@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hortifruti-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hortifruti
+      POSTGRES_PASSWORD: hortifruti_secret_2024
+      POSTGRES_DB: hortifruti_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hortifruti-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: hortifruti-redis
+    restart: unless-stopped
+    command: redis-server --requirepass hortifruti_redis_2024
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - hortifruti-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: hortifruti-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    networks:
+      - hortifruti-net
+
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    container_name: hortifruti-api
+    restart: unless-stopped
+    env_file: ./packages/api/.env
+    environment:
+      DATABASE_URL: postgresql://hortifruti:hortifruti_secret_2024@postgres:5432/hortifruti_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      NODE_ENV: production
+      PORT: 3001
+    ports:
+      - '3001:3001'
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - hortifruti-net
+
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+    container_name: hortifruti-web
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api/v1
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    networks:
+      - hortifruti-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+networks:
+  hortifruti-net:
+    driver: bridge

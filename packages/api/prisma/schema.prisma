@@ -1,0 +1,551 @@
+// ============================================
+// HortiFruti Gestão - Prisma Schema
+// Multi-tenant e-commerce + ERP platform
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ==================== MULTI-TENANT ====================
+
+model Tenant {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  domain        String?
+  subdomain     String?
+  logo          String?
+  favicon       String?
+  cnpj          String?
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  state         String?
+  zipCode       String?
+  active        Boolean  @default(true)
+  trialEndsAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  users         User[]
+  products      Product[]
+  categories    Category[]
+  orders        Order[]
+  customers     Customer[]
+  coupons       Coupon[]
+  deliveryZones DeliveryZone[]
+  banners       Banner[]
+  settings      TenantSetting[]
+  paymentMethods PaymentMethod[]
+  commissions   Commission[]
+  stockMovements StockMovement[]
+  financialEntries FinancialEntry[]
+  suppliers     Supplier[]
+  notifications Notification[]
+
+  @@map("tenants")
+}
+
+model TenantSetting {
+  id        String @id @default(uuid())
+  tenantId  String
+  key       String
+  value     String
+  group     String @default("general")
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, key])
+  @@map("tenant_settings")
+}
+
+// ==================== USERS & AUTH ====================
+
+model User {
+  id              String    @id @default(uuid())
+  tenantId        String?
+  email           String
+  password        String
+  name            String
+  phone           String?
+  avatar          String?
+  role            String    @default("EMPLOYEE")
+  active          Boolean   @default(true)
+  lastLoginAt     DateTime?
+  refreshToken    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  permissions     UserPermission[]
+  orders          Order[]
+  commissions     Commission[]
+  stockMovements  StockMovement[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@unique([tenantId, email])
+  @@map("users")
+}
+
+model Permission {
+  id          String @id @default(uuid())
+  code        String @unique
+  name        String
+  description String?
+  group       String
+
+  users       UserPermission[]
+
+  @@map("permissions")
+}
+
+model UserPermission {
+  id           String @id @default(uuid())
+  userId       String
+  permissionId String
+  granted      Boolean @default(true)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
+}
+
+// ==================== CUSTOMERS ====================
+
+model Customer {
+  id          String   @id @default(uuid())
+  tenantId    String
+  email       String
+  password    String
+  name        String
+  cpf         String?
+  phone       String?
+  avatar      String?
+  active      Boolean  @default(true)
+  vip         Boolean  @default(false)
+  totalSpent  Decimal  @default(0)
+  lastOrderAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  addresses   Address[]
+  orders      Order[]
+  favorites   Favorite[]
+
+  @@unique([tenantId, email])
+  @@map("customers")
+}
+
+model Address {
+  id         String  @id @default(uuid())
+  customerId String
+  label      String  @default("Principal")
+  street     String
+  number     String
+  complement String?
+  neighborhood String
+  city       String
+  state      String
+  zipCode    String
+  isDefault  Boolean @default(false)
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orders     Order[]
+
+  @@map("addresses")
+}
+
+// ==================== CATEGORIES ====================
+
+model Category {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  slug        String
+  description String?
+  image       String?
+  icon        String?
+  parentId    String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+
+  @@unique([tenantId, slug])
+  @@map("categories")
+}
+
+// ==================== SUPPLIERS ====================
+
+model Supplier {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  cnpj        String?
+  contact     String?
+  email       String?
+  phone       String?
+  address     String?
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  @@map("suppliers")
+}
+
+// ==================== PRODUCTS ====================
+
+model Product {
+  id              String   @id @default(uuid())
+  tenantId        String
+  categoryId      String?
+  supplierId      String?
+  name            String
+  slug            String
+  sku             String?
+  barcode         String?
+  description     String?
+  mainImage       String?
+  images          String  @default("[]")
+  costPrice       Decimal  @default(0)
+  salePrice       Decimal  @default(0)
+  promotionalPrice Decimal?
+  profitMargin    Decimal  @default(0)
+  commissionValue Decimal?
+  commissionPercent Decimal?
+  stock           Int      @default(0)
+  minStock        Int      @default(0)
+  weight          Decimal?
+  unit            String   @default("UN")
+  available       Boolean  @default(true)
+  featured        Boolean  @default(false)
+  promotional     Boolean  @default(false)
+  active          Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  orderItems      OrderItem[]
+  favorites       Favorite[]
+  stockMovements  StockMovement[]
+  commissions     Commission[]
+
+  @@unique([tenantId, slug])
+  @@map("products")
+}
+
+// ==================== ORDERS ====================
+
+model Order {
+  id              String   @id @default(uuid())
+  tenantId        String
+  customerId      String?
+  addressId       String?
+  userId          String?
+  orderNumber     Int
+  status          String   @default("PENDING")
+  deliveryType    String   @default("DELIVERY")
+  paymentMethod   String   @default("PIX")
+  paymentStatus   String   @default("PENDING")
+  subtotal        Decimal  @default(0)
+  deliveryFee     Decimal  @default(0)
+  discount        Decimal  @default(0)
+  total           Decimal  @default(0)
+  couponId        String?
+  couponCode      String?
+  notes           String?
+  internalNotes   String?
+  estimatedDelivery DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  paymentId       String?
+  paymentData     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer        Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  address         Address?       @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  statusHistory   OrderStatusHistory[]
+  coupon          Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, orderNumber])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  productId   String
+  productName String
+  productImage String?
+  quantity    Int
+  unitPrice   Decimal
+  totalPrice  Decimal
+  costPrice   Decimal
+  weight      Decimal?
+
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id        String   @id @default(uuid())
+  orderId   String
+  status    String
+  notes     String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_history")
+}
+
+// ==================== FAVORITES ====================
+
+model Favorite {
+  id         String   @id @default(uuid())
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
+  @@map("favorites")
+}
+
+// ==================== COUPONS ====================
+
+model Coupon {
+  id            String   @id @default(uuid())
+  tenantId      String
+  code          String
+  type          String   @default("PERCENTAGE")
+  value         Decimal  @default(0)
+  minOrderValue Decimal?
+  maxDiscount   Decimal?
+  usageLimit    Int?
+  usageCount    Int      @default(0)
+  perCustomer   Int?
+  validFrom     DateTime
+  validUntil    DateTime
+  active        Boolean  @default(true)
+  firstOrderOnly Boolean  @default(false)
+  vipOnly       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders        Order[]
+
+  @@unique([tenantId, code])
+  @@map("coupons")
+}
+
+// ==================== DELIVERY ====================
+
+model DeliveryZone {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String
+  neighborhoods   String   @default("[]")
+  cities          String   @default("[]")
+  zipCodes        String   @default("[]")
+  fee             Decimal  @default(0)
+  freeAbove       Decimal?
+  estimatedDays   Int      @default(1)
+  estimatedMinutes Int     @default(60)
+  availableDays   String   @default("[0,1,2,3,4,5,6]")
+  startTime       String   @default("08:00")
+  endTime         String   @default("20:00")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_zones")
+}
+
+// ==================== PAYMENTS ====================
+
+model PaymentMethod {
+  id          String  @id @default(uuid())
+  tenantId    String
+  type        String
+  name        String
+  credentials String  @default("{}")
+  active      Boolean @default(true)
+  sandbox     Boolean @default(true)
+  config      String?
+
+  tenant      Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+// ==================== COMMISSIONS ====================
+
+model Commission {
+  id          String   @id @default(uuid())
+  tenantId    String
+  userId      String?
+  productId   String?
+  categoryId  String?
+  type        String   @default("PERCENTAGE")
+  value       Decimal  @default(0)
+  percent     Decimal?
+  orderId     String?
+  orderValue  Decimal?
+  commissionValue Decimal?
+  paid        Boolean  @default(false)
+  paidAt      DateTime?
+  period      String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("commissions")
+}
+
+// ==================== STOCK ====================
+
+model StockMovement {
+  id          String   @id @default(uuid())
+  tenantId    String
+  productId   String
+  userId      String?
+  type        String
+  quantity    Int
+  previousQty Int
+  newQty      Int
+  costPrice   Decimal?
+  reason      String?
+  reference   String?
+  createdAt   DateTime @default(now())
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("stock_movements")
+}
+
+// ==================== FINANCIAL ====================
+
+model FinancialEntry {
+  id          String   @id @default(uuid())
+  tenantId    String
+  type        String
+  category    String   @default("OTHER")
+  description String
+  amount      Decimal
+  orderId     String?
+  dueDate     DateTime?
+  paidAt      DateTime?
+  paid        Boolean  @default(false)
+  recurring   Boolean  @default(false)
+  frequency   String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("financial_entries")
+}
+
+// ==================== BANNERS ====================
+
+model Banner {
+  id          String   @id @default(uuid())
+  tenantId    String
+  title       String
+  subtitle    String?
+  image       String
+  link        String?
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("banners")
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model Notification {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String?
+  type      String
+  title     String
+  message   String
+  data      String?
+  read      Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// ==================== AUDIT ====================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldData   String?
+  newData   String?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
