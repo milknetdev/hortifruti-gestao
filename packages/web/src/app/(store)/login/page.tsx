@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/conta';
@@ -136,5 +136,13 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[calc(100vh-300px)] flex items-center justify-center"><Loader2 className="animate-spin text-green-600" size={32} /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

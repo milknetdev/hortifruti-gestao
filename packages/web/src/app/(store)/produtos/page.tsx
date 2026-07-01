@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { SlidersHorizontal, ChevronDown, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { ProductCard } from '@/components/store/product-card';
 import { Product } from '@/types';
 import { api } from '@/lib/api';
@@ -23,7 +23,7 @@ const sortOptions = [
   { value: 'newest', label: 'Mais Recentes' },
 ];
 
-export default function ProductsPage() {
+function ProductsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -368,5 +368,13 @@ export default function ProductsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="animate-spin text-green-600" size={32} /></div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
