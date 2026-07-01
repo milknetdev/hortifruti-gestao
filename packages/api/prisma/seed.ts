@@ -47,16 +47,16 @@ async function main() {
   console.log('Cliente criado:', customer.email);
 
   const categoriesData = [
-    { name: 'Frutas', slug: 'frutas', icon: '🍎', color: '#ef4444', sortOrder: 1 },
-    { name: 'Verduras', slug: 'verduras', icon: '🥬', color: '#22c55e', sortOrder: 2 },
-    { name: 'Legumes', slug: 'legumes', icon: '🥕', color: '#f97316', sortOrder: 3 },
-    { name: 'Temperos e Ervas', slug: 'temperos', icon: '🌿', color: '#10b981', sortOrder: 4 },
-    { name: 'Organicos', slug: 'organicos', icon: '🌱', color: '#84cc16', sortOrder: 5 },
-    { name: 'Bebidas', slug: 'bebidas', icon: '🥤', color: '#06b6d4', sortOrder: 6 },
-    { name: 'Graos e Cereais', slug: 'graos', icon: '🌾', color: '#d97706', sortOrder: 7 },
-    { name: 'Ovos e Laticinios', slug: 'ovos-laticinios', icon: '🥚', color: '#fbbf24', sortOrder: 8 },
-    { name: 'Panificacao', slug: 'panificacao', icon: '🍞', color: '#a855f7', sortOrder: 9 },
-    { name: 'Congelados', slug: 'congelados', icon: '🧊', color: '#3b82f6', sortOrder: 10 },
+    { name: 'Frutas', slug: 'frutas', icon: '🍎', sortOrder: 1 },
+    { name: 'Verduras', slug: 'verduras', icon: '🥬', sortOrder: 2 },
+    { name: 'Legumes', slug: 'legumes', icon: '🥕', sortOrder: 3 },
+    { name: 'Temperos e Ervas', slug: 'temperos', icon: '🌿', sortOrder: 4 },
+    { name: 'Organicos', slug: 'organicos', icon: '🌱', sortOrder: 5 },
+    { name: 'Bebidas', slug: 'bebidas', icon: '🥤', sortOrder: 6 },
+    { name: 'Graos e Cereais', slug: 'graos', icon: '🌾', sortOrder: 7 },
+    { name: 'Ovos e Laticinios', slug: 'ovos-laticinios', icon: '🥚', sortOrder: 8 },
+    { name: 'Panificacao', slug: 'panificacao', icon: '🍞', sortOrder: 9 },
+    { name: 'Congelados', slug: 'congelados', icon: '🧊', sortOrder: 10 },
   ];
 
   for (const cat of categoriesData) {
