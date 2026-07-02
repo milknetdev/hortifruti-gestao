@@ -27,9 +27,9 @@ export class ProductsService {
     const skip = (page - 1) * limit;
     const where: any = { tenantId, active: true };
     if (query.search) where.OR = [
-      { name: { contains: query.search } },
-      { description: { contains: query.search } },
-      { sku: { contains: query.search } },
+      { name: { contains: query.search, mode: 'insensitive' } },
+      { description: { contains: query.search, mode: 'insensitive' } },
+      { sku: { contains: query.search, mode: 'insensitive' } },
     ];
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.featured !== undefined) where.featured = query.featured === 'true';
@@ -103,7 +103,10 @@ export class ProductsService {
     }
 
     return this.prisma.product.findMany({
-      where: { tenantId, active: true, available: true, OR: [{ name: { contains: query } }, { description: { contains: query } }] },
+      where: { tenantId, active: true, available: true, OR: [
+        { name: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+      ] },
       take: 10,
       include: { category: { select: { name: true } } },
     });
