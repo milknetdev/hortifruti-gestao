@@ -56,10 +56,12 @@ export class CustomerRegisterDto {
 
   @ApiProperty({ example: '(11) 99999-9999', required: false })
   @IsString()
+  @IsOptional()
   phone?: string;
 
   @ApiProperty({ example: '123.456.789-00', required: false })
   @IsString()
+  @IsOptional()
   cpf?: string;
 
   @ApiProperty({ example: 'tenant-id', required: false })
