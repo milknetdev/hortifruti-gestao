@@ -37,8 +37,8 @@ export function SearchBar() {
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const { data } = await api.get(`/products/search?q=${encodeURIComponent(query)}&limit=6`);
-        const items = Array.isArray(data) ? data : data?.items || [];
+        const { data: result } = await api.get(`/products?search=${encodeURIComponent(query)}&limit=6`);
+        const items = Array.isArray(result.data) ? result.data : [];
         setResults(items);
         setOpen(items.length > 0);
       } catch {
