@@ -187,6 +187,22 @@ export class AuthService {
     };
   }
 
+  async getCustomerByEmail(email: string) {
+    const customer = await this.prisma.customer.findFirst({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (!customer) throw new ConflictException('Cliente não encontrado');
+
+    return {
+      id: customer.id,
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone,
+      cpf: customer.cpf,
+      type: 'customer',
+    };
+  }
+
   private async generateTokens(userId: string, email: string, role: string) {
     const payload = { sub: userId, email, role };
     const jwtSecret = this.config.get('JWT_SECRET');

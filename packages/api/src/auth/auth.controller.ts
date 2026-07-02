@@ -58,6 +58,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Dados do usuario logado' })
   async me(@CurrentUser() user: any) {
+    // Se for cliente, busca dados completos do banco
+    if (user.type === 'customer') {
+      const customer = await this.authService.getCustomerByEmail(user.email);
+      return { user: customer };
+    }
     return { user };
   }
 
