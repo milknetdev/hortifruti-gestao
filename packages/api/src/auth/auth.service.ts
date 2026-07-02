@@ -98,26 +98,34 @@ export class AuthService {
     };
   }
 
-  async registerCustomer(data: { email: string; password: string; name: string; phone?: string; cpf?: string; tenantId: string }) {
-    if (!data.email || !data.password || !data.name || !data.tenantId) {
-      throw new ConflictException('Email, senha, nome e loja obrigatorios');
+  async registerCustomer(data: { email: string; password: string; name: string; phone?: string; cpf?: string; tenantId?: string }) {
+    if (!data.email || !data.password || !data.name) {
+      throw new ConflictException('Email, senha e nome obrigatorios');
     }
     if (data.password.length < 6) {
       throw new ConflictException('Senha deve ter pelo menos 6 caracteres');
     }
 
+    // Se não enviou tenantId, pega o primeiro tenant
+    let tenantId = data.tenantId;
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (!tenant) throw new ConflictException('Nenhuma loja encontrada');
+      tenantId = tenant.id;
+    }
+
     const email = data.email.toLowerCase().trim();
-    const exists = await this.prisma.customer.findFirst({ where: { email, tenantId: data.tenantId } });
+    const exists = await this.prisma.customer.findFirst({ where: { email, tenantId } });
     if (exists) throw new ConflictException('Email ja cadastrado nesta loja');
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
     const customer = await this.prisma.customer.create({
-      data: { email, password: hashedPassword, name: data.name.trim(), phone: data.phone?.trim(), cpf: data.cpf?.trim(), tenantId: data.tenantId },
+      data: { email, password: hashedPassword, name: data.name.trim(), phone: data.phone?.trim(), cpf: data.cpf?.trim(), tenantId },
     });
 
     const accessToken = this.jwt.sign(
-      { sub: customer.id, email: customer.email, type: 'customer', tenantId: data.tenantId },
+      { sub: customer.id, email: customer.email, type: 'customer', tenantId },
       { secret: this.config.get('JWT_SECRET'), expiresIn: '24h' },
     );
 

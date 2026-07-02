@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
+import { IsEmail, IsString, MinLength, MaxLength, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
@@ -62,9 +62,10 @@ export class CustomerRegisterDto {
   @IsString()
   cpf?: string;
 
-  @ApiProperty({ example: 'tenant-id' })
+  @ApiProperty({ example: 'tenant-id', required: false })
   @IsString()
-  tenantId: string;
+  @IsOptional()
+  tenantId?: string;
 }
 
 export class RefreshTokenDto {

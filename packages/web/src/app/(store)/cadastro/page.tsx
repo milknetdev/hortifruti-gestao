@@ -50,7 +50,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const { confirmPassword, ...payload } = data;
-      const { data: result } = await api.post('/auth/register', payload);
+      const { data: result } = await api.post('/auth/customer/register', payload);
       login(result.user, result.accessToken);
       toast.success('Conta criada com sucesso!');
       router.push('/conta');
