@@ -14,7 +14,14 @@ export class TenantGuard implements CanActivate {
     // Super admin bypasses tenant check
     if (user.role === 'SUPER_ADMIN') {
       // For super admin, allow optional tenantId from header
-      const tenantId = request.headers['x-tenant-id'];
+      let tenantId = request.headers['x-tenant-id'];
+      
+      // Se não enviou tenantId, pega o primeiro tenant
+      if (!tenantId) {
+        const firstTenant = await this.prisma.tenant.findFirst();
+        if (firstTenant) tenantId = firstTenant.id;
+      }
+      
       if (tenantId) {
         const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
         if (tenant && tenant.active) request.tenant = tenant;
