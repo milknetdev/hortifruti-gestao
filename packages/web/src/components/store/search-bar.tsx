@@ -111,9 +111,9 @@ export function SearchBar() {
             className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 max-h-96 overflow-y-auto"
           >
             {results.map((product) => {
-              const price = product.promotionalPrice || product.price;
+              const price = product.promotionalPrice || product.salePrice;
               const hasPromo =
-                product.promotionalPrice != null && product.promotionalPrice < product.price;
+                product.promotionalPrice != null && product.promotionalPrice < product.salePrice;
 
               return (
                 <Link
@@ -127,7 +127,7 @@ export function SearchBar() {
                 >
                   <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     <Image
-                      src={product.imageUrl || '/images/placeholder-product.jpg'}
+                      src={product.mainImage || '/images/placeholder-product.jpg'}
                       alt={product.name}
                       fill
                       className="object-cover"
@@ -143,7 +143,7 @@ export function SearchBar() {
                   <div className="text-right flex-shrink-0">
                     {hasPromo && (
                       <p className="text-xs text-gray-400 line-through">
-                        {formatCurrency(product.price)}
+                        {formatCurrency(price)}
                       </p>
                     )}
                     <p className="text-sm font-bold text-green-600">
