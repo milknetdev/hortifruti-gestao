@@ -30,8 +30,8 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/customer/login', { email, password });
-      login(data.user, data.accessToken);
+      const { data: result } = await api.post('/auth/customer/login', { email, password });
+      login(result.data.user, result.data.accessToken);
       toast.success('Bem-vindo de volta!');
       router.push(redirect);
     } catch (err: any) {
