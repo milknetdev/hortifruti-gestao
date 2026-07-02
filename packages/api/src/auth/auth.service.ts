@@ -45,9 +45,16 @@ export class AuthService {
     };
   }
 
-  async customerLogin(email: string, password: string, tenantId: string) {
-    if (!email || !password || !tenantId) {
-      throw new UnauthorizedException('Email, senha e loja obrigatorios');
+  async customerLogin(email: string, password: string, tenantId?: string) {
+    if (!email || !password) {
+      throw new UnauthorizedException('Email e senha obrigatorios');
+    }
+
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (!tenant) throw new UnauthorizedException('Nenhuma loja encontrada');
+      tenantId = tenant.id;
     }
 
     const customer = await this.prisma.customer.findFirst({
@@ -158,6 +165,26 @@ export class AuthService {
   async logout(userId: string) {
     await this.prisma.user.update({ where: { id: userId }, data: { refreshToken: null } });
     return { message: 'Logout realizado com sucesso' };
+  }
+
+  async updateCustomerProfile(email: string, data: { name?: string; phone?: string; cpf?: string }) {
+    const customer = await this.prisma.customer.findFirst({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (!customer) throw new ConflictException('Cliente não encontrado');
+
+    const updated = await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        ...(data.name && { name: data.name.trim() }),
+        ...(data.phone && { phone: data.phone.trim() }),
+        ...(data.cpf && { cpf: data.cpf.trim() }),
+      },
+    });
+
+    return {
+      user: { id: updated.id, email: updated.email, name: updated.name, phone: updated.phone, cpf: updated.cpf },
+    };
   }
 
   private async generateTokens(userId: string, email: string, role: string) {

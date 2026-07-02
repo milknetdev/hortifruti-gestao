@@ -14,9 +14,10 @@ export class LoginDto {
 }
 
 export class CustomerLoginDto extends LoginDto {
-  @ApiProperty({ example: 'tenant-id' })
+  @ApiProperty({ example: 'tenant-id', required: false })
   @IsString()
-  tenantId: string;
+  @IsOptional()
+  tenantId?: string;
 }
 
 export class RegisterDto {
