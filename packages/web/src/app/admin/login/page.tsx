@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAdminStore } from '@/stores/admin-store';
 import { loginAdmin } from '@/lib/auth';
 import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { isAuthenticated, user, login, hydrate } = useAuthStore();
+  const { isAuthenticated, user, login, hydrate } = useAdminStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

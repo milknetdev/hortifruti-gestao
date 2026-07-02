@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/stores/auth-store';
+import { useAdminStore } from '@/stores/admin-store';
 import { Sidebar } from '@/components/admin/sidebar';
 import { AdminHeader } from '@/components/admin/header';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, isLoading, hydrate } = useAuthStore();
+  const { isAuthenticated, user, isLoading, hydrate } = useAdminStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {

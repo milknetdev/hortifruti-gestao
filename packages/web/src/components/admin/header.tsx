@@ -15,20 +15,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MobileSidebar } from './sidebar';
+import { useAdminStore } from '@/stores/admin-store';
 
 interface HeaderProps {
   onMenuToggle?: () => void;
   notificationCount?: number;
-  user?: {
-    name: string;
-    email: string;
-    avatar?: string;
-  };
 }
 
-export function AdminHeader({ onMenuToggle, notificationCount = 0, user }: HeaderProps) {
+export function AdminHeader({ onMenuToggle, notificationCount = 0 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { user, logout } = useAdminStore();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +35,8 @@ export function AdminHeader({ onMenuToggle, notificationCount = 0, user }: Heade
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
+    logout();
+    router.push('/admin/login');
   };
 
   return (
