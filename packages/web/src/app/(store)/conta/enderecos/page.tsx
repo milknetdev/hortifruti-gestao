@@ -42,8 +42,8 @@ export default function AddressesPage() {
 
   const fetchAddresses = async () => {
     try {
-      const { data } = await api.get('/addresses');
-      setAddresses(Array.isArray(data) ? data : data?.items || []);
+      const { data: result } = await api.get('/addresses');
+      setAddresses(Array.isArray(result.data) ? result.data : []);
     } catch {
       setAddresses([]);
     } finally {
