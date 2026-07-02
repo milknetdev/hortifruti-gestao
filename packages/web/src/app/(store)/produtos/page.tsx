@@ -83,9 +83,9 @@ function ProductsContent() {
         params.set('page', String(currentPage));
         params.set('limit', '12');
 
-        const { data } = await api.get(`/products?${params.toString()}`);
-        setProducts(Array.isArray(data) ? data : data?.items || []);
-        setTotalPages(data?.totalPages || Math.ceil((data?.total || 0) / 12) || 1);
+        const { data: result } = await api.get(`/products?${params.toString()}`);
+        setProducts(Array.isArray(result.data) ? result.data : []);
+        setTotalPages(result.meta?.totalPages || Math.ceil((result.meta?.total || 0) / 12) || 1);
       } catch {
         setProducts([]);
       } finally {

@@ -39,6 +39,24 @@ export class ProductsController {
     return this.productsService.findAll(tenantId || '', query);
   }
 
+  @Get('featured')
+  @ApiOperation({ summary: 'Produtos em destaque' })
+  async findFeatured(@Query('limit') limit?: number) {
+    return this.productsService.findFeatured('', limit || 8);
+  }
+
+  @Get('promotional')
+  @ApiOperation({ summary: 'Produtos promocionais' })
+  async findPromotional(@Query('limit') limit?: number) {
+    return this.productsService.findPromotional('', limit || 8);
+  }
+
+  @Get('best-sellers')
+  @ApiOperation({ summary: 'Mais vendidos' })
+  async findBestSellers(@Query('limit') limit?: number) {
+    return this.productsService.findBestSellers('', limit || 8);
+  }
+
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Buscar produto por slug' })
   async findBySlug(@Param('slug') slug: string, @Query('tenantId') tenantId?: string) {
