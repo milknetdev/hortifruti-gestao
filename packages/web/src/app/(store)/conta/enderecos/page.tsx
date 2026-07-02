@@ -154,10 +154,19 @@ export default function AddressesPage() {
       </div>
 
       {addresses.length === 0 ? (
-        <div className="text-center py-16">
-          <MapPin size={64} className="mx-auto text-gray-300 mb-6" />
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+            <MapPin size={40} className="text-gray-400" />
+          </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Nenhum endereço cadastrado</h2>
-          <p className="text-gray-500 mb-6">Adicione um endereço para facilitar suas compras.</p>
+          <p className="text-gray-500 mb-6 text-center max-w-sm">Adicione um endereço para facilitar suas compras.</p>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-sm font-medium shadow-lg shadow-green-600/20"
+          >
+            <Plus size={18} />
+            Adicionar Endereço
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -238,9 +247,10 @@ export default function AddressesPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-2xl z-50 p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6 p-6 pb-0">
                 <h2 className="text-lg font-semibold">
                   {editingId ? 'Editar Endereço' : 'Novo Endereço'}
                 </h2>
@@ -252,7 +262,7 @@ export default function AddressesPage() {
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 p-6">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">Identificação</label>
                   <input
@@ -340,7 +350,7 @@ export default function AddressesPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 mt-6 p-6 pt-0">
                 <button
                   onClick={() => setModalOpen(false)}
                   className="flex-1 py-2.5 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -355,6 +365,7 @@ export default function AddressesPage() {
                   {saving ? <Loader2 size={16} className="animate-spin" /> : null}
                   {editingId ? 'Atualizar' : 'Salvar'}
                 </button>
+              </div>
               </div>
             </motion.div>
           </>
