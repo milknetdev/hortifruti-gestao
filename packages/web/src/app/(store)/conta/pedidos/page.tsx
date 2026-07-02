@@ -32,7 +32,7 @@ export default function OrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const { data } = await api.get('/orders');
+        const { data } = await api.get('/orders/my');
         setOrders(Array.isArray(data) ? data : data?.items || []);
       } catch {
         setOrders([]);

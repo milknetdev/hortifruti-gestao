@@ -92,7 +92,7 @@ api.interceptors.response.use(
         // Clear auth and redirect to login
         localStorage.removeItem('hortifruti-auth');
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
+          window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       } finally {
