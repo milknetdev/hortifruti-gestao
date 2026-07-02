@@ -60,8 +60,8 @@ export default function ProfilePage() {
     }
     setSaving(true);
     try {
-      const { data } = await api.put('/auth/profile', { name, email, phone, cpf });
-      if (data?.user) setUser(data.user);
+      const { data: result } = await api.put('/auth/profile', { name, email, phone, cpf });
+      if (result?.data?.user) setUser(result.data.user);
       toast.success('Perfil atualizado com sucesso!');
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao atualizar perfil');
