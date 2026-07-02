@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { isAuthenticated, login, hydrate } = useAuthStore();
+  const { isAuthenticated, user, login, hydrate } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
