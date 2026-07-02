@@ -12,8 +12,8 @@ interface SearchResult {
   id: string;
   name: string;
   slug: string;
-  imageUrl: string;
-  price: number;
+  mainImage?: string;
+  salePrice: number;
   promotionalPrice?: number | null;
   unit: string;
 }
