@@ -18,8 +18,8 @@ export default function AdminLoginPage() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) router.push('/admin');
-  }, [isAuthenticated, router]);
+    if (isAuthenticated && user?.role === 'ADMIN') router.push('/admin');
+  }, [isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

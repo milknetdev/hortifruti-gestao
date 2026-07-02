@@ -17,10 +17,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && pathname !== '/admin/login') {
-      router.push('/admin/login');
+    if (!isLoading && pathname !== '/admin/login') {
+      if (!isAuthenticated || !user || user.role !== 'ADMIN') {
+        router.push('/admin/login');
+      }
     }
-  }, [isLoading, isAuthenticated, pathname, router]);
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   // Login page - no sidebar/header
   if (pathname === '/admin/login') {
