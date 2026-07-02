@@ -42,17 +42,15 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  // Swagger - disable in production
-  if (process.env.NODE_ENV !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('HortiFruti Gestao API')
-      .setDescription('API completa para gestao de hortifruti')
-      .setVersion('1.0')
-      .addBearerAuth()
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document);
-  }
+  // Swagger - always enabled
+  const config = new DocumentBuilder()
+    .setTitle('HortiFruti Gestao API')
+    .setDescription('API completa para gestao de hortifruti')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
 
   const port = process.env.PORT || 3001;
   await app.listen(port);
