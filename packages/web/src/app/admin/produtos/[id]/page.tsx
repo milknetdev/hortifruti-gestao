@@ -121,7 +121,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log('Updated product:', data);
-      router.push('/produtos');
+      router.push('/admin/produtos');
     } catch (error) {
       console.error('Error updating product:', error);
     } finally {

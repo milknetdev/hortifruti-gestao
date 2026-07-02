@@ -82,7 +82,7 @@ export default function ProdutosPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/produtos/${row.id}`);
+              router.push(`/admin/produtos/${row.id}`);
             }}
           >
             <Pencil className="w-4 h-4" />
@@ -109,7 +109,7 @@ export default function ProdutosPage() {
         </div>
         <Button
           className="bg-[#16a34a] hover:bg-[#15803d]"
-          onClick={() => router.push('/produtos/novo')}
+          onClick={() => router.push('/admin/produtos/novo')}
         >
           <Plus className="w-4 h-4 mr-2" />
           Novo Produto
@@ -140,7 +140,7 @@ export default function ProdutosPage() {
             totalPages={2}
             totalItems={filteredProducts.length * 2}
             onPageChange={setPage}
-            onRowClick={(row) => router.push(`/produtos/${row.id}`)}
+            onRowClick={(row) => router.push(`/admin/produtos/${row.id}`)}
           />
         </CardContent>
       </Card>

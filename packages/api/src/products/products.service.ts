@@ -16,6 +16,12 @@ export class ProductsService {
   }
 
   async findAll(tenantId: string, query: any) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     const page = query.page || 1;
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
@@ -62,6 +68,12 @@ export class ProductsService {
   }
 
   async findBySlug(slug: string, tenantId: string) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     const product = await this.prisma.product.findFirst({ where: { slug, tenantId, active: true }, include: { category: true } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     return product;
@@ -84,6 +96,12 @@ export class ProductsService {
   }
 
   async search(tenantId: string, query: string) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     return this.prisma.product.findMany({
       where: { tenantId, active: true, available: true, OR: [{ name: { contains: query } }, { description: { contains: query } }] },
       take: 10,

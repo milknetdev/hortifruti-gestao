@@ -95,7 +95,7 @@ export default function NovoProdutoPage() {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log('Product data:', data);
-      router.push('/produtos');
+      router.push('/admin/produtos');
     } catch (error) {
       console.error('Error creating product:', error);
     } finally {
