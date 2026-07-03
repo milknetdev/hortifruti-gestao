@@ -123,7 +123,7 @@ export default function OrdersPage() {
 
                 {order.items && order.items.length > 0 && (
                   <p className="text-sm text-gray-600 mb-3">
-                    {order.items.slice(0, 3).map((i) => i.name).join(', ')}
+                    {order.items.slice(0, 3).map((i) => i.productName || i.name || 'Produto').join(', ')}
                     {order.items.length > 3 && ` e mais ${order.items.length - 3} item(ns)`}
                   </p>
                 )}
