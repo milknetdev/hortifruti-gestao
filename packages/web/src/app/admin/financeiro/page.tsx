@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StatCard } from '@/components/admin/stat-card';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,65 +21,135 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Plus } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const entries = [
-  { id: 1, data: '28/06/2026', tipo: 'Receita', categoria: 'Vendas', descricao: 'Venda de produtos - Pedido #1234', valor: 'R$ 127,50', pago: true },
-  { id: 2, data: '28/06/2026', tipo: 'Despesa', categoria: 'Fornecedores', descricao: 'Compra de frutas - Fazenda São João', valor: 'R$ 450,00', pago: true },
-  { id: 3, data: '27/06/2026', tipo: 'Receita', categoria: 'Vendas', descricao: 'Venda de produtos - Pedido #1233', valor: 'R$ 89,90', pago: true },
-  { id: 4, data: '27/06/2026', tipo: 'Despesa', categoria: 'Operacional', descricao: 'Conta de energia elétrica', valor: 'R$ 320,00', pago: false },
-  { id: 5, data: '26/06/2026', tipo: 'Receita', categoria: 'Vendas', descricao: 'Venda de produtos - Pedido #1232', valor: 'R$ 234,00', pago: true },
-  { id: 6, data: '26/06/2026', tipo: 'Despesa', categoria: 'Pessoal', descricao: 'Salário - Funcionário João', valor: 'R$ 2.500,00', pago: true },
-  { id: 7, data: '25/06/2026', tipo: 'Receita', categoria: 'Vendas', descricao: 'Venda de produtos - Pedido #1231', valor: 'R$ 45,80', pago: true },
-  { id: 8, data: '25/06/2026', tipo: 'Despesa', categoria: 'Marketing', descricao: 'Impressão de flyers', valor: 'R$ 150,00', pago: true },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const typeColors: Record<string, string> = {
   'Receita': 'bg-green-100 text-green-700',
   'Despesa': 'bg-red-100 text-red-700',
+  'income': 'bg-green-100 text-green-700',
+  'expense': 'bg-red-100 text-red-700',
 };
 
 export default function FinanceiroPage() {
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [filterType, setFilterType] = useState('todos');
+  const [summary, setSummary] = useState({ revenue: 0, expenses: 0, profit: 0, margin: 0 });
   const [formData, setFormData] = useState({
-    tipo: 'receita',
+    tipo: 'income',
     categoria: '',
     descricao: '',
     valor: '',
     data: '',
-    pago: false,
   });
+
+  useEffect(() => {
+    fetchFinance();
+  }, []);
+
+  const fetchFinance = async () => {
+    try {
+      const { data: result } = await api.get('/finance?limit=100');
+      const data = result?.data || [];
+      const list = Array.isArray(data) ? data : (data.entries || data.items || []);
+      setEntries(list);
+
+      // Calculate summary from entries
+      const revenue = list.filter((e: any) => (e.type || e.tipo) === 'income' || (e.type || e.tipo) === 'Receita')
+        .reduce((sum: number, e: any) => sum + Number(e.amount || e.valor || 0), 0);
+      const expenses = list.filter((e: any) => (e.type || e.tipo) === 'expense' || (e.type || e.tipo) === 'Despesa')
+        .reduce((sum: number, e: any) => sum + Number(e.amount || e.valor || 0), 0);
+      setSummary({
+        revenue,
+        expenses,
+        profit: revenue - expenses,
+        margin: revenue > 0 ? ((revenue - expenses) / revenue) * 100 : 0,
+      });
+    } catch {
+      setEntries([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!formData.descricao.trim() || !formData.valor) {
+      toast.error('Preencha os campos obrigatórios');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post('/finance', {
+        type: formData.tipo,
+        category: formData.categoria,
+        description: formData.descricao,
+        amount: parseFloat(formData.valor),
+        date: formData.data,
+      });
+      toast.success('Lançamento criado!');
+      setDialogOpen(false);
+      fetchFinance();
+    } catch {
+      toast.error('Erro ao criar lançamento');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filteredEntries = filterType === 'todos'
     ? entries
-    : entries.filter((e) => e.tipo.toLowerCase() === filterType);
+    : entries.filter((e) => {
+        const t = (e.type || e.tipo || '').toLowerCase();
+        return t === filterType || (filterType === 'receita' && t === 'income') || (filterType === 'despesa' && t === 'expense');
+      });
 
   const columns: Column<any>[] = [
-    { key: 'data', label: 'Data', sortable: true },
     {
-      key: 'tipo',
-      label: 'Tipo',
-      render: (value) => (
-        <Badge className={cn('border-0', typeColors[value])}>{value}</Badge>
-      ),
+      key: 'date',
+      label: 'Data',
+      sortable: true,
+      render: (v, row) => v ? new Date(v).toLocaleDateString('pt-BR') : (row.data || '-'),
     },
-    { key: 'categoria', label: 'Categoria' },
-    { key: 'descricao', label: 'Descrição' },
     {
-      key: 'valor',
+      key: 'type',
+      label: 'Tipo',
+      render: (value, row) => {
+        const v = value || row.tipo;
+        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{v === 'income' ? 'Receita' : v === 'expense' ? 'Despesa' : v}</Badge>;
+      },
+    },
+    {
+      key: 'category',
+      label: 'Categoria',
+      render: (v, row) => v || row.categoria || '-',
+    },
+    {
+      key: 'description',
+      label: 'Descrição',
+      render: (v, row) => v || row.descricao || '-',
+    },
+    {
+      key: 'amount',
       label: 'Valor',
       sortable: true,
-      render: (value, row) => (
-        <span className={cn('font-medium', row.tipo === 'Receita' ? 'text-green-600' : 'text-red-600')}>
-          {row.tipo === 'Receita' ? '+' : '-'}{value}
-        </span>
-      ),
+      render: (value, row) => {
+        const v = Number(value ?? row.valor ?? 0);
+        const isIncome = (row.type || row.tipo) === 'income' || (row.type || row.tipo) === 'Receita';
+        return (
+          <span className={cn('font-medium', isIncome ? 'text-green-600' : 'text-red-600')}>
+            {isIncome ? '+' : '-'}R$ {v.toFixed(2)}
+          </span>
+        );
+      },
     },
     {
-      key: 'pago',
+      key: 'paid',
       label: 'Status',
       render: (value) => (
         <Badge className={cn('border-0', value ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')}>
@@ -88,6 +158,14 @@ export default function FinanceiroPage() {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -106,7 +184,7 @@ export default function FinanceiroPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Receitas"
-          value="R$ 12.450"
+          value={`R$ ${summary.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingUp}
           trend={{ value: 15, isPositive: true }}
           iconBgColor="bg-green-50"
@@ -114,7 +192,7 @@ export default function FinanceiroPage() {
         />
         <StatCard
           title="Despesas"
-          value="R$ 8.230"
+          value={`R$ ${summary.expenses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingDown}
           trend={{ value: 5, isPositive: false }}
           iconBgColor="bg-red-50"
@@ -122,7 +200,7 @@ export default function FinanceiroPage() {
         />
         <StatCard
           title="Lucro"
-          value="R$ 4.220"
+          value={`R$ ${summary.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
           trend={{ value: 22, isPositive: true }}
           iconBgColor="bg-blue-50"
@@ -130,7 +208,7 @@ export default function FinanceiroPage() {
         />
         <StatCard
           title="Margem"
-          value="33.9%"
+          value={`${summary.margin.toFixed(1)}%`}
           icon={Percent}
           trend={{ value: 3, isPositive: true }}
           iconBgColor="bg-purple-50"
@@ -149,8 +227,8 @@ export default function FinanceiroPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="receita">Receitas</SelectItem>
-                <SelectItem value="despesa">Despesas</SelectItem>
+                <SelectItem value="income">Receitas</SelectItem>
+                <SelectItem value="expense">Despesas</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -162,8 +240,8 @@ export default function FinanceiroPage() {
             searchable
             searchPlaceholder="Pesquisar lançamentos..."
             page={page}
-            totalPages={3}
-            totalItems={filteredEntries.length * 3}
+            totalPages={Math.ceil(filteredEntries.length / 15) || 1}
+            totalItems={filteredEntries.length}
             onPageChange={setPage}
           />
         </CardContent>
@@ -183,8 +261,8 @@ export default function FinanceiroPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="receita">Receita</SelectItem>
-                  <SelectItem value="despesa">Despesa</SelectItem>
+                  <SelectItem value="income">Receita</SelectItem>
+                  <SelectItem value="expense">Despesa</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -231,7 +309,10 @@ export default function FinanceiroPage() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,26 +19,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Upload, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const categories = [
-  { id: 1, nome: 'Frutas', categoriaPai: '—', produtos: 24, status: 'Ativa', imagem: '🍎' },
-  { id: 2, nome: 'Hortaliças', categoriaPai: '—', produtos: 18, status: 'Ativa', imagem: '🥬' },
-  { id: 3, nome: 'Legumes', categoriaPai: '—', produtos: 15, status: 'Ativa', imagem: '🥕' },
-  { id: 4, nome: 'Temperos', categoriaPai: '—', produtos: 10, status: 'Ativa', imagem: '🌿' },
-  { id: 5, nome: 'Orgânicos', categoriaPai: '—', produtos: 8, status: 'Ativa', imagem: '🌱' },
-  { id: 6, nome: 'Cítricos', categoriaPai: 'Frutas', produtos: 6, status: 'Ativa', imagem: '🍋' },
-  { id: 7, nome: 'Tropicais', categoriaPai: 'Frutas', produtos: 8, status: 'Ativa', imagem: '🥭' },
-  { id: 8, nome: 'Folhosos', categoriaPai: 'Hortaliças', produtos: 5, status: 'Inativa', imagem: '🥬' },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function CategoriasPage() {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     categoriaPai: '',
@@ -46,14 +39,29 @@ export default function CategoriasPage() {
     ordem: '0',
   });
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data: result } = await api.get('/categories?limit=100');
+      setCategories(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOpenDialog = (cat?: any) => {
     if (cat) {
       setEditingCategory(cat);
       setFormData({
-        nome: cat.nome,
-        categoriaPai: cat.categoriaPai === '—' ? '' : cat.categoriaPai,
-        icone: cat.imagem,
-        ordem: '0',
+        nome: cat.name || cat.nome || '',
+        categoriaPai: cat.parentCategory?.name || cat.parentName || '',
+        icone: cat.icon || cat.imagem || '',
+        ordem: String(cat.order || cat.ordem || 0),
       });
     } else {
       setEditingCategory(null);
@@ -62,29 +70,81 @@ export default function CategoriasPage() {
     setDialogOpen(true);
   };
 
+  const handleSave = async () => {
+    if (!formData.nome.trim()) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        name: formData.nome,
+        order: parseInt(formData.ordem) || 0,
+      };
+      if (formData.categoriaPai) payload.parentName = formData.categoriaPai;
+      if (formData.icone) payload.icon = formData.icone;
+
+      if (editingCategory) {
+        await api.put(`/categories/${editingCategory.id}`, payload);
+        toast.success('Categoria atualizada!');
+      } else {
+        await api.post('/categories', payload);
+        toast.success('Categoria criada!');
+      }
+      setDialogOpen(false);
+      fetchCategories();
+    } catch {
+      toast.error('Erro ao salvar categoria');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir esta categoria?')) return;
+    try {
+      await api.delete(`/categories/${id}`);
+      toast.success('Categoria removida!');
+      fetchCategories();
+    } catch {
+      toast.error('Erro ao remover categoria');
+    }
+  };
+
+  const parentCategories = categories.filter((c: any) => !c.parentCategory && !c.parentName);
+
   const columns: Column<any>[] = [
     {
-      key: 'imagem',
+      key: 'icon',
       label: '',
       className: 'w-12',
-      render: (value) => <span className="text-2xl">{value}</span>,
-    },
-    { key: 'nome', label: 'Nome', sortable: true },
-    { key: 'categoriaPai', label: 'Categoria Pai' },
-    { key: 'produtos', label: 'Produtos', sortable: true },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value) => (
-        <Badge
-          className={cn(
-            'border-0',
-            value === 'Ativa' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          )}
-        >
-          {value}
-        </Badge>
+      render: (value) => value ? <span className="text-2xl">{value}</span> : (
+        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-400">📁</div>
       ),
+    },
+    { key: 'name', label: 'Nome', sortable: true, render: (v, row) => v || row.nome },
+    {
+      key: 'parentCategory',
+      label: 'Categoria Pai',
+      render: (v, row) => v?.name || row.parentName || '—',
+    },
+    {
+      key: 'productsCount',
+      label: 'Produtos',
+      sortable: true,
+      render: (v, row) => v ?? row.produtos ?? 0,
+    },
+    {
+      key: 'active',
+      label: 'Status',
+      render: (value, row) => {
+        const isActive = value !== undefined ? value : (row.status === 'Ativa');
+        return (
+          <Badge className={cn('border-0', isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
+            {isActive ? 'Ativa' : 'Inativa'}
+          </Badge>
+        );
+      },
     },
     {
       key: 'acoes',
@@ -94,13 +154,21 @@ export default function CategoriasPage() {
           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(row); }}>
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -123,8 +191,8 @@ export default function CategoriasPage() {
             searchable
             searchPlaceholder="Pesquisar categorias..."
             page={page}
-            totalPages={2}
-            totalItems={categories.length * 2}
+            totalPages={Math.ceil(categories.length / 15) || 1}
+            totalItems={categories.length}
             onPageChange={setPage}
           />
         </CardContent>
@@ -153,8 +221,8 @@ export default function CategoriasPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Nenhuma</SelectItem>
-                  {categories.filter((c) => c.categoriaPai === '—').map((c) => (
-                    <SelectItem key={c.id} value={c.nome}>{c.nome}</SelectItem>
+                  {parentCategories.map((c: any) => (
+                    <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -165,10 +233,11 @@ export default function CategoriasPage() {
                 {formData.icone && (
                   <span className="text-3xl">{formData.icone}</span>
                 )}
-                <Button variant="outline" size="sm">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Imagem
-                </Button>
+                <Input
+                  value={formData.icone}
+                  onChange={(e) => setFormData({ ...formData, icone: e.target.value })}
+                  placeholder="Emoji ou URL da imagem"
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -182,7 +251,10 @@ export default function CategoriasPage() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>

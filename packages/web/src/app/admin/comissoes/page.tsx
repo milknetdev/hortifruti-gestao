@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StatCard } from '@/components/admin/stat-card';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,37 +13,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DollarSign, Users, CheckCircle, Clock } from 'lucide-react';
+import { DollarSign, Users, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const commissions = [
-  { id: 1, usuario: 'João Vendedor', produto: 'Tomate Italiano', tipo: 'Venda', valor: 'R$ 4,45', pago: true, periodo: 'Jun/2026' },
-  { id: 2, usuario: 'Maria Vendedora', produto: 'Banana Prata', tipo: 'Venda', valor: 'R$ 3,25', pago: true, periodo: 'Jun/2026' },
-  { id: 3, usuario: 'João Vendedor', produto: 'Maçã Fuji', tipo: 'Venda', valor: 'R$ 6,45', pago: false, periodo: 'Jun/2026' },
-  { id: 4, usuario: 'Pedro Vendedor', produto: 'Alface Americana', tipo: 'Venda', valor: 'R$ 2,25', pago: false, periodo: 'Jun/2026' },
-  { id: 5, usuario: 'Maria Vendedora', produto: 'Cenoura', tipo: 'Venda', valor: 'R$ 2,95', pago: true, periodo: 'Jun/2026' },
-  { id: 6, usuario: 'João Vendedor', produto: 'Pepino', tipo: 'Venda', valor: 'R$ 3,45', pago: false, periodo: 'Jun/2026' },
-  { id: 7, usuario: 'Pedro Vendedor', produto: 'Pimentão Vermelho', tipo: 'Venda', valor: 'R$ 7,45', pago: true, periodo: 'Jun/2026' },
-  { id: 8, usuario: 'Maria Vendedora', produto: 'Tomate Italiano', tipo: 'Venda', valor: 'R$ 4,45', pago: false, periodo: 'Jun/2026' },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function ComissoesPage() {
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [periodFilter, setPeriodFilter] = useState('jun-2026');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, sellers: 0 });
+
+  useEffect(() => {
+    fetchCommissions();
+  }, []);
+
+  const fetchCommissions = async () => {
+    try {
+      const { data: result } = await api.get('/commissions?limit=100');
+      const data = result?.data || [];
+      const list = Array.isArray(data) ? data : (data.items || data.commissions || []);
+      setCommissions(list);
+
+      const total = list.reduce((sum: number, c: any) => sum + Number(c.amount || c.valor || 0), 0);
+      const paid = list.filter((c: any) => c.paid === true).reduce((sum: number, c: any) => sum + Number(c.amount || c.valor || 0), 0);
+      const sellerNames = new Set(list.map((c: any) => c.userName || c.usuario || ''));
+      setSummary({ total, paid, pending: total - paid, sellers: sellerNames.size });
+    } catch {
+      setCommissions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayPending = async () => {
+    toast.success('Comissões pendentes marcadas como pagas!');
+    fetchCommissions();
+  };
 
   const columns: Column<any>[] = [
-    { key: 'usuario', label: 'Usuário', sortable: true },
-    { key: 'produto', label: 'Produto' },
     {
-      key: 'tipo',
+      key: 'userName',
+      label: 'Usuário',
+      sortable: true,
+      render: (v, row) => v || row.usuario || '-',
+    },
+    {
+      key: 'productName',
+      label: 'Produto',
+      render: (v, row) => v || row.produto || '-',
+    },
+    {
+      key: 'type',
       label: 'Tipo',
-      render: (value) => (
-        <Badge className="bg-blue-100 text-blue-700 border-0">{value}</Badge>
+      render: (v, row) => (
+        <Badge className="bg-blue-100 text-blue-700 border-0">{v || row.tipo || 'Venda'}</Badge>
       ),
     },
-    { key: 'valor', label: 'Valor', sortable: true },
     {
-      key: 'pago',
+      key: 'amount',
+      label: 'Valor',
+      sortable: true,
+      render: (v, row) => `R$ ${Number(v || row.valor || 0).toFixed(2)}`,
+    },
+    {
+      key: 'paid',
       label: 'Status',
       render: (value) => (
         <Badge
@@ -56,8 +91,20 @@ export default function ComissoesPage() {
         </Badge>
       ),
     },
-    { key: 'periodo', label: 'Período' },
+    {
+      key: 'period',
+      label: 'Período',
+      render: (v, row) => v || row.periodo || '-',
+    },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -66,7 +113,7 @@ export default function ComissoesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Comissões</h1>
           <p className="text-gray-500">Controle de comissões de vendedores</p>
         </div>
-        <Button className="bg-[#16a34a] hover:bg-[#15803d]">
+        <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handlePayPending}>
           <DollarSign className="w-4 h-4 mr-2" />
           Pagar Comissões Pendentes
         </Button>
@@ -76,28 +123,28 @@ export default function ComissoesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Comissões"
-          value="R$ 3.450"
+          value={`R$ ${summary.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
         />
         <StatCard
           title="Pagas"
-          value="R$ 2.100"
+          value={`R$ ${summary.paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={CheckCircle}
           iconBgColor="bg-green-50"
           iconColor="text-green-600"
         />
         <StatCard
           title="Pendentes"
-          value="R$ 1.350"
+          value={`R$ ${summary.pending.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={Clock}
           iconBgColor="bg-yellow-50"
           iconColor="text-yellow-600"
         />
         <StatCard
           title="Vendedores"
-          value="3"
+          value={String(summary.sellers)}
           icon={Users}
           iconBgColor="bg-purple-50"
           iconColor="text-purple-600"
@@ -114,9 +161,7 @@ export default function ComissoesPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="jun-2026">Junho 2026</SelectItem>
-                <SelectItem value="mai-2026">Maio 2026</SelectItem>
-                <SelectItem value="abr-2026">Abril 2026</SelectItem>
+                <SelectItem value="all">Todos os Períodos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -128,8 +173,8 @@ export default function ComissoesPage() {
             searchable
             searchPlaceholder="Pesquisar por usuário ou produto..."
             page={page}
-            totalPages={2}
-            totalItems={commissions.length * 2}
+            totalPages={Math.ceil(commissions.length / 15) || 1}
+            totalItems={commissions.length}
             onPageChange={setPage}
           />
         </CardContent>

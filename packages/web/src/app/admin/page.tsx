@@ -14,38 +14,11 @@ import {
   TrendingUp,
   AlertTriangle,
   Eye,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Mock data
-const vendasUltimos30Dias = Array.from({ length: 30 }, (_, i) => ({
-  dia: `${i + 1}`,
-  vendas: Math.floor(Math.random() * 5000) + 1000,
-  pedidos: Math.floor(Math.random() * 30) + 5,
-}));
-
-const pedidosPorStatus = [
-  { status: 'Pendentes', quantidade: 12 },
-  { status: 'Pagos', quantidade: 28 },
-  { status: 'Separando', quantidade: 8 },
-  { status: 'Entregues', quantidade: 156 },
-  { status: 'Cancelados', quantidade: 5 },
-];
-
-const recentOrders = [
-  { id: '#1234', cliente: 'Maria Silva', itens: 5, total: 'R$ 127,50', status: 'Pendente', data: '28/06/2026' },
-  { id: '#1233', cliente: 'João Santos', itens: 3, total: 'R$ 89,90', status: 'Pago', data: '28/06/2026' },
-  { id: '#1232', cliente: 'Ana Oliveira', itens: 7, total: 'R$ 234,00', status: 'Separando', data: '27/06/2026' },
-  { id: '#1231', cliente: 'Pedro Costa', itens: 2, total: 'R$ 45,80', status: 'Entregue', data: '27/06/2026' },
-  { id: '#1230', cliente: 'Carla Mendes', itens: 4, total: 'R$ 156,30', status: 'Cancelado', data: '26/06/2026' },
-];
-
-const lowStockAlerts = [
-  { produto: 'Tomate Italiano', estoque: 3, minimo: 10 },
-  { produto: 'Banana Prata', estoque: 5, minimo: 15 },
-  { produto: 'Maçã Fuji', estoque: 2, minimo: 8 },
-  { produto: 'Alface Americana', estoque: 4, minimo: 12 },
-];
+import { api } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 const statusColors: Record<string, string> = {
   'Pendente': 'bg-yellow-100 text-yellow-700',
@@ -53,42 +26,107 @@ const statusColors: Record<string, string> = {
   'Separando': 'bg-purple-100 text-purple-700',
   'Entregue': 'bg-green-100 text-green-700',
   'Cancelado': 'bg-red-100 text-red-700',
+  'pending': 'bg-yellow-100 text-yellow-700',
+  'paid': 'bg-blue-100 text-blue-700',
+  'processing': 'bg-purple-100 text-purple-700',
+  'delivered': 'bg-green-100 text-green-700',
+  'cancelled': 'bg-red-100 text-red-700',
 };
 
-const orderColumns: Column<any>[] = [
-  { key: 'id', label: '#', sortable: true },
-  { key: 'cliente', label: 'Cliente', sortable: true },
-  { key: 'itens', label: 'Itens', sortable: true },
-  { key: 'total', label: 'Total', sortable: true },
-  {
-    key: 'status',
-    label: 'Status',
-    render: (value) => (
-      <Badge className={cn('border-0', statusColors[value] || 'bg-gray-100 text-gray-700')}>
-        {value}
-      </Badge>
-    ),
-  },
-  { key: 'data', label: 'Data', sortable: true },
-  {
-    key: 'acoes',
-    label: 'Ações',
-    render: () => (
-      <Button variant="ghost" size="sm">
-        <Eye className="w-4 h-4" />
-      </Button>
-    ),
-  },
-];
+interface DashboardData {
+  ordersToday?: number;
+  pendingOrders?: number;
+  monthlyRevenue?: number;
+  monthlyProfit?: number;
+  salesChart?: Array<{ day: string; sales: number; orders: number }>;
+  ordersByStatus?: Array<{ status: string; count: number }>;
+  recentOrders?: Array<any>;
+  lowStockAlerts?: Array<any>;
+}
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboard, setDashboard] = useState<DashboardData>({});
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [lowStockAlerts, setLowStockAlerts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(timer);
+    fetchDashboard();
   }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      const { data: result } = await api.get('/dashboard');
+      const data = result?.data || result || {};
+      setDashboard(data);
+      setRecentOrders(Array.isArray(data.recentOrders) ? data.recentOrders : []);
+      setLowStockAlerts(Array.isArray(data.lowStockAlerts) ? data.lowStockAlerts : []);
+    } catch {
+      setDashboard({});
+      setRecentOrders([]);
+      setLowStockAlerts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const salesChart = dashboard.salesChart || [];
+  const ordersByStatus = dashboard.ordersByStatus || [];
+
+  const orderColumns: Column<any>[] = [
+    { key: 'id', label: '#', sortable: true, render: (v) => `#${v}` },
+    {
+      key: 'customerName',
+      label: 'Cliente',
+      sortable: true,
+      render: (v, row) => v || row.customer?.name || '-',
+    },
+    {
+      key: 'itemsCount',
+      label: 'Itens',
+      sortable: true,
+      render: (v, row) => v ?? row.items?.length ?? '-',
+    },
+    {
+      key: 'total',
+      label: 'Total',
+      sortable: true,
+      render: (v) => `R$ ${Number(v || 0).toFixed(2)}`,
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value) => (
+        <Badge className={cn('border-0', statusColors[value] || 'bg-gray-100 text-gray-700')}>
+          {value}
+        </Badge>
+      ),
+    },
+    {
+      key: 'createdAt',
+      label: 'Data',
+      sortable: true,
+      render: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '-',
+    },
+    {
+      key: 'acoes',
+      label: 'Ações',
+      render: (_, row) => (
+        <Button variant="ghost" size="sm" onClick={() => router.push(`/admin/pedidos/${row.id}`)}>
+          <Eye className="w-4 h-4" />
+        </Button>
+      ),
+    },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -101,7 +139,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Pedidos Hoje"
-          value="24"
+          value={String(dashboard.ordersToday ?? 0)}
           icon={ShoppingBag}
           trend={{ value: 12, isPositive: true }}
           iconBgColor="bg-blue-50"
@@ -109,7 +147,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Pendentes"
-          value="8"
+          value={String(dashboard.pendingOrders ?? 0)}
           icon={Clock}
           trend={{ value: 5, isPositive: false }}
           iconBgColor="bg-yellow-50"
@@ -117,7 +155,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Faturamento Mês"
-          value="R$ 45.890"
+          value={`R$ ${Number(dashboard.monthlyRevenue ?? 0).toLocaleString('pt-BR')}`}
           icon={DollarSign}
           trend={{ value: 18, isPositive: true }}
           iconBgColor="bg-green-50"
@@ -125,7 +163,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Lucro Mês"
-          value="R$ 12.340"
+          value={`R$ ${Number(dashboard.monthlyProfit ?? 0).toLocaleString('pt-BR')}`}
           icon={TrendingUp}
           trend={{ value: 8, isPositive: true }}
           iconBgColor="bg-purple-50"
@@ -137,17 +175,17 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <AdminLineChart
           title="Vendas - Últimos 30 Dias"
-          data={vendasUltimos30Dias}
-          xKey="dia"
-          lines={[{ key: 'vendas', color: '#16a34a', label: 'Vendas (R$)' }]}
+          data={salesChart}
+          xKey="day"
+          lines={[{ key: 'sales', color: '#16a34a', label: 'Vendas (R$)' }]}
           className="lg:col-span-2"
           height={320}
         />
         <AdminPieChart
           title="Pedidos por Status"
-          data={pedidosPorStatus}
+          data={ordersByStatus}
           nameKey="status"
-          valueKey="quantidade"
+          valueKey="count"
           height={320}
         />
       </div>
@@ -180,17 +218,20 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {lowStockAlerts.map((item) => (
+              {lowStockAlerts.length === 0 && (
+                <p className="text-sm text-gray-500">Nenhum alerta de estoque baixo</p>
+              )}
+              {lowStockAlerts.map((item: any) => (
                 <div
-                  key={item.produto}
+                  key={item.id || item.productName}
                   className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100"
                 >
                   <div>
-                    <p className="font-medium text-sm text-gray-900">{item.produto}</p>
-                    <p className="text-xs text-gray-500">Mínimo: {item.minimo} un</p>
+                    <p className="font-medium text-sm text-gray-900">{item.productName || item.name}</p>
+                    <p className="text-xs text-gray-500">Mínimo: {item.minStock ?? item.minimum ?? 0} un</p>
                   </div>
                   <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
-                    {item.estoque} un
+                    {item.stock ?? item.current ?? 0} un
                   </Badge>
                 </div>
               ))}

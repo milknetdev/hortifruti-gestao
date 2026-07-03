@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,15 +9,79 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Upload, Save, Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function PersonalizacaoPage() {
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    storeName: 'HortiFruti',
+    slogan: 'Frutas e verduras frescas direto do produtor',
+    logo: '',
+    favicon: '',
+    primaryColor: '#16a34a',
+    secondaryColor: '#f97316',
+    accentColor: '#3b82f6',
+    fontFamily: 'Inter',
+    theme: 'light',
+    metaTitle: 'HortiFruti - Frutas e Verduras Frescas',
+    metaDescription: 'Compre frutas, verduras e legumes frescos com entrega rápida.',
+    keywords: 'frutas, verduras, legumes, hortifruti, delivery, orgânicos',
+    googleAnalyticsId: '',
+    facebookPixelId: '',
+    phone: '',
+    whatsapp: '',
+    email: '',
+    instagram: '',
+    address: '',
+    weekdayHours: '07:00 - 20:00',
+    saturdayHours: '07:00 - 18:00',
+    sundayHours: '08:00 - 14:00',
+    footerText: '© 2026 HortiFruti. Todos os direitos reservados.',
+    paymentText: 'Aceitamos PIX, Cartão de Crédito e Débito',
+    footerLinks: '',
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const { data: result } = await api.get('/settings');
+      const data = result?.data || result || {};
+      setSettings((prev) => ({ ...prev, ...data }));
+    } catch {
+      // Use defaults
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSaving(false);
+    try {
+      await api.put('/settings', settings);
+      toast.success('Configurações salvas!');
+    } catch {
+      toast.error('Erro ao salvar configurações');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const updateSetting = (key: string, value: string) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -32,7 +96,6 @@ export default function PersonalizacaoPage() {
           <TabsTrigger value="aparencia">Aparência</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
           <TabsTrigger value="contato">Contato</TabsTrigger>
-          <TabsTrigger value="banners">Banners</TabsTrigger>
           <TabsTrigger value="rodape">Rodapé</TabsTrigger>
         </TabsList>
 
@@ -46,36 +109,26 @@ export default function PersonalizacaoPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Nome da Loja</Label>
-                  <Input defaultValue="HortiFruti" />
+                  <Input
+                    value={settings.storeName}
+                    onChange={(e) => updateSetting('storeName', e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Slogan</Label>
-                  <Input defaultValue="Frutas e verduras frescas direto do produtor" />
+                  <Input
+                    value={settings.slogan}
+                    onChange={(e) => updateSetting('slogan', e.target.value)}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Logo</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 bg-[#16a34a] rounded-xl flex items-center justify-center">
-                    <span className="text-white text-2xl font-bold">HF</span>
-                  </div>
-                  <Button variant="outline">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Alterar Logo
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Favicon</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-8 h-8 bg-[#16a34a] rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">HF</span>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Alterar Favicon
-                  </Button>
-                </div>
+                <Label>Logo URL</Label>
+                <Input
+                  value={settings.logo}
+                  onChange={(e) => updateSetting('logo', e.target.value)}
+                  placeholder="https://..."
+                />
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
@@ -95,28 +148,32 @@ export default function PersonalizacaoPage() {
                 <div className="space-y-2">
                   <Label>Cor Primária</Label>
                   <div className="flex items-center gap-2">
-                    <input type="color" defaultValue="#16a34a" className="w-10 h-10 rounded cursor-pointer" />
-                    <Input defaultValue="#16a34a" className="flex-1" />
+                    <input type="color" value={settings.primaryColor} onChange={(e) => updateSetting('primaryColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                    <Input value={settings.primaryColor} onChange={(e) => updateSetting('primaryColor', e.target.value)} className="flex-1" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Cor Secundária</Label>
                   <div className="flex items-center gap-2">
-                    <input type="color" defaultValue="#f97316" className="w-10 h-10 rounded cursor-pointer" />
-                    <Input defaultValue="#f97316" className="flex-1" />
+                    <input type="color" value={settings.secondaryColor} onChange={(e) => updateSetting('secondaryColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                    <Input value={settings.secondaryColor} onChange={(e) => updateSetting('secondaryColor', e.target.value)} className="flex-1" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Cor de Destaque</Label>
                   <div className="flex items-center gap-2">
-                    <input type="color" defaultValue="#3b82f6" className="w-10 h-10 rounded cursor-pointer" />
-                    <Input defaultValue="#3b82f6" className="flex-1" />
+                    <input type="color" value={settings.accentColor} onChange={(e) => updateSetting('accentColor', e.target.value)} className="w-10 h-10 rounded cursor-pointer" />
+                    <Input value={settings.accentColor} onChange={(e) => updateSetting('accentColor', e.target.value)} className="flex-1" />
                   </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Fonte Principal</Label>
-                <select className="w-full px-3 py-2 border rounded-md text-sm">
+                <select
+                  value={settings.fontFamily}
+                  onChange={(e) => updateSetting('fontFamily', e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                >
                   <option>Inter</option>
                   <option>Roboto</option>
                   <option>Open Sans</option>
@@ -127,18 +184,12 @@ export default function PersonalizacaoPage() {
               <div className="space-y-2">
                 <Label>Tema</Label>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" value="light" defaultChecked />
-                    <span className="text-sm">Claro</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" value="dark" />
-                    <span className="text-sm">Escuro</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="theme" value="auto" />
-                    <span className="text-sm">Automático</span>
-                  </label>
+                  {['light', 'dark', 'auto'].map((t) => (
+                    <label key={t} className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="theme" value={t} checked={settings.theme === t} onChange={(e) => updateSetting('theme', e.target.value)} />
+                      <span className="text-sm">{t === 'light' ? 'Claro' : t === 'dark' ? 'Escuro' : 'Automático'}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
@@ -157,24 +208,42 @@ export default function PersonalizacaoPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Meta Title</Label>
-                <Input defaultValue="HortiFruti - Frutas e Verduras Frescas" />
+                <Input
+                  value={settings.metaTitle}
+                  onChange={(e) => updateSetting('metaTitle', e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Meta Description</Label>
-                <Textarea defaultValue="Compre frutas, verduras e legumes frescos com entrega rápida. HortiFruti - qualidade e frescor direto do produtor." rows={3} />
+                <Textarea
+                  value={settings.metaDescription}
+                  onChange={(e) => updateSetting('metaDescription', e.target.value)}
+                  rows={3}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Palavras-chave</Label>
-                <Input defaultValue="frutas, verduras, legumes, hortifruti, delivery, orgânicos" />
+                <Input
+                  value={settings.keywords}
+                  onChange={(e) => updateSetting('keywords', e.target.value)}
+                />
               </div>
               <Separator />
               <div className="space-y-2">
                 <Label>Google Analytics ID</Label>
-                <Input placeholder="G-XXXXXXXXXX" />
+                <Input
+                  value={settings.googleAnalyticsId}
+                  onChange={(e) => updateSetting('googleAnalyticsId', e.target.value)}
+                  placeholder="G-XXXXXXXXXX"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Facebook Pixel ID</Label>
-                <Input placeholder="123456789012345" />
+                <Input
+                  value={settings.facebookPixelId}
+                  onChange={(e) => updateSetting('facebookPixelId', e.target.value)}
+                  placeholder="123456789012345"
+                />
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
@@ -193,59 +262,44 @@ export default function PersonalizacaoPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Telefone</Label>
-                  <Input defaultValue="(11) 3456-7890" />
+                  <Input value={settings.phone} onChange={(e) => updateSetting('phone', e.target.value)} placeholder="(11) 3456-7890" />
                 </div>
                 <div className="space-y-2">
                   <Label>WhatsApp</Label>
-                  <Input defaultValue="(11) 99999-8888" />
+                  <Input value={settings.whatsapp} onChange={(e) => updateSetting('whatsapp', e.target.value)} placeholder="(11) 99999-8888" />
                 </div>
                 <div className="space-y-2">
                   <Label>E-mail</Label>
-                  <Input defaultValue="contato@hortifruti.com" />
+                  <Input value={settings.email} onChange={(e) => updateSetting('email', e.target.value)} placeholder="contato@hortifruti.com" />
                 </div>
                 <div className="space-y-2">
                   <Label>Instagram</Label>
-                  <Input defaultValue="@hortifruti" />
+                  <Input value={settings.instagram} onChange={(e) => updateSetting('instagram', e.target.value)} placeholder="@hortifruti" />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Endereço</Label>
-                <Textarea defaultValue="Rua das Flores, 123 - Centro, São Paulo - SP, 01234-567" rows={2} />
+                <Textarea value={settings.address} onChange={(e) => updateSetting('address', e.target.value)} rows={2} />
               </div>
               <div className="space-y-2">
                 <Label>Horário de Funcionamento</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <span className="text-sm w-20">Seg-Sex:</span>
-                    <Input defaultValue="07:00 - 20:00" />
+                    <Input value={settings.weekdayHours} onChange={(e) => updateSetting('weekdayHours', e.target.value)} />
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm w-20">Sábado:</span>
-                    <Input defaultValue="07:00 - 18:00" />
+                    <Input value={settings.saturdayHours} onChange={(e) => updateSetting('saturdayHours', e.target.value)} />
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm w-20">Domingo:</span>
-                    <Input defaultValue="08:00 - 14:00" />
+                    <Input value={settings.sundayHours} onChange={(e) => updateSetting('sundayHours', e.target.value)} />
                   </div>
                 </div>
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Banners */}
-        <TabsContent value="banners" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Configurações de Banners</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-500">Gerencie os banners da loja na página dedicada.</p>
-              <Button variant="outline" onClick={() => window.location.href = '/banners'}>
-                Ir para Banners
               </Button>
             </CardContent>
           </Card>
@@ -260,18 +314,11 @@ export default function PersonalizacaoPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Texto do Rodapé</Label>
-                <Textarea defaultValue="© 2026 HortiFruti. Todos os direitos reservados." rows={2} />
+                <Textarea value={settings.footerText} onChange={(e) => updateSetting('footerText', e.target.value)} rows={2} />
               </div>
               <div className="space-y-2">
                 <Label>Texto de Pagamento</Label>
-                <Input defaultValue="Aceitamos PIX, Cartão de Crédito e Débito" />
-              </div>
-              <div className="space-y-2">
-                <Label>Links Adicionais</Label>
-                <div className="space-y-2">
-                  <Input defaultValue="Termos de Uso" placeholder="Nome do link" />
-                  <Input defaultValue="/termos" placeholder="URL" />
-                </div>
+                <Input value={settings.paymentText} onChange={(e) => updateSetting('paymentText', e.target.value)} />
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}

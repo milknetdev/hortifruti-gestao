@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,44 +13,119 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Eye, EyeOff, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const banners = [
-  { id: 1, titulo: 'Promoção de Verão', imagem: '🏖️', link: '/promocoes/verao', dataInicio: '01/06/2026', dataFim: '31/08/2026', status: true, posicao: 'Home - Topo' },
-  { id: 2, titulo: 'Frutas Orgânicas', imagem: '🌿', link: '/categorias/organicos', dataInicio: '15/05/2026', dataFim: '15/07/2026', status: true, posicao: 'Home - Meio' },
-  { id: 3, titulo: 'Frete Grátis', imagem: '🚚', link: '/info/frete-gratis', dataInicio: '01/06/2026', dataFim: '30/06/2026', status: false, posicao: 'Home - Topo' },
-  { id: 4, titulo: 'Semana do Cliente', imagem: '🎉', link: '/promocoes/cliente', dataInicio: '01/07/2026', dataFim: '07/07/2026', status: true, posicao: 'Home - Banner' },
-  { id: 5, titulo: 'Hortaliças Frescas', imagem: '🥬', link: '/categorias/hortalicas', dataInicio: '10/06/2026', dataFim: '10/07/2026', status: true, posicao: 'Sidebar' },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 export default function BannersPage() {
+  const [banners, setBanners] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
     link: '',
     dataInicio: '',
     dataFim: '',
     posicao: '',
+    imagem: '',
   });
+
+  useEffect(() => {
+    fetchBanners();
+  }, []);
+
+  const fetchBanners = async () => {
+    try {
+      const { data: result } = await api.get('/banners?limit=100');
+      setBanners(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setBanners([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenDialog = (banner?: any) => {
     if (banner) {
       setEditingBanner(banner);
       setFormData({
-        titulo: banner.titulo,
-        link: banner.link,
-        dataInicio: '',
-        dataFim: '',
-        posicao: banner.posicao,
+        titulo: banner.title || banner.titulo || '',
+        link: banner.link || '',
+        dataInicio: banner.startDate || banner.dataInicio || '',
+        dataFim: banner.endDate || banner.dataFim || '',
+        posicao: banner.position || banner.posicao || '',
+        imagem: banner.image || banner.imagem || '',
       });
     } else {
       setEditingBanner(null);
-      setFormData({ titulo: '', link: '', dataInicio: '', dataFim: '', posicao: '' });
+      setFormData({ titulo: '', link: '', dataInicio: '', dataFim: '', posicao: '', imagem: '' });
     }
     setDialogOpen(true);
   };
+
+  const handleSave = async () => {
+    if (!formData.titulo.trim()) {
+      toast.error('Título é obrigatório');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        title: formData.titulo,
+        link: formData.link,
+        startDate: formData.dataInicio,
+        endDate: formData.dataFim,
+        position: formData.posicao,
+        image: formData.imagem,
+      };
+      if (editingBanner) {
+        await api.put(`/banners/${editingBanner.id}`, payload);
+        toast.success('Banner atualizado!');
+      } else {
+        await api.post('/banners', payload);
+        toast.success('Banner criado!');
+      }
+      setDialogOpen(false);
+      fetchBanners();
+    } catch {
+      toast.error('Erro ao salvar banner');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este banner?')) return;
+    try {
+      await api.delete(`/banners/${id}`);
+      toast.success('Banner removido!');
+      fetchBanners();
+    } catch {
+      toast.error('Erro ao remover banner');
+    }
+  };
+
+  const handleToggleStatus = async (banner: any) => {
+    try {
+      const isActive = banner.status ?? banner.active ?? true;
+      await api.put(`/banners/${banner.id}`, { active: !isActive });
+      toast.success('Status atualizado!');
+      fetchBanners();
+    } catch {
+      toast.error('Erro ao atualizar status');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -66,45 +141,60 @@ export default function BannersPage() {
       </div>
 
       {/* Banner Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {banners.map((banner) => (
-          <Card key={banner.id} className="overflow-hidden">
-            {/* Preview */}
-            <div className="h-40 bg-gradient-to-r from-[#16a34a] to-[#22c55e] flex items-center justify-center">
-              <span className="text-6xl">{banner.imagem}</span>
-            </div>
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{banner.titulo}</h3>
-                  <p className="text-sm text-gray-500">{banner.posicao}</p>
+      {banners.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-gray-500">Nenhum banner cadastrado</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {banners.map((banner) => {
+            const isActive = banner.status ?? banner.active ?? true;
+            return (
+              <Card key={banner.id} className="overflow-hidden">
+                {/* Preview */}
+                <div className="h-40 bg-gradient-to-r from-[#16a34a] to-[#22c55e] flex items-center justify-center">
+                  {(banner.image || banner.imagem) ? (
+                    <img src={banner.image || banner.imagem} alt={banner.title || banner.titulo} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-6xl">🖼️</span>
+                  )}
                 </div>
-                <Switch checked={banner.status} />
-              </div>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span>{banner.dataInicio}</span>
-                <span>→</span>
-                <span>{banner.dataFim}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Badge className={cn('border-0', banner.status ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700')}>
-                  {banner.status ? 'Ativo' : 'Inativo'}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2 pt-2 border-t">
-                <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(banner)}>
-                  <Pencil className="w-4 h-4 mr-1" />
-                  Editar
-                </Button>
-                <Button variant="ghost" size="sm" className="text-red-600">
-                  <Trash2 className="w-4 h-4 mr-1" />
-                  Excluir
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{banner.title || banner.titulo}</h3>
+                      <p className="text-sm text-gray-500">{banner.position || banner.posicao}</p>
+                    </div>
+                    <Switch checked={isActive} onCheckedChange={() => handleToggleStatus(banner)} />
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span>{banner.startDate || banner.dataInicio || '-'}</span>
+                    <span>→</span>
+                    <span>{banner.endDate || banner.dataFim || '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Badge className={cn('border-0', isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700')}>
+                      {isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 pt-2 border-t">
+                    <Button variant="ghost" size="sm" onClick={() => handleOpenDialog(banner)}>
+                      <Pencil className="w-4 h-4 mr-1" />
+                      Editar
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-red-600" onClick={() => handleDelete(banner.id)}>
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Excluir
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -122,12 +212,12 @@ export default function BannersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Imagem</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                <p className="text-sm text-gray-500">Clique para fazer upload</p>
-                <p className="text-xs text-gray-400">PNG, JPG até 2MB</p>
-              </div>
+              <Label>URL da Imagem</Label>
+              <Input
+                value={formData.imagem}
+                onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
+                placeholder="https://..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Link</Label>
@@ -172,7 +262,10 @@ export default function BannersPage() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>

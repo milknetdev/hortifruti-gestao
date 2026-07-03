@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,60 +22,93 @@ import {
   Clock,
   CheckCircle2,
   Truck,
-  CreditCard as CreditCardIcon,
   PackageCheck,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
-const orderData = {
-  id: '#1234',
-  status: 'Pago',
-  data: '28/06/2026 às 14:30',
-  cliente: {
-    nome: 'Maria Silva',
-    email: 'maria@email.com',
-    telefone: '(11) 99999-8888',
-    cpf: '123.456.789-00',
-  },
-  itens: [
-    { nome: 'Tomate Italiano (kg)', quantidade: 2, preco: 'R$ 8,90', subtotal: 'R$ 17,80' },
-    { nome: 'Banana Prata (kg)', quantidade: 1.5, preco: 'R$ 6,50', subtotal: 'R$ 9,75' },
-    { nome: 'Maçã Fuji (kg)', quantidade: 1, preco: 'R$ 12,90', subtotal: 'R$ 12,90' },
-    { nome: 'Alface Americana (un)', quantidade: 2, preco: 'R$ 4,50', subtotal: 'R$ 9,00' },
-    { nome: 'Cenoura (kg)', quantidade: 0.8, preco: 'R$ 5,90', subtotal: 'R$ 4,72' },
-  ],
-  endereco: {
-    rua: 'Rua das Flores, 123',
-    bairro: 'Centro',
-    cidade: 'São Paulo',
-    cep: '01234-567',
-    complemento: 'Apto 42',
-  },
-  pagamento: {
-    metodo: 'Cartão de Crédito',
-    bandeira: 'Visa',
-    final: '4321',
-    parcelas: 3,
-    total: 'R$ 127,50',
-    frete: 'R$ 8,00',
-    desconto: 'R$ 0,00',
-  },
-  timeline: [
-    { status: 'Pedido Realizado', data: '28/06/2026 14:30', icon: Package, done: true },
-    { status: 'Pagamento Confirmado', data: '28/06/2026 14:32', icon: CreditCardIcon, done: true },
-    { status: 'Separando Pedido', data: '', icon: Clock, done: false },
-    { status: 'Saiu para Entrega', data: '', icon: Truck, done: false },
-    { status: 'Entregue', data: '', icon: CheckCircle2, done: false },
-  ],
+const statusOptions = ['Pendente', 'Pago', 'Separando', 'Saiu para Entrega', 'Entregue', 'Cancelado',
+  'pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+const statusColors: Record<string, string> = {
+  'Pendente': 'bg-yellow-100 text-yellow-700',
+  'Pago': 'bg-blue-100 text-blue-700',
+  'Separando': 'bg-purple-100 text-purple-700',
+  'Entregue': 'bg-green-100 text-green-700',
+  'Cancelado': 'bg-red-100 text-red-700',
+  'pending': 'bg-yellow-100 text-yellow-700',
+  'paid': 'bg-blue-100 text-blue-700',
+  'processing': 'bg-purple-100 text-purple-700',
+  'shipped': 'bg-purple-100 text-purple-700',
+  'delivered': 'bg-green-100 text-green-700',
+  'cancelled': 'bg-red-100 text-red-700',
 };
 
-const statusOptions = ['Pendente', 'Pago', 'Separando', 'Saiu para Entrega', 'Entregue', 'Cancelado'];
+const timelineIcons = [Package, CreditCard, Clock, Truck, CheckCircle2];
 
 export default function PedidoDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const [currentStatus, setCurrentStatus] = useState(orderData.status);
+  const [order, setOrder] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState('');
   const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchOrder();
+  }, [params.id]);
+
+  const fetchOrder = async () => {
+    try {
+      const { data: result } = await api.get(`/orders/${params.id}`);
+      const orderData = result?.data || result;
+      setOrder(orderData);
+      setCurrentStatus(orderData.status || '');
+    } catch {
+      toast.error('Erro ao carregar pedido');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!currentStatus) return;
+    setSaving(true);
+    try {
+      await api.patch(`/orders/${params.id}/status`, { status: currentStatus });
+      toast.success('Status atualizado!');
+      fetchOrder();
+    } catch {
+      toast.error('Erro ao atualizar status');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">Pedido não encontrado</p>
+        <Button variant="outline" className="mt-4" onClick={() => router.back()}>Voltar</Button>
+      </div>
+    );
+  }
+
+  const items = order.items || order.orderItems || [];
+  const customer = order.customer || order.customerInfo || {};
+  const address = order.address || order.shippingAddress || {};
+  const payment = order.payment || order.paymentInfo || {};
 
   return (
     <div className="space-y-6">
@@ -85,56 +118,22 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pedido {orderData.id}</h1>
-          <p className="text-gray-500">{orderData.data}</p>
+          <h1 className="text-2xl font-bold text-gray-900">Pedido #{order.id}</h1>
+          <p className="text-gray-500">
+            {order.createdAt ? new Date(order.createdAt).toLocaleString('pt-BR') : '-'}
+          </p>
         </div>
-        <Badge className="ml-auto bg-blue-100 text-blue-700 border-0 text-sm">
+        <Badge className={cn('ml-auto border-0 text-sm', statusColors[currentStatus] || 'bg-gray-100 text-gray-700')}>
           {currentStatus}
         </Badge>
       </div>
 
-      {/* Status Timeline */}
+      {/* Status Update */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Status do Pedido</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between mb-6 overflow-x-auto pb-2">
-            {orderData.timeline.map((step, i) => {
-              const Icon = step.icon;
-              return (
-                <div key={i} className="flex items-center">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className={cn(
-                        'w-10 h-10 rounded-full flex items-center justify-center',
-                        step.done
-                          ? 'bg-[#16a34a] text-white'
-                          : 'bg-gray-100 text-gray-400'
-                      )}
-                    >
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <p className={cn('text-xs mt-2 text-center max-w-[100px]', step.done ? 'text-gray-900' : 'text-gray-400')}>
-                      {step.status}
-                    </p>
-                    {step.data && <p className="text-xs text-gray-500">{step.data}</p>}
-                  </div>
-                  {i < orderData.timeline.length - 1 && (
-                    <div
-                      className={cn(
-                        'h-0.5 w-16 mx-2 mt-[-20px]',
-                        step.done ? 'bg-[#16a34a]' : 'bg-gray-200'
-                      )}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <Separator className="my-4" />
-
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Atualizar Status:</span>
             <Select value={currentStatus} onValueChange={setCurrentStatus}>
@@ -147,7 +146,10 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
                 ))}
               </SelectContent>
             </Select>
-            <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+            <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleUpdateStatus} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              Salvar
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -169,12 +171,14 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
                 </tr>
               </thead>
               <tbody>
-                {orderData.itens.map((item, i) => (
+                {items.map((item: any, i: number) => (
                   <tr key={i} className="border-b last:border-0">
-                    <td className="py-3 text-sm text-gray-900">{item.nome}</td>
-                    <td className="py-3 text-sm text-gray-600 text-center">{item.quantidade}</td>
-                    <td className="py-3 text-sm text-gray-600 text-right">{item.preco}</td>
-                    <td className="py-3 text-sm font-medium text-gray-900 text-right">{item.subtotal}</td>
+                    <td className="py-3 text-sm text-gray-900">{item.productName || item.name || item.product?.name}</td>
+                    <td className="py-3 text-sm text-gray-600 text-center">{item.quantity}</td>
+                    <td className="py-3 text-sm text-gray-600 text-right">R$ {Number(item.price || item.unitPrice || 0).toFixed(2)}</td>
+                    <td className="py-3 text-sm font-medium text-gray-900 text-right">
+                      R$ {Number(item.subtotal || item.total || (item.quantity * (item.price || item.unitPrice || 0))).toFixed(2)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -185,20 +189,20 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
             <div className="space-y-2 text-right">
               <div className="flex justify-end gap-8">
                 <span className="text-sm text-gray-500">Subtotal:</span>
-                <span className="text-sm font-medium">R$ 54,17</span>
+                <span className="text-sm font-medium">R$ {Number(order.subtotal || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-end gap-8">
                 <span className="text-sm text-gray-500">Frete:</span>
-                <span className="text-sm font-medium">{orderData.pagamento.frete}</span>
+                <span className="text-sm font-medium">R$ {Number(order.shipping || order.freight || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-end gap-8">
                 <span className="text-sm text-gray-500">Desconto:</span>
-                <span className="text-sm font-medium text-green-600">{orderData.pagamento.desconto}</span>
+                <span className="text-sm font-medium text-green-600">R$ {Number(order.discount || 0).toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex justify-end gap-8">
                 <span className="text-base font-bold text-gray-900">Total:</span>
-                <span className="text-base font-bold text-[#16a34a]">{orderData.pagamento.total}</span>
+                <span className="text-base font-bold text-[#16a34a]">R$ {Number(order.total || 0).toFixed(2)}</span>
               </div>
             </div>
           </CardContent>
@@ -212,28 +216,30 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
               <CardTitle className="text-base">Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <p className="font-medium text-gray-900">{orderData.cliente.nome}</p>
-              <p className="text-sm text-gray-500">{orderData.cliente.email}</p>
-              <p className="text-sm text-gray-500">{orderData.cliente.telefone}</p>
-              <p className="text-sm text-gray-500">CPF: {orderData.cliente.cpf}</p>
+              <p className="font-medium text-gray-900">{customer.name || order.customerName || '-'}</p>
+              <p className="text-sm text-gray-500">{customer.email || '-'}</p>
+              <p className="text-sm text-gray-500">{customer.phone || '-'}</p>
+              {customer.cpf && <p className="text-sm text-gray-500">CPF: {customer.cpf}</p>}
             </CardContent>
           </Card>
 
           {/* Address */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-gray-500" />
-                <CardTitle className="text-base">Endereço de Entrega</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-700">{orderData.endereco.rua}</p>
-              <p className="text-sm text-gray-500">{orderData.endereco.complemento}</p>
-              <p className="text-sm text-gray-500">{orderData.endereco.bairro} - {orderData.endereco.cidade}</p>
-              <p className="text-sm text-gray-500">CEP: {orderData.endereco.cep}</p>
-            </CardContent>
-          </Card>
+          {address && (address.street || address.rua) && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <CardTitle className="text-base">Endereço de Entrega</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700">{address.street || address.rua} {address.number || ''}</p>
+                {address.complement && <p className="text-sm text-gray-500">{address.complement}</p>}
+                <p className="text-sm text-gray-500">{address.neighborhood || address.bairro} - {address.city || address.cidade}</p>
+                <p className="text-sm text-gray-500">CEP: {address.zipCode || address.cep}</p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Payment */}
           <Card>
@@ -244,11 +250,9 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
               </div>
             </CardHeader>
             <CardContent className="space-y-1">
-              <p className="text-sm text-gray-700">{orderData.pagamento.metodo}</p>
-              <p className="text-sm text-gray-500">
-                {orderData.pagamento.bandeira} •••• {orderData.pagamento.final}
-              </p>
-              <p className="text-sm text-gray-500">{orderData.pagamento.parcelas}x sem juros</p>
+              <p className="text-sm text-gray-700">{payment.method || payment.paymentMethod || order.paymentMethod || '-'}</p>
+              {payment.brand && <p className="text-sm text-gray-500">{payment.brand} •••• {payment.lastDigits}</p>}
+              {payment.installments && <p className="text-sm text-gray-500">{payment.installments}x sem juros</p>}
             </CardContent>
           </Card>
 

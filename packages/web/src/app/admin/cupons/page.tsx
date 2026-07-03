@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,92 +20,171 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Pencil, Trash2, Copy } from 'lucide-react';
+import { Plus, Pencil, Trash2, Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const coupons = [
-  { id: 1, codigo: 'BEMVINDO10', tipo: 'Percentual', valor: '10%', uso: '45/100', validade: '31/07/2026', status: 'Ativo' },
-  { id: 2, codigo: 'FRETEGRATIS', tipo: 'Frete Grátis', valor: 'R$ 0,00', uso: '120/200', validade: '30/06/2026', status: 'Expirado' },
-  { id: 3, codigo: 'VERAO20', tipo: 'Percentual', valor: '20%', uso: '30/50', validade: '31/08/2026', status: 'Ativo' },
-  { id: 4, codigo: 'R$15OFF', tipo: 'Valor Fixo', valor: 'R$ 15,00', uso: '8/100', validade: '31/12/2026', status: 'Ativo' },
-  { id: 5, codigo: 'FRUTAS25', tipo: 'Percentual', valor: '25%', uso: '50/50', validade: '15/07/2026', status: 'Esgotado' },
-  { id: 6, codigo: 'HORTA5', tipo: 'Valor Fixo', valor: 'R$ 5,00', uso: '10/500', validade: '31/12/2026', status: 'Ativo' },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const typeColors: Record<string, string> = {
   'Percentual': 'bg-blue-100 text-blue-700',
   'Valor Fixo': 'bg-purple-100 text-purple-700',
   'Frete Grátis': 'bg-green-100 text-green-700',
+  'percentage': 'bg-blue-100 text-blue-700',
+  'fixed': 'bg-purple-100 text-purple-700',
+  'free_shipping': 'bg-green-100 text-green-700',
 };
 
 const statusColors: Record<string, string> = {
   'Ativo': 'bg-green-100 text-green-700',
   'Expirado': 'bg-gray-100 text-gray-700',
   'Esgotado': 'bg-yellow-100 text-yellow-700',
+  'active': 'bg-green-100 text-green-700',
+  'expired': 'bg-gray-100 text-gray-700',
+  'exhausted': 'bg-yellow-100 text-yellow-700',
 };
 
 export default function CuponsPage() {
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     codigo: '',
-    tipo: 'percentual',
+    tipo: 'percentage',
     valor: '',
     limiteUso: '',
     validade: '',
     valorMinimo: '',
   });
 
+  useEffect(() => {
+    fetchCoupons();
+  }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      const { data: result } = await api.get('/coupons?limit=100');
+      setCoupons(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setCoupons([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOpenDialog = (coupon?: any) => {
     if (coupon) {
       setEditingCoupon(coupon);
       setFormData({
-        codigo: coupon.codigo,
-        tipo: coupon.tipo.toLowerCase().replace(' ', '_'),
-        valor: coupon.valor,
-        limiteUso: coupon.uso.split('/')[1],
-        validade: '',
-        valorMinimo: '',
+        codigo: coupon.code || coupon.codigo || '',
+        tipo: coupon.type || coupon.tipo || 'percentage',
+        valor: String(coupon.value || coupon.valor || ''),
+        limiteUso: String(coupon.usageLimit || coupon.limiteUso || ''),
+        validade: coupon.expiresAt || coupon.validade || '',
+        valorMinimo: String(coupon.minimumOrder || coupon.valorMinimo || ''),
       });
     } else {
       setEditingCoupon(null);
-      setFormData({ codigo: '', tipo: 'percentual', valor: '', limiteUso: '', validade: '', valorMinimo: '' });
+      setFormData({ codigo: '', tipo: 'percentage', valor: '', limiteUso: '', validade: '', valorMinimo: '' });
     }
     setDialogOpen(true);
   };
 
+  const handleSave = async () => {
+    if (!formData.codigo.trim()) {
+      toast.error('Código é obrigatório');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        code: formData.codigo.toUpperCase(),
+        type: formData.tipo,
+        value: parseFloat(formData.valor) || 0,
+        usageLimit: parseInt(formData.limiteUso) || 0,
+        expiresAt: formData.validade,
+        minimumOrder: parseFloat(formData.valorMinimo) || 0,
+      };
+      if (editingCoupon) {
+        await api.put(`/coupons/${editingCoupon.id}`, payload);
+        toast.success('Cupom atualizado!');
+      } else {
+        await api.post('/coupons', payload);
+        toast.success('Cupom criado!');
+      }
+      setDialogOpen(false);
+      fetchCoupons();
+    } catch {
+      toast.error('Erro ao salvar cupom');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este cupom?')) return;
+    try {
+      await api.delete(`/coupons/${id}`);
+      toast.success('Cupom removido!');
+      fetchCoupons();
+    } catch {
+      toast.error('Erro ao remover cupom');
+    }
+  };
+
   const columns: Column<any>[] = [
     {
-      key: 'codigo',
+      key: 'code',
       label: 'Código',
       sortable: true,
-      render: (value) => (
+      render: (value, row) => (
         <div className="flex items-center gap-2">
-          <code className="px-2 py-1 bg-gray-100 rounded text-sm font-mono font-medium">{value}</code>
-          <button className="text-gray-400 hover:text-gray-600">
-            <Copy className="w-3 h-3" />
-          </button>
+          <code className="px-2 py-1 bg-gray-100 rounded text-sm font-mono font-medium">{value || row.codigo}</code>
         </div>
       ),
     },
     {
-      key: 'tipo',
+      key: 'type',
       label: 'Tipo',
-      render: (value) => (
-        <Badge className={cn('border-0', typeColors[value])}>{value}</Badge>
-      ),
+      render: (value, row) => {
+        const v = value || row.tipo;
+        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{v}</Badge>;
+      },
     },
-    { key: 'valor', label: 'Valor' },
-    { key: 'uso', label: 'Uso' },
-    { key: 'validade', label: 'Validade' },
     {
-      key: 'status',
+      key: 'value',
+      label: 'Valor',
+      render: (v, row) => {
+        const val = v ?? row.valor;
+        const type = row.type || row.tipo;
+        if (type === 'percentage' || type === 'Percentual') return `${val}%`;
+        if (type === 'free_shipping' || type === 'Frete Grátis') return 'R$ 0,00';
+        return `R$ ${Number(val || 0).toFixed(2)}`;
+      },
+    },
+    {
+      key: 'usage',
+      label: 'Uso',
+      render: (v, row) => `${row.currentUsage || v || 0}/${row.usageLimit || row.limiteUso || '∞'}`,
+    },
+    {
+      key: 'expiresAt',
+      label: 'Validade',
+      render: (v, row) => v || row.validade || '-',
+    },
+    {
+      key: 'active',
       label: 'Status',
-      render: (value) => (
-        <Badge className={cn('border-0', statusColors[value])}>{value}</Badge>
-      ),
+      render: (value, row) => {
+        const isActive = value !== undefined ? value : row.status === 'Ativo';
+        return (
+          <Badge className={cn('border-0', isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700')}>
+            {isActive ? 'Ativo' : 'Inativo'}
+          </Badge>
+        );
+      },
     },
     {
       key: 'acoes',
@@ -115,13 +194,21 @@ export default function CuponsPage() {
           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(row); }}>
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -144,8 +231,8 @@ export default function CuponsPage() {
             searchable
             searchPlaceholder="Pesquisar por código..."
             page={page}
-            totalPages={2}
-            totalItems={coupons.length * 2}
+            totalPages={Math.ceil(coupons.length / 15) || 1}
+            totalItems={coupons.length}
             onPageChange={setPage}
           />
         </CardContent>
@@ -173,19 +260,19 @@ export default function CuponsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentual">Percentual</SelectItem>
-                  <SelectItem value="valor_fixo">Valor Fixo</SelectItem>
-                  <SelectItem value="frete_gratis">Frete Grátis</SelectItem>
+                  <SelectItem value="percentage">Percentual</SelectItem>
+                  <SelectItem value="fixed">Valor Fixo</SelectItem>
+                  <SelectItem value="free_shipping">Frete Grátis</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {formData.tipo !== 'frete_gratis' && (
+            {formData.tipo !== 'free_shipping' && (
               <div className="space-y-2">
                 <Label>Valor</Label>
                 <Input
                   value={formData.valor}
                   onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                  placeholder={formData.tipo === 'percentual' ? '10' : '15.00'}
+                  placeholder={formData.tipo === 'percentage' ? '10' : '15.00'}
                 />
               </div>
             )}
@@ -220,7 +307,10 @@ export default function CuponsPage() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { AdminLineChart, AdminBarChart, AdminPieChart } from '@/components/admin/charts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Download, FileText, Table } from 'lucide-react';
+import { Download, FileText, Table, Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const reportTypes = [
   { value: 'vendas', label: 'Vendas' },
@@ -24,50 +25,87 @@ const reportTypes = [
   { value: 'financeiro', label: 'Financeiro' },
 ];
 
-// Mock data for charts
-const vendasData = Array.from({ length: 12 }, (_, i) => ({
-  mes: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][i],
-  vendas: Math.floor(Math.random() * 50000) + 20000,
-  pedidos: Math.floor(Math.random() * 300) + 100,
-}));
-
-const produtosMaisVendidos = [
-  { produto: 'Banana Prata', vendas: 234 },
-  { produto: 'Tomate Italiano', vendas: 198 },
-  { produto: 'Maçã Fuji', vendas: 167 },
-  { produto: 'Cenoura', vendas: 145 },
-  { produto: 'Alface', vendas: 123 },
-];
-
-const pedidosPorCategoria = [
-  { categoria: 'Frutas', quantidade: 450 },
-  { categoria: 'Hortaliças', quantidade: 320 },
-  { categoria: 'Legumes', quantidade: 280 },
-  { categoria: 'Orgânicos', quantidade: 150 },
-  { categoria: 'Temperos', quantidade: 90 },
-];
-
-const reportData = [
-  { periodo: '01/06/2026', vendas: 'R$ 1.250,00', pedidos: 15, ticket: 'R$ 83,33', cancelados: 1 },
-  { periodo: '02/06/2026', vendas: 'R$ 980,00', pedidos: 12, ticket: 'R$ 81,67', cancelados: 0 },
-  { periodo: '03/06/2026', vendas: 'R$ 1.450,00', pedidos: 18, ticket: 'R$ 80,56', cancelados: 2 },
-  { periodo: '04/06/2026', vendas: 'R$ 1.100,00', pedidos: 14, ticket: 'R$ 78,57', cancelados: 0 },
-  { periodo: '05/06/2026', vendas: 'R$ 1.670,00', pedidos: 20, ticket: 'R$ 83,50', cancelados: 1 },
-];
-
 export default function RelatoriosPage() {
+  const [loading, setLoading] = useState(true);
   const [reportType, setReportType] = useState('vendas');
   const [dateFrom, setDateFrom] = useState('2026-06-01');
   const [dateTo, setDateTo] = useState('2026-06-28');
   const [page, setPage] = useState(1);
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any>({});
+  const [summary, setSummary] = useState({ totalSales: 0, totalOrders: 0, avgTicket: 0, cancelled: 0 });
+
+  useEffect(() => {
+    fetchReportData();
+  }, []);
+
+  const fetchReportData = async () => {
+    try {
+      const { data: result } = await api.get('/dashboard');
+      const data = result?.data || result || {};
+
+      setChartData({
+        salesChart: Array.isArray(data.salesChart) ? data.salesChart : [],
+        topProducts: Array.isArray(data.topProducts) ? data.topProducts : [],
+        ordersByCategory: Array.isArray(data.ordersByCategory) ? data.ordersByCategory : [],
+      });
+
+      setSummary({
+        totalSales: data.monthlyRevenue || 0,
+        totalOrders: data.totalOrders || 0,
+        avgTicket: data.avgTicket || 0,
+        cancelled: data.cancelledOrders || 0,
+      });
+
+      // Use recent orders as report data if available
+      const dailyReport = Array.isArray(data.dailyReport) ? data.dailyReport : [];
+      setReportData(dailyReport);
+    } catch {
+      setChartData({});
+      setReportData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: Column<any>[] = [
-    { key: 'periodo', label: 'Período', sortable: true },
-    { key: 'vendas', label: 'Vendas', sortable: true },
-    { key: 'pedidos', label: 'Pedidos', sortable: true },
-    { key: 'ticket', label: 'Ticket Médio' },
-    { key: 'cancelados', label: 'Cancelados' },
+    {
+      key: 'period',
+      label: 'Período',
+      sortable: true,
+      render: (v, row) => v || row.periodo || '-',
+    },
+    {
+      key: 'sales',
+      label: 'Vendas',
+      sortable: true,
+      render: (v, row) => `R$ ${Number(v || row.vendas || 0).toFixed(2)}`,
+    },
+    {
+      key: 'orders',
+      label: 'Pedidos',
+      sortable: true,
+      render: (v, row) => v ?? row.pedidos ?? '-',
+    },
+    {
+      key: 'avgTicket',
+      label: 'Ticket Médio',
+      render: (v, row) => `R$ ${Number(v || row.ticket || 0).toFixed(2)}`,
+    },
+    {
+      key: 'cancelled',
+      label: 'Cancelados',
+      render: (v, row) => v ?? row.cancelados ?? 0,
+    },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -111,7 +149,7 @@ export default function RelatoriosPage() {
                 className="w-[160px]"
               />
             </div>
-            <Button className="bg-[#16a34a] hover:bg-[#15803d]">Gerar Relatório</Button>
+            <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={fetchReportData}>Gerar Relatório</Button>
             <div className="ml-auto flex gap-2">
               <Button variant="outline">
                 <FileText className="w-4 h-4 mr-2" />
@@ -130,18 +168,18 @@ export default function RelatoriosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AdminLineChart
           title="Vendas Mensais"
-          data={vendasData}
-          xKey="mes"
+          data={chartData.salesChart || []}
+          xKey="month"
           lines={[
-            { key: 'vendas', color: '#16a34a', label: 'Vendas (R$)' },
+            { key: 'sales', color: '#16a34a', label: 'Vendas (R$)' },
           ]}
           height={300}
         />
         <AdminBarChart
           title="Produtos Mais Vendidos"
-          data={produtosMaisVendidos}
-          xKey="produto"
-          yKey="vendas"
+          data={chartData.topProducts || []}
+          xKey="name"
+          yKey="sales"
           color="#f97316"
           height={300}
         />
@@ -150,9 +188,9 @@ export default function RelatoriosPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <AdminPieChart
           title="Pedidos por Categoria"
-          data={pedidosPorCategoria}
-          nameKey="categoria"
-          valueKey="quantidade"
+          data={chartData.ordersByCategory || []}
+          nameKey="category"
+          valueKey="count"
           height={280}
         />
         <Card className="lg:col-span-2">
@@ -163,19 +201,19 @@ export default function RelatoriosPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Total Vendas</p>
-                <p className="text-xl font-bold text-[#16a34a]">R$ 45.890</p>
+                <p className="text-xl font-bold text-[#16a34a]">R$ {Number(summary.totalSales).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Total Pedidos</p>
-                <p className="text-xl font-bold text-gray-900">560</p>
+                <p className="text-xl font-bold text-gray-900">{summary.totalOrders}</p>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Ticket Médio</p>
-                <p className="text-xl font-bold text-gray-900">R$ 81,95</p>
+                <p className="text-xl font-bold text-gray-900">R$ {Number(summary.avgTicket).toFixed(2)}</p>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-500">Cancelados</p>
-                <p className="text-xl font-bold text-red-600">12</p>
+                <p className="text-xl font-bold text-red-600">{summary.cancelled}</p>
               </div>
             </div>
           </CardContent>
@@ -183,23 +221,25 @@ export default function RelatoriosPage() {
       </div>
 
       {/* Data Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dados Detalhados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={reportData}
-            searchable={false}
-            page={page}
-            totalPages={5}
-            totalItems={reportData.length * 5}
-            onPageChange={setPage}
-            pageSize={10}
-          />
-        </CardContent>
-      </Card>
+      {reportData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Dados Detalhados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={columns}
+              data={reportData}
+              searchable={false}
+              page={page}
+              totalPages={Math.ceil(reportData.length / 10) || 1}
+              totalItems={reportData.length}
+              onPageChange={setPage}
+              pageSize={10}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

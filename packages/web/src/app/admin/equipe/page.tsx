@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,16 +21,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const team = [
-  { id: 1, nome: 'Admin Master', email: 'admin@hortifruti.com', role: 'Administrador', ultimoLogin: '28/06/2026 14:30', status: 'Ativo' },
-  { id: 2, nome: 'João Vendedor', email: 'joao@hortifruti.com', role: 'Vendedor', ultimoLogin: '28/06/2026 10:15', status: 'Ativo' },
-  { id: 3, nome: 'Maria Caixa', email: 'maria@hortifruti.com', role: 'Caixa', ultimoLogin: '27/06/2026 18:00', status: 'Ativo' },
-  { id: 4, nome: 'Pedro Estoque', email: 'pedro@hortifruti.com', role: 'Estoquista', ultimoLogin: '26/06/2026 09:30', status: 'Ativo' },
-  { id: 5, nome: 'Ana Entregadora', email: 'ana@hortifruti.com', role: 'Entregador', ultimoLogin: '25/06/2026 16:45', status: 'Inativo' },
-];
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 const roleColors: Record<string, string> = {
   'Administrador': 'bg-purple-100 text-purple-700',
@@ -38,17 +32,27 @@ const roleColors: Record<string, string> = {
   'Caixa': 'bg-green-100 text-green-700',
   'Estoquista': 'bg-orange-100 text-orange-700',
   'Entregador': 'bg-yellow-100 text-yellow-700',
+  'admin': 'bg-purple-100 text-purple-700',
+  'seller': 'bg-blue-100 text-blue-700',
+  'cashier': 'bg-green-100 text-green-700',
+  'stock': 'bg-orange-100 text-orange-700',
+  'delivery': 'bg-yellow-100 text-yellow-700',
 };
 
 const statusColors: Record<string, string> = {
   'Ativo': 'bg-green-100 text-green-700',
   'Inativo': 'bg-red-100 text-red-700',
+  'active': 'bg-green-100 text-green-700',
+  'inactive': 'bg-red-100 text-red-700',
 };
 
 export default function EquipePage() {
+  const [team, setTeam] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -56,10 +60,30 @@ export default function EquipePage() {
     senha: '',
   });
 
+  useEffect(() => {
+    fetchTeam();
+  }, []);
+
+  const fetchTeam = async () => {
+    try {
+      const { data: result } = await api.get('/users?limit=100');
+      setTeam(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setTeam([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOpenDialog = (user?: any) => {
     if (user) {
       setEditingUser(user);
-      setFormData({ nome: user.nome, email: user.email, role: user.role.toLowerCase(), senha: '' });
+      setFormData({
+        nome: user.name || user.nome || '',
+        email: user.email || '',
+        role: user.role || '',
+        senha: '',
+      });
     } else {
       setEditingUser(null);
       setFormData({ nome: '', email: '', role: '', senha: '' });
@@ -67,20 +91,61 @@ export default function EquipePage() {
     setDialogOpen(true);
   };
 
+  const handleSave = async () => {
+    if (!formData.nome.trim() || !formData.email.trim()) {
+      toast.error('Nome e email são obrigatórios');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload: any = {
+        name: formData.nome,
+        email: formData.email,
+        role: formData.role,
+      };
+      if (formData.senha) payload.password = formData.senha;
+
+      if (editingUser) {
+        await api.put(`/users/${editingUser.id}`, payload);
+        toast.success('Membro atualizado!');
+      } else {
+        await api.post('/users', payload);
+        toast.success('Membro adicionado!');
+      }
+      setDialogOpen(false);
+      fetchTeam();
+    } catch {
+      toast.error('Erro ao salvar membro');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente remover este membro?')) return;
+    try {
+      await api.delete(`/users/${id}`);
+      toast.success('Membro removido!');
+      fetchTeam();
+    } catch {
+      toast.error('Erro ao remover membro');
+    }
+  };
+
   const columns: Column<any>[] = [
     {
-      key: 'nome',
+      key: 'name',
       label: 'Nome',
       sortable: true,
       render: (value, row) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-[#16a34a] text-white text-xs">
-              {value.charAt(0)}
+              {(value || row.nome || '?').charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium text-gray-900">{value}</p>
+            <p className="font-medium text-gray-900">{value || row.nome}</p>
             <p className="text-xs text-gray-500">{row.email}</p>
           </div>
         </div>
@@ -91,16 +156,25 @@ export default function EquipePage() {
       key: 'role',
       label: 'Cargo',
       render: (value) => (
-        <Badge className={cn('border-0', roleColors[value])}>{value}</Badge>
+        <Badge className={cn('border-0', roleColors[value] || 'bg-gray-100 text-gray-700')}>{value}</Badge>
       ),
     },
-    { key: 'ultimoLogin', label: 'Último Login' },
     {
-      key: 'status',
+      key: 'lastLogin',
+      label: 'Último Login',
+      render: (v) => v ? new Date(v).toLocaleString('pt-BR') : '-',
+    },
+    {
+      key: 'active',
       label: 'Status',
-      render: (value) => (
-        <Badge className={cn('border-0', statusColors[value])}>{value}</Badge>
-      ),
+      render: (value, row) => {
+        const isActive = value !== undefined ? value : (row.status === 'Ativo');
+        return (
+          <Badge className={cn('border-0', isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}>
+            {isActive ? 'Ativo' : 'Inativo'}
+          </Badge>
+        );
+      },
     },
     {
       key: 'acoes',
@@ -110,13 +184,21 @@ export default function EquipePage() {
           <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleOpenDialog(row); }}>
             <Pencil className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => e.stopPropagation()}>
+          <Button variant="ghost" size="sm" className="text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }}>
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -139,8 +221,8 @@ export default function EquipePage() {
             searchable
             searchPlaceholder="Pesquisar por nome ou e-mail..."
             page={page}
-            totalPages={2}
-            totalItems={team.length * 2}
+            totalPages={Math.ceil(team.length / 15) || 1}
+            totalItems={team.length}
             onPageChange={setPage}
           />
         </CardContent>
@@ -177,11 +259,11 @@ export default function EquipePage() {
                   <SelectValue placeholder="Selecione o cargo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="administrador">Administrador</SelectItem>
-                  <SelectItem value="vendedor">Vendedor</SelectItem>
-                  <SelectItem value="caixa">Caixa</SelectItem>
-                  <SelectItem value="estoquista">Estoquista</SelectItem>
-                  <SelectItem value="entregador">Entregador</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="seller">Vendedor</SelectItem>
+                  <SelectItem value="cashier">Caixa</SelectItem>
+                  <SelectItem value="stock">Estoquista</SelectItem>
+                  <SelectItem value="delivery">Entregador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -196,7 +278,10 @@ export default function EquipePage() {
             </div>
             <div className="flex justify-end gap-3">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button className="bg-[#16a34a] hover:bg-[#15803d]">Salvar</Button>
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Salvar
+              </Button>
             </div>
           </div>
         </DialogContent>
