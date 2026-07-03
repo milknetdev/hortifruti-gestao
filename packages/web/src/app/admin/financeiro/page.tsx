@@ -27,10 +27,13 @@ import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 const typeColors: Record<string, string> = {
-  'Receita': 'bg-green-100 text-green-700',
-  'Despesa': 'bg-red-100 text-red-700',
-  'income': 'bg-green-100 text-green-700',
-  'expense': 'bg-red-100 text-red-700',
+  'INCOME': 'bg-green-100 text-green-700',
+  'EXPENSE': 'bg-red-100 text-red-700',
+};
+
+const typeLabels: Record<string, string> = {
+  'INCOME': 'Receita',
+  'EXPENSE': 'Despesa',
 };
 
 export default function FinanceiroPage() {
@@ -61,10 +64,14 @@ export default function FinanceiroPage() {
       setEntries(list);
 
       // Calculate summary from entries
-      const revenue = list.filter((e: any) => (e.type || e.tipo) === 'income' || (e.type || e.tipo) === 'Receita')
-        .reduce((sum: number, e: any) => sum + Number(e.amount || e.valor || 0), 0);
-      const expenses = list.filter((e: any) => (e.type || e.tipo) === 'expense' || (e.type || e.tipo) === 'Despesa')
-        .reduce((sum: number, e: any) => sum + Number(e.amount || e.valor || 0), 0);
+      const revenue = list.filter((e: any) => {
+        const t = (e.type || '').toUpperCase();
+        return t === 'INCOME' || t === 'RECEITA';
+      }).reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0);
+      const expenses = list.filter((e: any) => {
+        const t = (e.type || '').toUpperCase();
+        return t === 'EXPENSE' || t === 'DESPESA';
+      }).reduce((sum: number, e: any) => sum + Number(e.amount || 0), 0);
       setSummary({
         revenue,
         expenses,
@@ -121,7 +128,7 @@ export default function FinanceiroPage() {
       label: 'Tipo',
       render: (value, row) => {
         const v = value || row.tipo;
-        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{v === 'income' ? 'Receita' : v === 'expense' ? 'Despesa' : v}</Badge>;
+        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{typeLabels[v] || v}</Badge>;
       },
     },
     {
@@ -139,11 +146,12 @@ export default function FinanceiroPage() {
       label: 'Valor',
       sortable: true,
       render: (value, row) => {
-        const v = Number(value ?? row.valor ?? 0);
-        const isIncome = (row.type || row.tipo) === 'income' || (row.type || row.tipo) === 'Receita';
+        const v = Number(value ?? 0);
+        const t = (row.type || '').toUpperCase();
+        const isIncome = t === 'INCOME' || t === 'RECEITA';
         return (
           <span className={cn('font-medium', isIncome ? 'text-green-600' : 'text-red-600')}>
-            {isIncome ? '+' : '-'}R$ {v.toFixed(2)}
+            {isIncome ? '+' : '-'}R$ {Math.abs(v).toFixed(2)}
           </span>
         );
       },
