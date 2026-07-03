@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,11 +16,15 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, clearCart, subtotal: getSubtotal } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [couponApplied, setCouponApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
+
+  useEffect(() => {
+    cleanInvalidItems();
+  }, []);
 
   const subtotal = getSubtotal();
   const deliveryFeeAmount = deliveryType === 'delivery' && subtotal < 100 ? 9.90 : 0;
