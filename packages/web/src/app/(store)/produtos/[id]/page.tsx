@@ -66,7 +66,18 @@ export default function ProductDetailPage() {
       }
     };
     fetchProduct();
+    checkIfFavorited();
   }, [slug]);
+
+  const checkIfFavorited = async () => {
+    try {
+      const { data: favorites } = await api.get('/favorites');
+      const isFav = Array.isArray(favorites) && favorites.some((f: any) => f.slug === slug);
+      setIsFavorited(isFav);
+    } catch {
+      // User might not be logged in
+    }
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -284,7 +295,16 @@ export default function ProductDetailPage() {
           {/* Actions */}
           <div className="flex gap-3 mb-6">
             <button
-              onClick={() => setIsFavorited(!isFavorited)}
+              onClick={async () => {
+                try {
+                  if (!product) return;
+                  const { data: result } = await api.post(`/favorites/${product.id}`);
+                  setIsFavorited(result.favorited);
+                  toast.success(result.favorited ? 'Adicionado aos favoritos!' : 'Removido dos favoritos');
+                } catch {
+                  toast.error('Faça login para favoritar produtos');
+                }
+              }}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors',
                 isFavorited
