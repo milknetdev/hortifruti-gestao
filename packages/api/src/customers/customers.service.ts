@@ -6,7 +6,16 @@ import * as bcrypt from 'bcrypt';
 export class CustomersService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async create(data: any, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const exists = await this.prisma.customer.findFirst({ where: { email: data.email, tenantId } });
     if (exists) throw new ConflictException('Email já cadastrado');
     const hashedPassword = await bcrypt.hash(data.password, 12);
@@ -14,6 +23,7 @@ export class CustomersService {
   }
 
   async findAll(tenantId: string, query: { page?: number; limit?: number; search?: string }) {
+    tenantId = await this.resolveTenantId(tenantId);
     const page = query.page || 1;
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
@@ -28,6 +38,7 @@ export class CustomersService {
   }
 
   async findOne(id: string, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const customer = await this.prisma.customer.findFirst({ where: { id, tenantId }, include: { addresses: true } });
     if (!customer) throw new NotFoundException('Cliente não encontrado');
     const { password, ...result } = customer as any;
