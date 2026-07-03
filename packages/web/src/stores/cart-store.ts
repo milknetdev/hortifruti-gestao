@@ -43,7 +43,7 @@ export const useCartStore = create<CartState>()(
       deliveryFee: 0,
       notes: '',
 
-      addItem: (product: Product, quantity = product.minQuantity) => {
+      addItem: (product: Product, quantity?: number) => {
         set((state) => {
           const existingIndex = state.items.findIndex(
             (item) => item.productId === product.id
@@ -53,15 +53,18 @@ export const useCartStore = create<CartState>()(
           const salePrice = Number(product.salePrice) || 0;
           const promotionalPrice = product.promotionalPrice ? Number(product.promotionalPrice) : null;
           const unitPrice = promotionalPrice && promotionalPrice < salePrice ? promotionalPrice : salePrice;
+          
+          // Garantir que quantidade é válida
+          const qty = Number(quantity) || Number(product.minQuantity) || 1;
 
           if (existingIndex >= 0) {
             const updatedItems = [...state.items];
             const existing = updatedItems[existingIndex];
-            const newQuantity = existing.quantity + quantity;
+            const newQuantity = Number(existing.quantity) + qty;
             updatedItems[existingIndex] = {
               ...existing,
               quantity: newQuantity,
-              totalPrice: newQuantity * existing.unitPrice,
+              totalPrice: newQuantity * (Number(existing.unitPrice) || 0),
             };
             return { items: updatedItems };
           }
@@ -70,9 +73,9 @@ export const useCartStore = create<CartState>()(
             id: `cart-${product.id}-${Date.now()}`,
             productId: product.id,
             product,
-            quantity,
+            quantity: qty,
             unitPrice,
-            totalPrice: quantity * unitPrice,
+            totalPrice: qty * unitPrice,
           };
 
           return { items: [...state.items, newItem] };
@@ -87,7 +90,8 @@ export const useCartStore = create<CartState>()(
 
       updateQuantity: (productId: string, quantity: number) => {
         set((state) => {
-          if (quantity <= 0) {
+          const qty = Number(quantity) || 0;
+          if (qty <= 0) {
             return {
               items: state.items.filter((item) => item.productId !== productId),
             };
@@ -98,8 +102,8 @@ export const useCartStore = create<CartState>()(
               item.productId === productId
                 ? {
                     ...item,
-                    quantity,
-                    totalPrice: quantity * (Number(item.unitPrice) || 0),
+                    quantity: qty,
+                    totalPrice: qty * (Number(item.unitPrice) || 0),
                   }
                 : item
             ),
