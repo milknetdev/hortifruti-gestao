@@ -73,11 +73,13 @@ export default function CheckoutPage() {
     setLoading(true);
     try {
       await api.post('/orders', {
-        items: items.map((item) => ({ productId: item.id, quantity: item.quantity })),
+        items: items.map((item) => ({ 
+          productId: item.productId || item.id, 
+          quantity: Number(item.quantity) || 1 
+        })),
         deliveryType,
-        address: deliveryType === 'delivery' ? address : undefined,
         paymentMethod,
-        notes,
+        notes: notes || undefined,
       });
       clearCart();
       toast.success('Pedido realizado com sucesso!');
