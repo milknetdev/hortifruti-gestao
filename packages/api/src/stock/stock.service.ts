@@ -13,25 +13,25 @@ export class StockService {
     if (query.productId) where.productId = query.productId;
     if (query.type) where.type = query.type;
 
-    const [items, total] = await Promise.all([
-      this.prisma.stockMovement.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { product: { select: { id: true, name: true, sku: true, mainImage: true, stock: true, minStock: true } } } }),
-      this.prisma.stockMovement.count({ where }),
-    ]);
+    try {
+      const items = await this.prisma.stockMovement.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } });
+      const total = await this.prisma.stockMovement.count({ where });
 
-    // Buscar usuários separadamente para evitar erro de relation
-    const userIds = Array.from(new Set(items.filter(i => i.userId).map(i => i.userId)));
-    let usersMap: Record<string, any> = {};
-    if (userIds.length > 0) {
-      const users = await this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } });
-      usersMap = Object.fromEntries(users.map(u => [u.id, u]));
+      // Buscar produtos separadamente
+      const productIds = Array.from(new Set(items.map(i => i.productId)));
+      const products = await this.prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true, sku: true, mainImage: true, stock: true, minStock: true } });
+      const productsMap = Object.fromEntries(products.map(p => [p.id, p]));
+
+      const enrichedItems = items.map(item => ({
+        ...item,
+        product: productsMap[item.productId] || null,
+        user: null,
+      }));
+
+      return { data: enrichedItems, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    } catch (error: any) {
+      throw new Error('Erro ao buscar movimentações: ' + error.message);
     }
-
-    const enrichedItems = items.map(item => ({
-      ...item,
-      user: item.userId ? usersMap[item.userId] || null : null,
-    }));
-
-    return { data: enrichedItems, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async addStock(productId: string, quantity: number, tenantId: string, userId?: string, costPrice?: number, reason?: string) {
