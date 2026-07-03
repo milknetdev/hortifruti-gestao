@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DataTable, Column } from '@/components/admin/data-table';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,43 +13,92 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
-const products = [
-  { id: 1, imagem: '🍅', nome: 'Tomate Italiano', sku: 'TOM-001', preco: 'R$ 8,90/kg', estoque: 45, status: 'Ativo', categoria: 'Hortaliças' },
-  { id: 2, imagem: '🍌', nome: 'Banana Prata', sku: 'BAN-001', preco: 'R$ 6,50/kg', estoque: 120, status: 'Ativo', categoria: 'Frutas' },
-  { id: 3, imagem: '🍎', nome: 'Maçã Fuji', sku: 'MAC-001', preco: 'R$ 12,90/kg', estoque: 8, status: 'Ativo', categoria: 'Frutas' },
-  { id: 4, imagem: '🥬', nome: 'Alface Americana', sku: 'ALA-001', preco: 'R$ 4,50/un', estoque: 30, status: 'Ativo', categoria: 'Hortaliças' },
-  { id: 5, imagem: '🥕', nome: 'Cenoura', sku: 'CEN-001', preco: 'R$ 5,90/kg', estoque: 65, status: 'Ativo', categoria: 'Legumes' },
-  { id: 6, imagem: '🍋', nome: 'Limão Tahiti', sku: 'LIM-001', preco: 'R$ 4,90/kg', estoque: 0, status: 'Inativo', categoria: 'Frutas' },
-  { id: 7, imagem: '🥒', nome: 'Pepino', sku: 'PEP-001', preco: 'R$ 6,90/kg', estoque: 25, status: 'Ativo', categoria: 'Legumes' },
-  { id: 8, imagem: '🌶️', nome: 'Pimentão Vermelho', sku: 'PIM-001', preco: 'R$ 14,90/kg', estoque: 15, status: 'Ativo', categoria: 'Legumes' },
-];
-
-const categories = ['Todas', 'Frutas', 'Hortaliças', 'Legumes', 'Temperos', 'Orgânicos'];
+interface Product {
+  id: string;
+  name: string;
+  sku?: string;
+  salePrice: number;
+  stock: number;
+  active: boolean;
+  category?: { name: string };
+  mainImage?: string;
+}
 
 export default function ProdutosPage() {
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('Todas');
+  const [categories, setCategories] = useState<string[]>(['Todas']);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const { data: result } = await api.get('/products?limit=100');
+      setProducts(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data: result } = await api.get('/categories');
+      const cats = Array.isArray(result.data) ? result.data : [];
+      setCategories(['Todas', ...cats.map((c: any) => c.name)]);
+    } catch {
+      setCategories(['Todas']);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este produto?')) return;
+    try {
+      await api.delete(`/products/${id}`);
+      toast.success('Produto removido!');
+      fetchProducts();
+    } catch {
+      toast.error('Erro ao remover produto');
+    }
+  };
 
   const filteredProducts = category === 'Todas'
     ? products
-    : products.filter((p) => p.categoria === category);
+    : products.filter((p) => p.category?.name === category);
 
   const columns: Column<any>[] = [
     {
-      key: 'imagem',
+      key: 'mainImage',
       label: '',
       className: 'w-12',
-      render: (value) => <span className="text-2xl">{value}</span>,
+      render: (value, row) => value ? (
+        <img src={value} alt={row.name} className="w-10 h-10 rounded object-cover" />
+      ) : (
+        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-400">📷</div>
+      ),
     },
-    { key: 'nome', label: 'Nome', sortable: true },
+    { key: 'name', label: 'Nome', sortable: true },
     { key: 'sku', label: 'SKU', sortable: true },
-    { key: 'preco', label: 'Preço', sortable: true },
     {
-      key: 'estoque',
+      key: 'salePrice',
+      label: 'Preço',
+      sortable: true,
+      render: (value) => `R$ ${Number(value).toFixed(2)}`,
+    },
+    {
+      key: 'stock',
       label: 'Estoque',
       sortable: true,
       render: (value) => (
@@ -59,22 +108,17 @@ export default function ProdutosPage() {
       ),
     },
     {
-      key: 'status',
+      key: 'active',
       label: 'Status',
       render: (value) => (
-        <Badge
-          className={cn(
-            'border-0',
-            value === 'Ativo' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          )}
-        >
-          {value}
+        <Badge variant={value ? 'default' : 'secondary'} className={value ? 'bg-green-100 text-green-700' : ''}>
+          {value ? 'Ativo' : 'Inativo'}
         </Badge>
       ),
     },
     {
-      key: 'acoes',
-      label: 'Ações',
+      key: 'actions',
+      label: '',
       render: (_, row) => (
         <div className="flex items-center gap-1">
           <Button
@@ -90,8 +134,11 @@ export default function ProdutosPage() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(row.id);
+            }}
+            className="text-red-500 hover:text-red-700"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -100,45 +147,51 @@ export default function ProdutosPage() {
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
-          <p className="text-gray-500">Gerencie o catálogo de produtos</p>
+          <p className="text-sm text-gray-500">{products.length} produtos cadastrados</p>
         </div>
-        <Button
-          className="bg-[#16a34a] hover:bg-[#15803d]"
-          onClick={() => router.push('/admin/produtos/novo')}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Produto
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            className="bg-[#16a34a] hover:bg-[#15803d]"
+            onClick={() => router.push('/admin/produtos/novo')}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Produto
+          </Button>
+        </div>
       </div>
 
       <Card>
-        <CardContent className="p-6">
-          <div className="mb-4">
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
+        <CardContent className="p-0">
           <DataTable
-            columns={columns}
             data={filteredProducts}
-            searchable
-            searchPlaceholder="Pesquisar por nome ou SKU..."
-            page={page}
-            totalPages={2}
-            totalItems={filteredProducts.length * 2}
+            columns={columns}
+            pageSize={15}
+            currentPage={page}
+            totalPages={Math.ceil(filteredProducts.length / 15)}
+            totalItems={filteredProducts.length}
             onPageChange={setPage}
             onRowClick={(row) => router.push(`/admin/produtos/${row.id}`)}
           />
