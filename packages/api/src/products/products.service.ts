@@ -98,6 +98,12 @@ export class ProductsService {
   }
 
   async update(id: string, data: any, tenantId: string) {
+    // Resolve tenantId if empty
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     const product = await this.findOne(id, tenantId);
     
     // Calculate profit margin if both prices are provided
@@ -106,21 +112,26 @@ export class ProductsService {
     }
 
     // Track stock changes
-    if (data.stock !== undefined && data.stock !== product.stock) {
-      const diff = data.stock - product.stock;
+    const newStock = typeof data.stock === 'string' ? parseInt(data.stock) : data.stock;
+    if (newStock !== undefined && !isNaN(newStock) && newStock !== product.stock) {
+      const diff = newStock - product.stock;
       const movementType = diff > 0 ? 'ENTRY' : 'EXIT';
       
-      await this.prisma.stockMovement.create({
-        data: {
-          tenantId,
-          productId: id,
-          type: movementType,
-          quantity: diff,
-          previousQty: product.stock,
-          newQty: data.stock,
-          reason: 'Atualização via edição de produto',
-        },
-      });
+      try {
+        await this.prisma.stockMovement.create({
+          data: {
+            tenantId,
+            productId: id,
+            type: movementType,
+            quantity: diff,
+            previousQty: product.stock,
+            newQty: newStock,
+            reason: 'Atualização via edição de produto',
+          },
+        });
+      } catch (e) {
+        console.error('Erro ao criar movimentação de estoque:', e);
+      }
     }
 
     return this.prisma.product.update({ where: { id }, data });
