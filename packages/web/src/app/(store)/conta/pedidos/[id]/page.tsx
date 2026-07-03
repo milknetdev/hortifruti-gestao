@@ -14,6 +14,7 @@ import {
   MapPin,
   CreditCard,
   Loader2,
+  Store,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
@@ -52,12 +53,20 @@ interface OrderDetail {
   notes?: string;
 }
 
-const statusSteps = [
-  { key: 'PENDING', label: 'Pendente', icon: Clock },
-  { key: 'PAID', label: 'Confirmado', icon: CheckCircle2 },
-  { key: 'PROCESSING', label: 'Preparando', icon: Package },
-  { key: 'OUT_FOR_DELIVERY', label: 'A Caminho', icon: Truck },
-  { key: 'DELIVERED', label: 'Entregue', icon: CheckCircle2 },
+const deliverySteps = [
+  { key: 'PENDING', label: 'Pendente', icon: Clock, description: 'Pedido recebido' },
+  { key: 'PAID', label: 'Pago', icon: CreditCard, description: 'Pagamento confirmado' },
+  { key: 'PROCESSING', label: 'Preparando', icon: Package, description: 'Separando seus itens' },
+  { key: 'OUT_FOR_DELIVERY', label: 'A Caminho', icon: Truck, description: 'Saiu para entrega' },
+  { key: 'DELIVERED', label: 'Entregue', icon: CheckCircle2, description: 'Entrega concluída' },
+];
+
+const pickupSteps = [
+  { key: 'PENDING', label: 'Pedido Feito', icon: Clock, description: 'Pedido recebido' },
+  { key: 'PAID', label: 'Pago', icon: CreditCard, description: 'Pagamento confirmado' },
+  { key: 'PROCESSING', label: 'Preparando', icon: Package, description: 'Separando seus itens' },
+  { key: 'PICKUP_AVAILABLE', label: 'Pronto!', icon: Store, description: 'Pode vir retirar' },
+  { key: 'PICKED_UP', label: 'Retirado', icon: CheckCircle2, description: 'Retirada concluída' },
 ];
 
 const paymentLabels: Record<string, string> = {
@@ -113,6 +122,7 @@ export default function OrderDetailPage() {
     );
   }
 
+  const statusSteps = order.deliveryType === 'pickup' ? pickupSteps : deliverySteps;
   const currentStepIndex = statusSteps.findIndex((s) => s.key === order.status);
   const isCancelled = order.status === 'CANCELLED';
 
@@ -163,26 +173,34 @@ export default function OrderDetailPage() {
               const Icon = step.icon;
               const isActive = index <= currentStepIndex;
               const isCurrent = index === currentStepIndex;
+              const isPickupReady = step.key === 'PICKUP_AVAILABLE' && isActive;
               return (
                 <div key={step.key} className="relative flex flex-col items-center z-10">
                   <div
                     className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors',
-                      isActive
-                        ? 'bg-green-500 border-green-500 text-white'
-                        : 'bg-white border-gray-300 text-gray-400'
+                      'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all',
+                      isPickupReady
+                        ? 'bg-green-500 border-green-500 text-white scale-110 shadow-lg shadow-green-200'
+                        : isActive
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'bg-white border-gray-300 text-gray-400'
                     )}
                   >
-                    <Icon size={18} />
+                    <Icon size={20} />
                   </div>
                   <p
                     className={cn(
                       'text-xs mt-2 font-medium text-center',
-                      isCurrent ? 'text-green-600' : isActive ? 'text-gray-900' : 'text-gray-400'
+                      isPickupReady ? 'text-green-600 font-bold' : isCurrent ? 'text-green-600' : isActive ? 'text-gray-900' : 'text-gray-400'
                     )}
                   >
                     {step.label}
                   </p>
+                  {isCurrent && (
+                    <p className="text-[10px] text-gray-500 mt-1 text-center max-w-[80px]">
+                      {step.description}
+                    </p>
+                  )}
                 </div>
               );
             })}
