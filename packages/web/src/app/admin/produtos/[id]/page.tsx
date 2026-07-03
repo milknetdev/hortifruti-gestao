@@ -219,6 +219,7 @@ export default function EditarProdutoPage() {
                 <Label>Categoria *</Label>
                 <Select value={watch('categoryId')} onValueChange={(v) => setValue('categoryId', v)}>
                   <SelectTrigger>
+                    {/* Category selector */}
                     <SelectValue placeholder={categories.find(c => c.id === watch('categoryId'))?.name || 'Selecione uma categoria'} />
                   </SelectTrigger>
                   <SelectContent>
