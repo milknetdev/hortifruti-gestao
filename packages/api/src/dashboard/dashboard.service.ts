@@ -5,7 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async getStats(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -20,9 +29,13 @@ export class DashboardService {
 
     const monthOrders = await this.prisma.order.findMany({
       where: { tenantId, status: { not: 'CANCELLED' }, createdAt: { gte: startOfMonth } },
-      select: { total: true },
+      select: { total: true, items: { select: { costPrice: true, quantity: true, unitPrice: true } } },
     });
     const monthRevenue = monthOrders.reduce((sum, o) => sum + Number(o.total), 0);
+    const monthProfit = monthOrders.reduce((sum, o) => {
+      const itemProfit = o.items.reduce((isum, item) => isum + (Number(item.unitPrice) - Number(item.costPrice || 0)) * item.quantity, 0);
+      return sum + itemProfit;
+    }, 0);
 
     const recentOrders = await this.prisma.order.findMany({
       where: { tenantId }, take: 10, orderBy: { createdAt: 'desc' },
@@ -38,7 +51,7 @@ export class DashboardService {
       todayOrders, pendingOrders, deliveredOrders,
       outOfStock: lowStockProducts.filter((p) => p.stock === 0).length,
       lowStock: lowStock.length,
-      monthRevenue, totalCustomers, totalEmployees,
+      monthRevenue, monthProfit, totalCustomers, totalEmployees,
       recentOrders, lowStockAlerts: lowStock.slice(0, 5),
     };
   }
