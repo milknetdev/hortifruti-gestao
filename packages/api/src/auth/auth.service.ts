@@ -73,7 +73,7 @@ export class AuthService {
     );
 
     return {
-      user: { id: customer.id, email: customer.email, name: customer.name, type: 'customer' },
+      user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, cpf: customer.cpf, type: 'customer' },
       accessToken,
     };
   }
@@ -136,7 +136,7 @@ export class AuthService {
       { secret: this.config.get('JWT_SECRET'), expiresIn: '24h' },
     );
 
-    return { user: { id: customer.id, email: customer.email, name: customer.name }, accessToken };
+    return { user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, cpf: customer.cpf, type: 'customer' }, accessToken };
   }
 
   async refresh(refreshToken: string) {
