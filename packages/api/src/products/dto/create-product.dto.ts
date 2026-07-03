@@ -104,6 +104,11 @@ export class UpdateProductDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   sku?: string;
 
   @ApiPropertyOptional()
@@ -125,6 +130,11 @@ export class UpdateProductDto {
   @IsOptional()
   @IsString()
   mainImage?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  images?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
