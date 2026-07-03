@@ -129,10 +129,9 @@ export default function CategoriasPage() {
       render: (v, row) => v?.name || row.parentName || '—',
     },
     {
-      key: 'productsCount',
+      key: '_count',
       label: 'Produtos',
-      sortable: true,
-      render: (v, row) => v ?? row.produtos ?? 0,
+      render: (v) => v?.products ?? 0,
     },
     {
       key: 'active',
