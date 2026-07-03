@@ -2,32 +2,30 @@ import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nest
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CommissionsService } from './commissions.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
-import { TenantGuard } from '../common/guards/tenant.guard';
-import { CurrentTenant } from '../common/decorators/tenant.decorator';
 
 @ApiTags('Commissions')
 @Controller('commissions')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class CommissionsController {
   constructor(private commissionsService: CommissionsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar comissões' })
-  findAll(@Query() query: any, @CurrentTenant() tenant: any) {
-    return this.commissionsService.findAll(tenant.id, query);
+  findAll(@Query() query: any) {
+    return this.commissionsService.findAll('', query);
   }
 
   @Get('summary')
   @ApiOperation({ summary: 'Resumo de comissões' })
-  getSummary(@Query('period') period: string, @CurrentTenant() tenant: any) {
-    return this.commissionsService.getSummary(tenant.id, period);
+  getSummary(@Query('period') period: string) {
+    return this.commissionsService.getSummary('', period);
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar comissão' })
-  create(@Body() data: any, @CurrentTenant() tenant: any) {
-    return this.commissionsService.create(data, tenant.id);
+  create(@Body() data: any) {
+    return this.commissionsService.create(data, '');
   }
 
   @Put(':id/pay')

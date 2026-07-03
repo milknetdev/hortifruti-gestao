@@ -5,7 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CommissionsService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async findAll(tenantId: string, query: { page?: number; limit?: number; userId?: string; paid?: boolean; period?: string }) {
+    tenantId = await this.resolveTenantId(tenantId);
     const page = query.page || 1;
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
@@ -22,6 +31,7 @@ export class CommissionsService {
   }
 
   async getSummary(tenantId: string, period?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const where: any = { tenantId };
     if (period) where.period = period;
 

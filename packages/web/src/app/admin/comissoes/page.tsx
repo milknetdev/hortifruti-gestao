@@ -36,9 +36,9 @@ export default function ComissoesPage() {
       const list = Array.isArray(data) ? data : (data.items || data.commissions || []);
       setCommissions(list);
 
-      const total = list.reduce((sum: number, c: any) => sum + Number(c.amount || c.valor || 0), 0);
-      const paid = list.filter((c: any) => c.paid === true).reduce((sum: number, c: any) => sum + Number(c.amount || c.valor || 0), 0);
-      const sellerNames = new Set(list.map((c: any) => c.userName || c.usuario || ''));
+      const total = list.reduce((sum: number, c: any) => sum + Number(c.commissionValue || c.orderValue || 0), 0);
+      const paid = list.filter((c: any) => c.paid === true).reduce((sum: number, c: any) => sum + Number(c.commissionValue || c.orderValue || 0), 0);
+      const sellerNames = new Set(list.map((c: any) => c.user?.name || ''));
       setSummary({ total, paid, pending: total - paid, sellers: sellerNames.size });
     } catch {
       setCommissions([]);
@@ -48,34 +48,44 @@ export default function ComissoesPage() {
   };
 
   const handlePayPending = async () => {
-    toast.success('Comissões pendentes marcadas como pagas!');
-    fetchCommissions();
+    const pendingIds = commissions.filter((c: any) => !c.paid).map((c: any) => c.id);
+    if (pendingIds.length === 0) {
+      toast.error('Nenhuma comissão pendente');
+      return;
+    }
+    try {
+      await api.post('/commissions/batch-pay', { ids: pendingIds });
+      toast.success('Comissões pendentes marcadas como pagas!');
+      fetchCommissions();
+    } catch {
+      toast.error('Erro ao pagar comissões');
+    }
   };
 
   const columns: Column<any>[] = [
     {
-      key: 'userName',
+      key: 'user',
       label: 'Usuário',
       sortable: true,
-      render: (v, row) => v || row.usuario || '-',
+      render: (v) => v?.name || '-',
     },
     {
-      key: 'productName',
+      key: 'product',
       label: 'Produto',
-      render: (v, row) => v || row.produto || '-',
+      render: (v) => v?.name || '-',
     },
     {
       key: 'type',
       label: 'Tipo',
-      render: (v, row) => (
-        <Badge className="bg-blue-100 text-blue-700 border-0">{v || row.tipo || 'Venda'}</Badge>
+      render: (v) => (
+        <Badge className="bg-blue-100 text-blue-700 border-0">{v || 'Venda'}</Badge>
       ),
     },
     {
-      key: 'amount',
+      key: 'commissionValue',
       label: 'Valor',
       sortable: true,
-      render: (v, row) => `R$ ${Number(v || row.valor || 0).toFixed(2)}`,
+      render: (v, row) => `R$ ${Number(v || row.orderValue || 0).toFixed(2)}`,
     },
     {
       key: 'paid',
