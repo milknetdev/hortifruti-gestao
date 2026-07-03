@@ -20,11 +20,11 @@ import { formatCurrency, cn } from '@/lib/utils';
 
 interface OrderItem {
   id: string;
-  name: string;
-  imageUrl: string;
-  price: number;
+  productName: string;
+  productImage: string;
+  unitPrice: number;
+  totalPrice: number;
   quantity: number;
-  unit: string;
 }
 
 interface OrderDetail {
@@ -77,8 +77,9 @@ export default function OrderDetailPage() {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const { data } = await api.get(`/orders/${orderId}`);
-        setOrder(data);
+        const { data: result } = await api.get(`/orders/${orderId}`);
+        const orderData = result?.data || result;
+        setOrder(orderData);
       } catch {
         setOrder(null);
       } finally {
@@ -205,18 +206,18 @@ export default function OrderDetailPage() {
                 <div key={item.id} className="flex gap-4 p-3 bg-gray-50 rounded-lg">
                   <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                     <Image
-                      src={item.imageUrl || '/images/placeholder-product.jpg'}
-                      alt={item.name}
+                      src={item.productImage || '/images/placeholder-product.jpg'}
+                      alt={item.productName}
                       fill
                       className="object-cover"
                       sizes="64px"
                     />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.name}</h4>
-                    <p className="text-xs text-gray-500">{item.quantity}x {formatCurrency(item.price)}</p>
+                    <h4 className="font-medium text-sm">{item.productName}</h4>
+                    <p className="text-xs text-gray-500">{item.quantity}x {formatCurrency(item.unitPrice)}</p>
                   </div>
-                  <p className="font-medium text-sm">{formatCurrency(item.price * item.quantity)}</p>
+                  <p className="font-medium text-sm">{formatCurrency(item.totalPrice || item.unitPrice * item.quantity)}</p>
                 </div>
               ))}
             </div>
