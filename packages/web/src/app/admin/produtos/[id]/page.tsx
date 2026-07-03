@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -208,8 +209,8 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               <Label>Imagens</Label>
               <div className="flex items-center gap-4">
                 {images.map((img, i) => (
-                  <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-3xl">{img}</span>
+                  <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
+                    <img src={img} alt={`Imagem ${i + 1}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => setImages(images.filter((_, idx) => idx !== i))}
@@ -219,14 +220,38 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                     </button>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setImages([...images, '📦'])}
-                  className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-                >
+                <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors cursor-pointer">
                   <Upload className="w-5 h-5" />
                   <span className="text-xs">Upload</span>
-                </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      try {
+                        const token = localStorage.getItem('hortifruti-admin');
+                        const parsed = token ? JSON.parse(token) : null;
+                        const accessToken = parsed?.state?.accessToken;
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/upload`, {
+                          method: 'POST',
+                          headers: { Authorization: 'Bearer ' + accessToken },
+                          body: formData,
+                        });
+                        const result = await res.json();
+                        if (result?.data?.url) {
+                          setImages([...images, result.data.url]);
+                          toast.success('Imagem enviada!');
+                        }
+                      } catch {
+                        toast.error('Erro ao enviar imagem');
+                      }
+                    }}
+                  />
+                </label>
               </div>
             </div>
 
