@@ -28,13 +28,17 @@ export class CustomersService {
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
-    if (query.search) where.OR = [{ name: { contains: query.search } }, { email: { contains: query.search } }];
+    if (query.search) where.OR = [{ name: { contains: query.search, mode: 'insensitive' } }, { email: { contains: query.search, mode: 'insensitive' } }];
 
-    const [items, total] = await Promise.all([
-      this.prisma.customer.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, select: { id: true, email: true, name: true, cpf: true, phone: true, active: true, vip: true, totalSpent: true, lastOrderAt: true, createdAt: true } }),
-      this.prisma.customer.count({ where }),
-    ]);
-    return { data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    try {
+      const [items, total] = await Promise.all([
+        this.prisma.customer.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' } }),
+        this.prisma.customer.count({ where }),
+      ]);
+      return { data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    } catch (error: any) {
+      return { data: [], meta: { total: 0, page: 1, limit: 20, totalPages: 0 }, error: error.message };
+    }
   }
 
   async findOne(id: string, tenantId: string) {
