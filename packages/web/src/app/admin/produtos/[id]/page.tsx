@@ -217,33 +217,31 @@ export default function EditarProdutoPage() {
               </div>
               <div className="space-y-2">
                 <Label>Categoria *</Label>
-                <Select value={watch('categoryId')} onValueChange={(v) => setValue('categoryId', v)}>
-                  <SelectTrigger>
-                    {/* Category selector */}
-                    <SelectValue placeholder={categories.find(c => c.id === watch('categoryId'))?.name || 'Selecione uma categoria'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={watch('categoryId')}
+                  onChange={(e) => setValue('categoryId', e.target.value)}
+                >
+                  <option value="">Selecione uma categoria</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
                 {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label>Unidade *</Label>
-                <Select value={watch('unit')} onValueChange={(v) => setValue('unit', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="KG">Quilograma (kg)</SelectItem>
-                    <SelectItem value="UN">Unidade (un)</SelectItem>
-                    <SelectItem value="G">Grama (g)</SelectItem>
-                    <SelectItem value="CX">Caixa (cx)</SelectItem>
-                    <SelectItem value="L">Litro (L)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={watch('unit')}
+                  onChange={(e) => setValue('unit', e.target.value)}
+                >
+                  <option value="KG">Quilograma (kg)</option>
+                  <option value="UN">Unidade (un)</option>
+                  <option value="G">Grama (g)</option>
+                  <option value="CX">Caixa (cx)</option>
+                  <option value="L">Litro (L)</option>
+                </select>
               </div>
             </div>
 
