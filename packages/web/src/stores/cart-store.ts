@@ -16,6 +16,7 @@ interface CartState {
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  cleanInvalidItems: () => void;
   applyCoupon: (coupon: Coupon | null, code?: string) => void;
   removeCoupon: () => void;
   setDeliveryType: (type: DeliveryType) => void;
@@ -98,7 +99,7 @@ export const useCartStore = create<CartState>()(
                 ? {
                     ...item,
                     quantity,
-                    totalPrice: quantity * item.unitPrice,
+                    totalPrice: quantity * (Number(item.unitPrice) || 0),
                   }
                 : item
             ),
@@ -113,6 +114,16 @@ export const useCartStore = create<CartState>()(
           coupon: null,
           notes: '',
         });
+      },
+
+      cleanInvalidItems: () => {
+        set((state) => ({
+          items: state.items.filter((item) => {
+            const price = Number(item.unitPrice);
+            const qty = Number(item.quantity);
+            return !isNaN(price) && price > 0 && !isNaN(qty) && qty > 0;
+          }),
+        }));
       },
 
       applyCoupon: (coupon: Coupon | null, code?: string) => {
@@ -148,7 +159,10 @@ export const useCartStore = create<CartState>()(
       },
 
       subtotal: () => {
-        return get().items.reduce((sum, item) => sum + item.totalPrice, 0);
+        return get().items.reduce((sum, item) => {
+          const price = Number(item.totalPrice) || 0;
+          return sum + price;
+        }, 0);
       },
 
       discount: () => {
