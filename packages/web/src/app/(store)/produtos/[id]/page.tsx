@@ -70,11 +70,12 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (!product) return;
+    const price = product.promotionalPrice || product.salePrice;
     const cartProduct: any = {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      salePrice: displayPrice,
+      salePrice: price,
       mainImage: product.mainImage,
       unit: product.unit,
       stock: product.stock,
@@ -130,7 +131,17 @@ export default function ProductDetailPage() {
 
   const displayPrice = product.promotionalPrice || product.salePrice;
   const hasPromo = product.promotionalPrice != null && product.promotionalPrice < product.salePrice;
-  const allImages = product.images?.length ? product.images : [product.mainImage];
+  
+  // Parse images
+  let allImages: string[] = [];
+  if (product.images) {
+    try {
+      const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+      if (Array.isArray(parsed) && parsed.length > 0) allImages = parsed;
+    } catch {}
+  }
+  if (allImages.length === 0 && product.mainImage) allImages = [product.mainImage];
+  if (allImages.length === 0) allImages = ['/images/placeholder-product.jpg'];
 
   return (
     <div className="container mx-auto px-4 py-6">
