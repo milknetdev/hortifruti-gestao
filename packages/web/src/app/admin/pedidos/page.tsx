@@ -9,35 +9,42 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
-
 const statusColors: Record<string, string> = {
-  'Pendente': 'bg-yellow-100 text-yellow-700',
-  'Pago': 'bg-blue-100 text-blue-700',
-  'Separando': 'bg-purple-100 text-purple-700',
-  'Entregue': 'bg-green-100 text-green-700',
-  'Cancelado': 'bg-red-100 text-red-700',
-  'pending': 'bg-yellow-100 text-yellow-700',
-  'paid': 'bg-blue-100 text-blue-700',
-  'processing': 'bg-purple-100 text-purple-700',
-  'delivered': 'bg-green-100 text-green-700',
-  'cancelled': 'bg-red-100 text-red-700',
+  'PENDING': 'bg-yellow-100 text-yellow-700',
+  'PAID': 'bg-blue-100 text-blue-700',
+  'PROCESSING': 'bg-purple-100 text-purple-700',
+  'OUT_FOR_DELIVERY': 'bg-orange-100 text-orange-700',
+  'DELIVERED': 'bg-green-100 text-green-700',
+  'CANCELLED': 'bg-red-100 text-red-700',
+  'PICKUP_AVAILABLE': 'bg-cyan-100 text-cyan-700',
+  'PICKED_UP': 'bg-green-100 text-green-700',
+};
+
+const statusLabels: Record<string, string> = {
+  'PENDING': 'Pendente',
+  'PAID': 'Pago',
+  'PROCESSING': 'Separando',
+  'OUT_FOR_DELIVERY': 'Saiu para Entrega',
+  'DELIVERED': 'Entregue',
+  'CANCELLED': 'Cancelado',
+  'PICKUP_AVAILABLE': 'Pronto para Retirada',
+  'PICKED_UP': 'Retirado',
 };
 
 const statusTabs = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'pending', label: 'Pendentes' },
-  { value: 'paid', label: 'Pagos' },
-  { value: 'processing', label: 'Separando' },
-  { value: 'delivered', label: 'Entregues' },
-  { value: 'cancelled', label: 'Cancelados' },
+  { value: 'all', label: 'Todos' },
+  { value: 'PENDING', label: 'Pendentes' },
+  { value: 'PAID', label: 'Pagos' },
+  { value: 'PROCESSING', label: 'Separando' },
+  { value: 'DELIVERED', label: 'Entregues' },
+  { value: 'CANCELLED', label: 'Cancelados' },
 ];
 
 export default function PedidosPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('todos');
+  const [activeTab, setActiveTab] = useState('all');
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -55,9 +62,9 @@ export default function PedidosPage() {
     }
   };
 
-  const filteredOrders = activeTab === 'todos'
+  const filteredOrders = activeTab === 'all'
     ? orders
-    : orders.filter((o) => (o.status || '').toLowerCase() === activeTab);
+    : orders.filter((o) => (o.status || '') === activeTab);
 
   const columns: Column<any>[] = [
     { key: 'id', label: '#', sortable: true, render: (v) => `#${v}` },
@@ -84,7 +91,7 @@ export default function PedidosPage() {
       label: 'Status',
       render: (value) => (
         <Badge className={cn('border-0', statusColors[value] || 'bg-gray-100 text-gray-700')}>
-          {value}
+          {statusLabels[value] || value}
         </Badge>
       ),
     },

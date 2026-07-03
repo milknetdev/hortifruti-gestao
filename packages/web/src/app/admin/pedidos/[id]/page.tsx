@@ -29,22 +29,26 @@ import {
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
-
-const statusOptions = ['Pendente', 'Pago', 'Separando', 'Saiu para Entrega', 'Entregue', 'Cancelado',
-  'pending', 'paid', 'processing', 'shipped', 'delivered', 'cancelled'];
+const statusOptions = [
+  { value: 'PENDING', label: 'Pendente' },
+  { value: 'PAID', label: 'Pago' },
+  { value: 'PROCESSING', label: 'Separando' },
+  { value: 'OUT_FOR_DELIVERY', label: 'Saiu para Entrega' },
+  { value: 'DELIVERED', label: 'Entregue' },
+  { value: 'CANCELLED', label: 'Cancelado' },
+  { value: 'PICKUP_AVAILABLE', label: 'Pronto para Retirada' },
+  { value: 'PICKED_UP', label: 'Retirado' },
+];
 
 const statusColors: Record<string, string> = {
-  'Pendente': 'bg-yellow-100 text-yellow-700',
-  'Pago': 'bg-blue-100 text-blue-700',
-  'Separando': 'bg-purple-100 text-purple-700',
-  'Entregue': 'bg-green-100 text-green-700',
-  'Cancelado': 'bg-red-100 text-red-700',
-  'pending': 'bg-yellow-100 text-yellow-700',
-  'paid': 'bg-blue-100 text-blue-700',
-  'processing': 'bg-purple-100 text-purple-700',
-  'shipped': 'bg-purple-100 text-purple-700',
-  'delivered': 'bg-green-100 text-green-700',
-  'cancelled': 'bg-red-100 text-red-700',
+  'PENDING': 'bg-yellow-100 text-yellow-700',
+  'PAID': 'bg-blue-100 text-blue-700',
+  'PROCESSING': 'bg-purple-100 text-purple-700',
+  'OUT_FOR_DELIVERY': 'bg-orange-100 text-orange-700',
+  'DELIVERED': 'bg-green-100 text-green-700',
+  'CANCELLED': 'bg-red-100 text-red-700',
+  'PICKUP_AVAILABLE': 'bg-cyan-100 text-cyan-700',
+  'PICKED_UP': 'bg-green-100 text-green-700',
 };
 
 const timelineIcons = [Package, CreditCard, Clock, Truck, CheckCircle2];
@@ -124,7 +128,7 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
           </p>
         </div>
         <Badge className={cn('ml-auto border-0 text-sm', statusColors[currentStatus] || 'bg-gray-100 text-gray-700')}>
-          {currentStatus}
+          {statusOptions.find(s => s.value === currentStatus)?.label || currentStatus}
         </Badge>
       </div>
 
@@ -142,7 +146,7 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
               </SelectTrigger>
               <SelectContent>
                 {statusOptions.map((s) => (
-                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
