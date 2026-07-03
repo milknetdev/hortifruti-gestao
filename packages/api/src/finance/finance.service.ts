@@ -20,8 +20,8 @@ export class FinanceService {
 
   async findAll(tenantId: string, query: any) {
     tenantId = await this.resolveTenantId(tenantId);
-    const page = query.page || 1;
-    const limit = query.limit || 50;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 50;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
     if (query.type) where.type = query.type;
