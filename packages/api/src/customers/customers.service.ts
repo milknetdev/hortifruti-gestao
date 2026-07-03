@@ -24,8 +24,8 @@ export class CustomersService {
 
   async findAll(tenantId: string, query: { page?: number; limit?: number; search?: string }) {
     tenantId = await this.resolveTenantId(tenantId);
-    const page = query.page || 1;
-    const limit = query.limit || 20;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
     if (query.search) where.OR = [{ name: { contains: query.search, mode: 'insensitive' } }, { email: { contains: query.search, mode: 'insensitive' } }];
