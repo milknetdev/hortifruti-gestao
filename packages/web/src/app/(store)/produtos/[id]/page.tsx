@@ -71,7 +71,8 @@ export default function ProductDetailPage() {
 
   const checkIfFavorited = async () => {
     try {
-      const { data: favorites } = await api.get('/favorites');
+      const { data: result } = await api.get('/favorites');
+      const favorites = result?.data || result;
       const isFav = Array.isArray(favorites) && favorites.some((f: any) => f.slug === slug);
       setIsFavorited(isFav);
     } catch {
@@ -299,8 +300,9 @@ export default function ProductDetailPage() {
                 try {
                   if (!product) return;
                   const { data: result } = await api.post(`/favorites/${product.id}`);
-                  setIsFavorited(result.favorited);
-                  toast.success(result.favorited ? 'Adicionado aos favoritos!' : 'Removido dos favoritos');
+                  const data = result?.data || result;
+                  setIsFavorited(data.favorited);
+                  toast.success(data.favorited ? 'Adicionado aos favoritos!' : 'Removido dos favoritos');
                 } catch {
                   toast.error('Faça login para favoritar produtos');
                 }
