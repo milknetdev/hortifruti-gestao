@@ -167,7 +167,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Faturamento Mês"
-          value={`R$ ${Number(dashboard.monthlyRevenue ?? 0).toLocaleString('pt-BR')}`}
+          value={`R$ ${Number(dashboard.monthRevenue ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={DollarSign}
           trend={{ value: 18, isPositive: true }}
           iconBgColor="bg-green-50"
@@ -175,7 +175,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Lucro Mês"
-          value={`R$ ${Number(dashboard.monthlyProfit ?? 0).toLocaleString('pt-BR')}`}
+          value={`R$ ${Number(dashboard.monthProfit ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           icon={TrendingUp}
           trend={{ value: 8, isPositive: true }}
           iconBgColor="bg-purple-50"
