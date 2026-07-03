@@ -6,6 +6,8 @@ const nextConfig = {
       { protocol: 'http', hostname: 'localhost', port: '9000' },
       { protocol: 'http', hostname: 'minio', port: '9000' },
       { protocol: 'https', hostname: '*.cloudfront.net' },
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: '*.supabase.in' },
     ],
   },
   async rewrites() {
