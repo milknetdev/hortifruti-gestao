@@ -28,21 +28,19 @@ import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 const typeColors: Record<string, string> = {
-  'Entrada': 'bg-green-100 text-green-700',
-  'Saída': 'bg-blue-100 text-blue-700',
-  'Ajuste': 'bg-yellow-100 text-yellow-700',
-  'Perda': 'bg-red-100 text-red-700',
-  'entry': 'bg-green-100 text-green-700',
-  'exit': 'bg-blue-100 text-blue-700',
-  'adjustment': 'bg-yellow-100 text-yellow-700',
-  'loss': 'bg-red-100 text-red-700',
+  'ENTRY': 'bg-green-100 text-green-700',
+  'EXIT': 'bg-blue-100 text-blue-700',
+  'SALE': 'bg-orange-100 text-orange-700',
+  'ADJUSTMENT': 'bg-yellow-100 text-yellow-700',
+  'LOSS': 'bg-red-100 text-red-700',
 };
 
 const typeLabels: Record<string, string> = {
-  'entry': 'Entrada',
-  'exit': 'Saída',
-  'adjustment': 'Ajuste',
-  'loss': 'Perda',
+  'ENTRY': 'Entrada',
+  'EXIT': 'Saída',
+  'SALE': 'Venda',
+  'ADJUSTMENT': 'Ajuste',
+  'LOSS': 'Perda',
 };
 
 export default function EstoquePage() {
