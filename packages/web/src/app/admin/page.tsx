@@ -21,16 +21,25 @@ import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 const statusColors: Record<string, string> = {
-  'Pendente': 'bg-yellow-100 text-yellow-700',
-  'Pago': 'bg-blue-100 text-blue-700',
-  'Separando': 'bg-purple-100 text-purple-700',
-  'Entregue': 'bg-green-100 text-green-700',
-  'Cancelado': 'bg-red-100 text-red-700',
-  'pending': 'bg-yellow-100 text-yellow-700',
-  'paid': 'bg-blue-100 text-blue-700',
-  'processing': 'bg-purple-100 text-purple-700',
-  'delivered': 'bg-green-100 text-green-700',
-  'cancelled': 'bg-red-100 text-red-700',
+  'PENDING': 'bg-yellow-100 text-yellow-700',
+  'PAID': 'bg-blue-100 text-blue-700',
+  'PROCESSING': 'bg-purple-100 text-purple-700',
+  'OUT_FOR_DELIVERY': 'bg-orange-100 text-orange-700',
+  'DELIVERED': 'bg-green-100 text-green-700',
+  'CANCELLED': 'bg-red-100 text-red-700',
+  'PICKUP_AVAILABLE': 'bg-cyan-100 text-cyan-700',
+  'PICKED_UP': 'bg-green-100 text-green-700',
+};
+
+const statusLabels: Record<string, string> = {
+  'PENDING': 'Pendente',
+  'PAID': 'Pago',
+  'PROCESSING': 'Separando',
+  'OUT_FOR_DELIVERY': 'A Caminho',
+  'DELIVERED': 'Entregue',
+  'CANCELLED': 'Cancelado',
+  'PICKUP_AVAILABLE': 'Pronto para Retirada',
+  'PICKED_UP': 'Retirado',
 };
 
 interface DashboardData {
@@ -72,7 +81,10 @@ export default function DashboardPage() {
   };
 
   const salesChart = dashboard.salesChart || [];
-  const ordersByStatus = dashboard.ordersByStatus || [];
+  const ordersByStatus = (dashboard.ordersByStatus || []).map(item => ({
+    ...item,
+    status: statusLabels[item.status] || item.status,
+  }));
 
   const orderColumns: Column<any>[] = [
     { key: 'id', label: '#', sortable: true, render: (v) => `#${v}` },
@@ -99,7 +111,7 @@ export default function DashboardPage() {
       label: 'Status',
       render: (value) => (
         <Badge className={cn('border-0', statusColors[value] || 'bg-gray-100 text-gray-700')}>
-          {value}
+          {statusLabels[value] || value}
         </Badge>
       ),
     },
