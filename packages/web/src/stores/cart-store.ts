@@ -48,6 +48,11 @@ export const useCartStore = create<CartState>()(
             (item) => item.productId === product.id
           );
 
+          // Garantir que preços são números
+          const salePrice = Number(product.salePrice) || 0;
+          const promotionalPrice = product.promotionalPrice ? Number(product.promotionalPrice) : null;
+          const unitPrice = promotionalPrice && promotionalPrice < salePrice ? promotionalPrice : salePrice;
+
           if (existingIndex >= 0) {
             const updatedItems = [...state.items];
             const existing = updatedItems[existingIndex];
@@ -65,10 +70,8 @@ export const useCartStore = create<CartState>()(
             productId: product.id,
             product,
             quantity,
-            unitPrice: product.promotionalPrice && product.promotionalPrice < product.salePrice
-              ? product.promotionalPrice
-              : product.salePrice,
-            totalPrice: quantity * (product.promotionalPrice && product.promotionalPrice < product.salePrice ? product.promotionalPrice : product.salePrice),
+            unitPrice,
+            totalPrice: quantity * unitPrice,
           };
 
           return { items: [...state.items, newItem] };
