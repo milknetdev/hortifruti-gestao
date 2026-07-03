@@ -93,11 +93,11 @@ export default function FinanceiroPage() {
     setSaving(true);
     try {
       await api.post('/finance', {
-        type: formData.tipo,
+        type: formData.tipo === 'expense' ? 'EXPENSE' : 'INCOME',
         category: formData.categoria,
         description: formData.descricao,
         amount: parseFloat(formData.valor),
-        date: formData.data,
+        dueDate: formData.data ? new Date(formData.data).toISOString() : new Date().toISOString(),
       });
       toast.success('Lançamento criado!');
       setDialogOpen(false);
@@ -264,15 +264,14 @@ export default function FinanceiroPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="income">Receita</SelectItem>
-                  <SelectItem value="expense">Despesa</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                value={formData.tipo}
+                onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              >
+                <option value="income">Receita</option>
+                <option value="expense">Despesa</option>
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Categoria</Label>
