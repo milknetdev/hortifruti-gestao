@@ -51,6 +51,28 @@ export default function AddressesPage() {
     }
   };
 
+  const fetchAddressByCep = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setForm((prev) => ({
+          ...prev,
+          street: data.logradouro || prev.street,
+          neighborhood: data.bairro || prev.neighborhood,
+          city: data.localidade || prev.city,
+          state: data.uf || prev.state,
+          zipCode: cep,
+        }));
+        toast.success('Endereço encontrado!');
+      }
+    } catch {
+      // Ignore errors
+    }
+  };
+
   useEffect(() => {
     fetchAddresses();
   }, []);
@@ -279,6 +301,7 @@ export default function AddressesPage() {
                     type="text"
                     value={form.zipCode}
                     onChange={(e) => setForm({ ...form, zipCode: e.target.value })}
+                    onBlur={(e) => fetchAddressByCep(e.target.value)}
                     placeholder="00000-000"
                     className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                   />
