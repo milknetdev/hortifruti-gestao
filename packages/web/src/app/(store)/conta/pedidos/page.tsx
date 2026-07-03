@@ -17,12 +17,14 @@ interface Order {
 }
 
 const statusMap: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-700' },
-  confirmed: { label: 'Confirmado', color: 'bg-blue-100 text-blue-700' },
-  preparing: { label: 'Preparando', color: 'bg-indigo-100 text-indigo-700' },
-  shipping: { label: 'A Caminho', color: 'bg-purple-100 text-purple-700' },
-  delivered: { label: 'Entregue', color: 'bg-green-100 text-green-700' },
-  cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-700' },
+  PENDING: { label: 'Pendente', color: 'bg-yellow-100 text-yellow-700' },
+  PAID: { label: 'Pago', color: 'bg-blue-100 text-blue-700' },
+  PROCESSING: { label: 'Preparando', color: 'bg-indigo-100 text-indigo-700' },
+  OUT_FOR_DELIVERY: { label: 'A Caminho', color: 'bg-purple-100 text-purple-700' },
+  DELIVERED: { label: 'Entregue', color: 'bg-green-100 text-green-700' },
+  CANCELLED: { label: 'Cancelado', color: 'bg-red-100 text-red-700' },
+  PICKUP_AVAILABLE: { label: 'Pronto para Retirada', color: 'bg-cyan-100 text-cyan-700' },
+  PICKED_UP: { label: 'Retirado', color: 'bg-green-100 text-green-700' },
 };
 
 export default function OrdersPage() {

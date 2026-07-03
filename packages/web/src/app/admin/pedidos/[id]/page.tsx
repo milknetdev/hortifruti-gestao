@@ -140,16 +140,15 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
         <CardContent>
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Atualizar Status:</span>
-            <Select value={currentStatus} onValueChange={setCurrentStatus}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statusOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              className="w-[200px] border rounded-md px-3 py-2 text-sm"
+              value={currentStatus}
+              onChange={(e) => setCurrentStatus(e.target.value)}
+            >
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
             <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleUpdateStatus} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Salvar
