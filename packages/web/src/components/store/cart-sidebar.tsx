@@ -17,7 +17,7 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal, deliveryFee: cartDeliveryFee, setDeliveryFee } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [couponApplied, setCouponApplied] = useState(false);
@@ -28,7 +28,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
   }, []);
 
   const subtotal = getSubtotal();
-  const deliveryFeeAmount = deliveryType === 'delivery' && subtotal < 100 ? 9.90 : 0;
+  const deliveryFeeAmount = deliveryType === 'pickup' ? 0 : (cartDeliveryFee || (subtotal < 100 ? 9.90 : 0));
   const total = subtotal - discount + deliveryFeeAmount;
 
   const handleApplyCoupon = async () => {
@@ -40,8 +40,15 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
       const { data: result } = await api.get(`/coupons/validate/${couponCode.toUpperCase()}?orderTotal=${subtotal}`);
       const data = result?.data || result;
       if (data.valid) {
-        setDiscount(Number(data.discount) || 0);
+        const couponType = data.coupon?.type;
+        if (couponType === 'FREE_SHIPPING' || couponType === 'free_shipping') {
+          setDiscount(0);
+          setDeliveryFee(0);
+        } else {
+          setDiscount(Number(data.discount) || 0);
+        }
         setCouponApplied(true);
+        setCouponCode(couponCode.toUpperCase());
         toast.success('Cupom aplicado!');
       }
     } catch (err: any) {
