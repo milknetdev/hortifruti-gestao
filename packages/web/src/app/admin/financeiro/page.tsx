@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Plus, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, Plus, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -55,6 +55,31 @@ export default function FinanceiroPage() {
   useEffect(() => {
     fetchFinance();
   }, []);
+
+  const handleTogglePaid = async (entry: any) => {
+    try {
+      if (entry.paid) {
+        await api.put(`/finance/${entry.id}`, { paid: false, paidAt: null });
+      } else {
+        await api.put(`/finance/${entry.id}/pay`);
+      }
+      toast.success(entry.paid ? 'Marcado como pendente!' : 'Marcado como pago!');
+      fetchFinance();
+    } catch {
+      toast.error('Erro ao atualizar status');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir?')) return;
+    try {
+      await api.delete(`/finance/${id}`);
+      toast.success('Lançamento excluído!');
+      fetchFinance();
+    } catch {
+      toast.error('Erro ao excluir lançamento');
+    }
+  };
 
   const fetchFinance = async () => {
     try {
@@ -159,10 +184,28 @@ export default function FinanceiroPage() {
     {
       key: 'paid',
       label: 'Status',
-      render: (value) => (
-        <Badge className={cn('border-0', value ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')}>
-          {value ? 'Pago' : 'Pendente'}
-        </Badge>
+      render: (value, row) => (
+        <button
+          onClick={() => handleTogglePaid(row)}
+          className="cursor-pointer"
+        >
+          <Badge className={cn('border-0 hover:opacity-80', value ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700')}>
+            {value ? 'Pago' : 'Pendente'}
+          </Badge>
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      label: 'Ações',
+      render: (value, row) => (
+        <button
+          onClick={() => handleDelete(row.id)}
+          className="text-red-500 hover:text-red-700 p-1"
+          title="Excluir"
+        >
+          <Trash2 size={16} />
+        </button>
       ),
     },
   ];
