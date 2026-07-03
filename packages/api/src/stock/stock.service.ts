@@ -19,7 +19,7 @@ export class StockService {
     ]);
 
     // Buscar usuários separadamente para evitar erro de relation
-    const userIds = [...new Set(items.filter(i => i.userId).map(i => i.userId))];
+    const userIds = Array.from(new Set(items.filter(i => i.userId).map(i => i.userId)));
     let usersMap: Record<string, any> = {};
     if (userIds.length > 0) {
       const users = await this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } });
