@@ -38,7 +38,7 @@ export class OrdersController {
     const tenantId = await this.ordersService.resolveTenantId('');
     const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
     if (!customer) return [];
-    return this.ordersService.findByCustomer(customer.id, tenantId);
+    return this.ordersService.findByCustomer(customer.id);
   }
 
   @Get(':id')
