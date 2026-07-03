@@ -143,10 +143,13 @@ export default function FinanceiroPage() {
 
   const columns: Column<any>[] = [
     {
-      key: 'date',
+      key: 'createdAt',
       label: 'Data',
       sortable: true,
-      render: (v, row) => v ? new Date(v).toLocaleDateString('pt-BR') : (row.data || '-'),
+      render: (v, row) => {
+        const date = v || row.dueDate || row.date;
+        return date ? new Date(date).toLocaleDateString('pt-BR') : '-';
+      },
     },
     {
       key: 'type',
