@@ -99,13 +99,15 @@ export default function CuponsPage() {
     }
     setSaving(true);
     try {
+      const now = new Date().toISOString();
       const payload: any = {
         code: formData.codigo.toUpperCase(),
         type: formData.tipo,
         value: parseFloat(formData.valor) || 0,
         usageLimit: parseInt(formData.limiteUso) || 0,
-        expiresAt: formData.validade,
-        minimumOrder: parseFloat(formData.valorMinimo) || 0,
+        validFrom: now,
+        validUntil: formData.validade ? new Date(formData.validade).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        minOrderValue: parseFloat(formData.valorMinimo) || 0,
       };
       if (editingCoupon) {
         await api.put(`/coupons/${editingCoupon.id}`, payload);
