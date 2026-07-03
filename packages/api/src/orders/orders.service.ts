@@ -82,6 +82,20 @@ export class OrdersService {
     if (couponId) await this.prisma.coupon.update({ where: { id: couponId }, data: { usageCount: { increment: 1 } } });
     if (data.customerId) await this.prisma.customer.update({ where: { id: data.customerId }, data: { totalSpent: { increment: total }, lastOrderAt: new Date() } });
 
+    // Criar lançamento financeiro
+    await this.prisma.financialEntry.create({
+      data: {
+        tenantId: data.tenantId,
+        type: 'INCOME',
+        category: 'Vendas',
+        description: `Pedido #${orderNumber}`,
+        amount: total,
+        paid: false,
+        dueDate: new Date(),
+        orderId: order.id,
+      },
+    });
+
     return order;
   }
 
@@ -128,7 +142,15 @@ export class OrdersService {
       for (const item of items) {
         await this.prisma.product.update({ where: { id: item.productId }, data: { stock: { increment: item.quantity } } });
       }
+      // Cancelar lançamento financeiro
+      await this.prisma.financialEntry.updateMany({ where: { orderId: id }, data: { paid: false } });
     }
+
+    // Marcar lançamento como pago quando o pedido for pago
+    if (status === 'PAID' || status === 'DELIVERED' || status === 'PICKED_UP') {
+      await this.prisma.financialEntry.updateMany({ where: { orderId: id, type: 'INCOME' }, data: { paid: true, paidAt: new Date() } });
+    }
+
     return updated;
   }
 
