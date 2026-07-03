@@ -1,9 +1,7 @@
-import { Controller, Get, Post, Put, Patch, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
-import { TenantGuard } from '../common/guards/tenant.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/create-order.dto';
 
 @ApiTags('Orders')
@@ -12,14 +10,13 @@ export class OrdersController {
   constructor(private ordersService: OrdersService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Listar pedidos' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'status', required: false })
   async findAll(
-    @Req() req: any,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('status') status?: string,
@@ -29,36 +26,56 @@ export class OrdersController {
       limit: Math.min(100, Math.max(1, Number(limit) || 20)),
     };
     if (status) query.status = status;
-    return this.ordersService.findAll(req.tenant.id, query);
+    return this.ordersService.findAll('', query);
   }
 
   @Get('my')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Meus pedidos (cliente)' })
-  async findMyOrders(@CurrentUser('id') userId: string) {
-    return this.ordersService.findByCustomer(userId);
+  @ApiOperation({ summary: 'Meus pedidos' })
+  async findMyOrders(@Req() req: any) {
+    const email = req.user?.email;
+    const tenantId = await this.ordersService.resolveTenantId('');
+    const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
+    if (!customer) return [];
+    return this.ordersService.findByCustomer(customer.id, tenantId);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Buscar pedido por ID' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Detalhes do pedido' })
   async findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(id);
+    return this.ordersService.findOne(id, '');
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar pedido' })
   async create(@Body() dto: CreateOrderDto, @Req() req: any) {
-    const tenantId = req.tenant?.id || req.headers['x-tenant-id'];
-    const userId = req.user?.id;
-    return this.ordersService.create({ ...dto, tenantId, customerId: dto.customerId || userId });
+    const tenantId = await this.ordersService.resolveTenantId('');
+    const email = req.user?.email;
+    
+    // Buscar customer pelo email
+    let customerId = dto.customerId;
+    if (!customerId && email) {
+      const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
+      if (customer) customerId = customer.id;
+    }
+    
+    return this.ordersService.create({ 
+      ...dto, 
+      tenantId, 
+      customerId,
+    });
   }
 
   @Patch(':id/status')
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Atualizar status do pedido' })
-  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @Req() req: any, @CurrentUser('id') userId: string) {
-    return this.ordersService.updateStatus(id, dto.status, req.tenant.id, userId, dto.reason);
+  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @Req() req: any) {
+    return this.ordersService.updateStatus(id, dto.status, '', req.user?.id, dto.reason);
   }
 }
