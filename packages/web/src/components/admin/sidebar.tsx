@@ -61,6 +61,7 @@ const menuGroups: MenuGroup[] = [
       { label: 'Estoque', href: '/admin/estoque', icon: Warehouse },
       { label: 'Financeiro', href: '/admin/financeiro', icon: DollarSign },
       { label: 'Comissões', href: '/admin/comissoes', icon: Percent },
+      { label: 'Indicações', href: '/admin/indicacoes', icon: Users },
       { label: 'Cupons', href: '/admin/cupons', icon: Ticket },
       { label: 'Entregas', href: '/admin/entregas', icon: Truck },
     ],

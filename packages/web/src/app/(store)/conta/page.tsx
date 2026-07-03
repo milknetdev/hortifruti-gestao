@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Package, MapPin, Heart, User, ChevronRight, LogOut } from 'lucide-react';
+import { Package, MapPin, Heart, User, ChevronRight, LogOut, Share2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 
 const quickLinks = [
   { href: '/conta/pedidos', label: 'Meus Pedidos', icon: Package, description: 'Acompanhe seus pedidos' },
   { href: '/conta/enderecos', label: 'Endereços', icon: MapPin, description: 'Gerencie seus endereços' },
   { href: '/conta/favoritos', label: 'Favoritos', icon: Heart, description: 'Seus produtos favoritos' },
+  { href: '/conta/indicacoes', label: 'Indicações', icon: Share2, description: 'Ganhe comissões indicando' },
   { href: '/conta/perfil', label: 'Meu Perfil', icon: User, description: 'Edite seus dados pessoais' },
 ];
 
