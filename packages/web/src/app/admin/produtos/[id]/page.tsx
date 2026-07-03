@@ -21,6 +21,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -233,15 +234,9 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                       const formData = new FormData();
                       formData.append('file', file);
                       try {
-                        const token = localStorage.getItem('hortifruti-admin');
-                        const parsed = token ? JSON.parse(token) : null;
-                        const accessToken = parsed?.state?.accessToken;
-                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/upload`, {
-                          method: 'POST',
-                          headers: { Authorization: 'Bearer ' + accessToken },
-                          body: formData,
+                        const { data: result } = await api.post('/upload', formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' },
                         });
-                        const result = await res.json();
                         if (result?.data?.url) {
                           setImages([...images, result.data.url]);
                           toast.success('Imagem enviada!');
