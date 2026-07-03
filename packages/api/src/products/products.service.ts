@@ -48,14 +48,32 @@ export class ProductsService {
   }
 
   async findFeatured(tenantId: string, limit = 8) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     return this.prisma.product.findMany({ where: { tenantId, featured: true, active: true, available: true }, take: limit, include: { category: true } });
   }
 
   async findPromotional(tenantId: string, limit = 8) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     return this.prisma.product.findMany({ where: { tenantId, promotional: true, active: true, available: true }, take: limit, include: { category: true } });
   }
 
   async findBestSellers(tenantId: string, limit = 8) {
+    // Se não enviou tenantId, pega o primeiro tenant
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) tenantId = tenant.id;
+    }
+
     return this.prisma.product.findMany({ where: { tenantId, active: true, available: true }, take: limit, include: { category: true } });
   }
 
