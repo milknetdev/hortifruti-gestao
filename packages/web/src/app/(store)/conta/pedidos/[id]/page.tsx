@@ -53,11 +53,11 @@ interface OrderDetail {
 }
 
 const statusSteps = [
-  { key: 'pending', label: 'Pendente', icon: Clock },
-  { key: 'confirmed', label: 'Confirmado', icon: CheckCircle2 },
-  { key: 'preparing', label: 'Preparando', icon: Package },
-  { key: 'shipping', label: 'A Caminho', icon: Truck },
-  { key: 'delivered', label: 'Entregue', icon: CheckCircle2 },
+  { key: 'PENDING', label: 'Pendente', icon: Clock },
+  { key: 'PAID', label: 'Confirmado', icon: CheckCircle2 },
+  { key: 'PROCESSING', label: 'Preparando', icon: Package },
+  { key: 'OUT_FOR_DELIVERY', label: 'A Caminho', icon: Truck },
+  { key: 'DELIVERED', label: 'Entregue', icon: CheckCircle2 },
 ];
 
 const paymentLabels: Record<string, string> = {
@@ -114,7 +114,7 @@ export default function OrderDetailPage() {
   }
 
   const currentStepIndex = statusSteps.findIndex((s) => s.key === order.status);
-  const isCancelled = order.status === 'cancelled';
+  const isCancelled = order.status === 'CANCELLED';
 
   return (
     <div className="container mx-auto px-4 py-8">
