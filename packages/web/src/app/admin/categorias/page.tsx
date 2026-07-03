@@ -58,10 +58,10 @@ export default function CategoriasPage() {
     if (cat) {
       setEditingCategory(cat);
       setFormData({
-        nome: cat.name || cat.nome || '',
-        categoriaPai: cat.parentCategory?.name || cat.parentName || '',
-        icone: cat.icon || cat.imagem || '',
-        ordem: String(cat.order || cat.ordem || 0),
+        nome: cat.name || '',
+        categoriaPai: cat.parentId || '',
+        icone: cat.icon || '',
+        ordem: String(cat.sortOrder || 0),
       });
     } else {
       setEditingCategory(null);
@@ -79,9 +79,9 @@ export default function CategoriasPage() {
     try {
       const payload: any = {
         name: formData.nome,
-        order: parseInt(formData.ordem) || 0,
+        sortOrder: parseInt(formData.ordem) || 0,
       };
-      if (formData.categoriaPai) payload.parentName = formData.categoriaPai;
+      if (formData.categoriaPai) payload.parentId = formData.categoriaPai;
       if (formData.icone) payload.icon = formData.icone;
 
       if (editingCategory) {
