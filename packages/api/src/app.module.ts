@@ -13,6 +13,7 @@ import { OrdersModule } from './orders/orders.module';
 import { StockModule } from './stock/stock.module';
 import { FinanceModule } from './finance/finance.module';
 import { CommissionsModule } from './commissions/commissions.module';
+import { ReferralModule } from './referral/referral.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { PaymentsModule } from './payments/payments.module';
@@ -39,6 +40,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     StockModule,
     FinanceModule,
     CommissionsModule,
+    ReferralModule,
     CouponsModule,
     DeliveryModule,
     PaymentsModule,

@@ -57,10 +57,17 @@ export class OrdersService {
     const orderNumber = (lastOrder?.orderNumber || 0) + 1;
     const total = subtotal - discount + Number(data.deliveryFee || 0);
 
+    // Find referrer by referral code
+    let referredBy = null;
+    if (data.referralCode) {
+      const referrer = await this.prisma.user.findFirst({ where: { referralCode: data.referralCode, active: true } });
+      if (referrer) referredBy = referrer.id;
+    }
+
     const order = await this.prisma.order.create({
       data: {
         tenantId: data.tenantId, customerId: data.customerId, addressId: data.addressId,
-        userId: data.userId, orderNumber, status: 'PENDING',
+        userId: data.userId, referredBy, orderNumber, status: 'PENDING',
         deliveryType: data.deliveryType || 'DELIVERY', paymentMethod: data.paymentMethod || 'PIX',
         subtotal, deliveryFee: data.deliveryFee || 0, discount, total,
         couponId, couponCode: data.couponCode, notes: data.notes,
@@ -149,6 +156,30 @@ export class OrdersService {
     // Marcar lançamento como pago quando o pedido for pago
     if (status === 'PAID' || status === 'DELIVERED' || status === 'PICKED_UP') {
       await this.prisma.financialEntry.updateMany({ where: { orderId: id, type: 'INCOME' }, data: { paid: true, paidAt: new Date() } });
+
+      // Create commission for referrer
+      if (updated.referredBy) {
+        const referrer = await this.prisma.user.findUnique({ where: { id: updated.referredBy } });
+        if (referrer) {
+          const commissionRate = Number(referrer.commissionRate || 10) / 100;
+          const commissionValue = Number(updated.total) * commissionRate;
+          
+          await this.prisma.commission.create({
+            data: {
+              tenantId: updated.tenantId,
+              userId: updated.referredBy,
+              type: 'PERCENTAGE',
+              value: referrer.commissionRate || 10,
+              percent: referrer.commissionRate || 10,
+              orderId: id,
+              orderValue: updated.total,
+              commissionValue,
+              period: new Date().toISOString().substring(0, 7), // YYYY-MM
+              notes: `Comissão do Pedido #${updated.orderNumber}`,
+            },
+          });
+        }
+      }
     }
 
     return updated;

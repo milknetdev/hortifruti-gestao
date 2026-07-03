@@ -77,6 +77,8 @@ model User {
   avatar          String?
   role            String    @default("EMPLOYEE")
   active          Boolean   @default(true)
+  referralCode    String?   @unique
+  commissionRate  Decimal?  @default(10)
   lastLoginAt     DateTime?
   refreshToken    String?
   createdAt       DateTime  @default(now())
@@ -84,7 +86,8 @@ model User {
 
   tenant          Tenant?   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   permissions     UserPermission[]
-  orders          Order[]
+  orders          Order[]        @relation("OrderUser")
+  referredOrders  Order[]        @relation("OrderReferrer")
   commissions     Commission[]
   stockMovements  StockMovement[]
   auditLogs       AuditLog[]
@@ -265,6 +268,7 @@ model Order {
   customerId      String?
   addressId       String?
   userId          String?
+  referredBy      String?
   orderNumber     Int
   status          String   @default("PENDING")
   deliveryType    String   @default("DELIVERY")
@@ -290,7 +294,8 @@ model Order {
   tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer        Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
   address         Address?       @relation(fields: [addressId], references: [id], onDelete: SetNull)
-  user            User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user            User?          @relation("OrderUser", fields: [userId], references: [id], onDelete: SetNull)
+  referrer        User?          @relation("OrderReferrer", fields: [referredBy], references: [id], onDelete: SetNull)
   items           OrderItem[]
   statusHistory   OrderStatusHistory[]
   coupon          Coupon?        @relation(fields: [couponId], references: [id], onDelete: SetNull)

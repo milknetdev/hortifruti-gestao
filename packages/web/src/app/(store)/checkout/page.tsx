@@ -127,6 +127,12 @@ export default function CheckoutPage() {
 
     setLoading(true);
     try {
+      // Get referral code from cookie
+      const referralCode = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('referral_code='))
+        ?.split('=')[1];
+
       await api.post('/orders', {
         items: items.map((item) => ({ 
           productId: item.productId || item.id, 
@@ -135,6 +141,7 @@ export default function CheckoutPage() {
         deliveryType,
         paymentMethod,
         notes: notes || undefined,
+        referralCode: referralCode || undefined,
       });
       clearCart();
       toast.success('Pedido realizado com sucesso!');
