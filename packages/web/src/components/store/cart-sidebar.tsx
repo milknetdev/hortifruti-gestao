@@ -21,6 +21,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const [couponCode, setCouponCode] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [couponApplied, setCouponApplied] = useState(false);
+  const [freeShipping, setFreeShipping] = useState(false);
   const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
@@ -28,7 +29,8 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
   }, []);
 
   const subtotal = getSubtotal();
-  const deliveryFeeAmount = deliveryType === 'pickup' ? 0 : (cartDeliveryFee || (subtotal < 100 ? 9.90 : 0));
+  const baseDeliveryFee = subtotal >= 100 ? 0 : 9.90;
+  const deliveryFeeAmount = deliveryType === 'pickup' ? 0 : (freeShipping ? 0 : baseDeliveryFee);
   const total = subtotal - discount + deliveryFeeAmount;
 
   const handleApplyCoupon = async () => {
@@ -43,7 +45,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
         const couponType = data.coupon?.type;
         if (couponType === 'FREE_SHIPPING' || couponType === 'free_shipping') {
           setDiscount(0);
-          setDeliveryFee(0);
+          setFreeShipping(true);
         } else {
           setDiscount(Number(data.discount) || 0);
         }
@@ -257,16 +259,12 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                       <span>-{formatCurrency(discount)}</span>
                     </div>
                   )}
-                  {deliveryFeeAmount > 0 && (
+                  {deliveryType === 'delivery' && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Frete</span>
-                      <span>{formatCurrency(deliveryFeeAmount)}</span>
-                    </div>
-                  )}
-                  {deliveryType === 'delivery' && subtotal >= 100 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Frete</span>
-                      <span>Grátis</span>
+                      <span className={freeShipping || deliveryFeeAmount === 0 ? 'text-green-600' : 'text-gray-600'}>Frete</span>
+                      <span className={freeShipping || deliveryFeeAmount === 0 ? 'text-green-600' : ''}>
+                        {deliveryFeeAmount > 0 ? formatCurrency(deliveryFeeAmount) : 'Grátis'}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between font-bold text-base pt-2 border-t">
