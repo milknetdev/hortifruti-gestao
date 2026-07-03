@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,53 +18,80 @@ import {
   Heart,
   Pencil,
   Save,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
-const customerData = {
-  id: 1,
-  nome: 'Maria Silva',
-  email: 'maria@email.com',
-  telefone: '(11) 99999-8888',
-  cpf: '123.456.789-00',
-  dataNascimento: '15/03/1990',
-  dataCadastro: '10/01/2025',
-  status: 'Ativo',
-  totalGasto: 'R$ 1.250,00',
-  totalPedidos: 15,
-  enderecos: [
-    { id: 1, principal: true, rua: 'Rua das Flores, 123', bairro: 'Centro', cidade: 'São Paulo', cep: '01234-567', complemento: 'Apto 42' },
-    { id: 2, principal: false, rua: 'Av. Paulista, 1000', bairro: 'Bela Vista', cidade: 'São Paulo', cep: '01310-100', complemento: 'Sala 501' },
-  ],
-  pedidosRecentes: [
-    { id: '#1234', data: '28/06/2026', total: 'R$ 127,50', status: 'Pago' },
-    { id: '#1220', data: '20/06/2026', total: 'R$ 89,90', status: 'Entregue' },
-    { id: '#1205', data: '12/06/2026', total: 'R$ 234,00', status: 'Entregue' },
-    { id: '#1190', data: '05/06/2026', total: 'R$ 56,70', status: 'Entregue' },
-  ],
-  favoritos: [
-    { nome: 'Tomate Italiano', preco: 'R$ 8,90/kg' },
-    { nome: 'Banana Prata', preco: 'R$ 6,50/kg' },
-    { nome: 'Maçã Fuji', preco: 'R$ 12,90/kg' },
-  ],
-};
-
-const statusColors: Record<string, string> = {
-  'Pago': 'bg-blue-100 text-blue-700',
-  'Entregue': 'bg-green-100 text-green-700',
-  'Pendente': 'bg-yellow-100 text-yellow-700',
-  'Cancelado': 'bg-red-100 text-red-700',
-};
-
-export default function ClienteDetailPage({ params }: { params: { id: string } }) {
+export default function ClienteDetailPage() {
   const router = useRouter();
+  const params = useParams();
+  const customerId = params.id as string;
+
+  const [customer, setCustomer] = useState<any>(null);
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    nome: customerData.nome,
-    email: customerData.email,
-    telefone: customerData.telefone,
-    cpf: customerData.cpf,
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', cpf: '' });
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [customerId]);
+
+  const fetchCustomer = async () => {
+    try {
+      const { data: result } = await api.get(`/customers/${customerId}`);
+      const data = result?.data || result;
+      setCustomer(data);
+      setFormData({
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        cpf: data.cpf || '',
+      });
+
+      // Fetch addresses
+      try {
+        const { data: addrResult } = await api.get(`/customers/${customerId}/addresses`);
+        setAddresses(Array.isArray(addrResult?.data) ? addrResult.data : (Array.isArray(addrResult) ? addrResult : []));
+      } catch {
+        setAddresses([]);
+      }
+    } catch {
+      toast.error('Erro ao carregar cliente');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await api.put(`/customers/${customerId}`, formData);
+      toast.success('Cliente atualizado!');
+      setEditing(false);
+      fetchCustomer();
+    } catch {
+      toast.error('Erro ao atualizar cliente');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin text-green-600" size={32} />
+      </div>
+    );
+  }
+
+  if (!customer) {
+    return (
+      <div className="text-center py-16">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Cliente não encontrado</h2>
+        <Button onClick={() => router.back()}>Voltar</Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -73,10 +100,12 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{customerData.nome}</h1>
-          <p className="text-gray-500">Cliente desde {customerData.dataCadastro}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
+          <p className="text-gray-500">Cliente desde {new Date(customer.createdAt).toLocaleDateString('pt-BR')}</p>
         </div>
-        <Badge className="ml-auto bg-green-100 text-green-700 border-0">{customerData.status}</Badge>
+        <Badge className={cn('ml-auto border-0', customer.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500')}>
+          {customer.active ? 'Ativo' : 'Inativo'}
+        </Badge>
       </div>
 
       {/* Summary Cards */}
@@ -84,19 +113,21 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-gray-500">Total Gasto</p>
-            <p className="text-2xl font-bold text-[#16a34a]">{customerData.totalGasto}</p>
+            <p className="text-2xl font-bold text-[#16a34a]">R$ {Number(customer.totalSpent || 0).toFixed(2)}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-gray-500">Total de Pedidos</p>
-            <p className="text-2xl font-bold text-gray-900">{customerData.totalPedidos}</p>
+            <p className="text-2xl font-bold text-gray-900">{customer._count?.orders || 0}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-gray-500">Ticket Médio</p>
-            <p className="text-2xl font-bold text-gray-900">R$ 83,33</p>
+            <p className="text-2xl font-bold text-gray-900">
+              R$ {customer._count?.orders ? (Number(customer.totalSpent || 0) / customer._count.orders).toFixed(2) : '0.00'}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -105,8 +136,6 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
         <TabsList>
           <TabsTrigger value="info">Informações</TabsTrigger>
           <TabsTrigger value="enderecos">Endereços</TabsTrigger>
-          <TabsTrigger value="pedidos">Pedidos</TabsTrigger>
-          <TabsTrigger value="favoritos">Favoritos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info" className="mt-6">
@@ -117,7 +146,7 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => editing ? setEditing(false) : setEditing(true)}
+                  onClick={() => editing ? handleSave() : setEditing(true)}
                 >
                   {editing ? <><Save className="w-4 h-4 mr-2" />Salvar</> : <><Pencil className="w-4 h-4 mr-2" />Editar</>}
                 </Button>
@@ -128,9 +157,9 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
                 <div className="space-y-2">
                   <Label>Nome</Label>
                   {editing ? (
-                    <Input value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} />
+                    <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                   ) : (
-                    <p className="text-gray-900">{customerData.nome}</p>
+                    <p className="text-gray-900">{customer.name}</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -140,28 +169,24 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
                   ) : (
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4 text-gray-400" />
-                      <p className="text-gray-900">{customerData.email}</p>
+                      <p className="text-gray-900">{customer.email}</p>
                     </div>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label>Telefone</Label>
                   {editing ? (
-                    <Input value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} />
+                    <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                   ) : (
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-gray-400" />
-                      <p className="text-gray-900">{customerData.telefone}</p>
+                      <p className="text-gray-900">{customer.phone || '-'}</p>
                     </div>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label>CPF</Label>
-                  <p className="text-gray-900">{customerData.cpf}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Data de Nascimento</Label>
-                  <p className="text-gray-900">{customerData.dataNascimento}</p>
+                  <p className="text-gray-900">{customer.cpf || '-'}</p>
                 </div>
               </div>
             </CardContent>
@@ -169,75 +194,36 @@ export default function ClienteDetailPage({ params }: { params: { id: string } }
         </TabsContent>
 
         <TabsContent value="enderecos" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {customerData.enderecos.map((end) => (
-              <Card key={end.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-gray-900">{end.rua}</p>
-                        <p className="text-sm text-gray-500">{end.complemento}</p>
-                        <p className="text-sm text-gray-500">{end.bairro} - {end.cidade}</p>
-                        <p className="text-sm text-gray-500">CEP: {end.cep}</p>
+          {addresses.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <MapPin className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p>Nenhum endereço cadastrado</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {addresses.map((addr: any) => (
+                <Card key={addr.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-gray-900">{addr.label || 'Endereço'}</p>
+                          <p className="text-sm text-gray-500">{addr.street}, {addr.number}</p>
+                          {addr.complement && <p className="text-sm text-gray-500">{addr.complement}</p>}
+                          <p className="text-sm text-gray-500">{addr.neighborhood} - {addr.city}/{addr.state}</p>
+                          <p className="text-sm text-gray-500">CEP: {addr.zipCode}</p>
+                        </div>
                       </div>
+                      {addr.isDefault && (
+                        <Badge className="bg-[#16a34a]/10 text-[#16a34a] border-0">Principal</Badge>
+                      )}
                     </div>
-                    {end.principal && (
-                      <Badge className="bg-[#16a34a]/10 text-[#16a34a] border-0">Principal</Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="pedidos" className="mt-6">
-          <Card>
-            <CardContent className="p-0">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">#</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Data</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Total</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customerData.pedidosRecentes.map((pedido) => (
-                    <tr key={pedido.id} className="border-b last:border-0 hover:bg-gray-50 cursor-pointer">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{pedido.id}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{pedido.data}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{pedido.total}</td>
-                      <td className="px-4 py-3">
-                        <Badge className={cn('border-0', statusColors[pedido.status])}>
-                          {pedido.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="favoritos" className="mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {customerData.favoritos.map((fav, i) => (
-              <Card key={i}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <Heart className="w-5 h-5 text-red-400 fill-red-400" />
-                  <div>
-                    <p className="font-medium text-gray-900">{fav.nome}</p>
-                    <p className="text-sm text-gray-500">{fav.preco}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

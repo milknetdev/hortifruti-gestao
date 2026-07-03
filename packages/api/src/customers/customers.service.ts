@@ -43,7 +43,13 @@ export class CustomersService {
 
   async findOne(id: string, tenantId: string) {
     tenantId = await this.resolveTenantId(tenantId);
-    const customer = await this.prisma.customer.findFirst({ where: { id, tenantId }, include: { addresses: true } });
+    const customer = await this.prisma.customer.findFirst({ 
+      where: { id, tenantId }, 
+      include: { 
+        addresses: true,
+        _count: { select: { orders: true, favorites: true } }
+      } 
+    });
     if (!customer) throw new NotFoundException('Cliente não encontrado');
     const { password, ...result } = customer as any;
     return result;
