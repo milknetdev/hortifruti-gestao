@@ -189,7 +189,7 @@ export default function ProdutosPage() {
             data={filteredProducts}
             columns={columns}
             pageSize={15}
-            currentPage={page}
+            page={page}
             totalPages={Math.ceil(filteredProducts.length / 15)}
             totalItems={filteredProducts.length}
             onPageChange={setPage}

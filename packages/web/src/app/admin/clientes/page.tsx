@@ -103,7 +103,7 @@ export default function ClientesPage() {
             data={customers}
             columns={columns}
             pageSize={15}
-            currentPage={page}
+            page={page}
             totalPages={Math.ceil(customers.length / 15)}
             totalItems={customers.length}
             onPageChange={setPage}
