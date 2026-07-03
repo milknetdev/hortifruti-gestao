@@ -5,7 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class CouponsService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async create(data: any, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const code = data.code.toUpperCase();
     const exists = await this.prisma.coupon.findFirst({ where: { code, tenantId } });
     if (exists) throw new ConflictException('Cupom já existe');
@@ -13,8 +22,9 @@ export class CouponsService {
   }
 
   async findAll(tenantId: string, query?: any) {
-    const page = query?.page || 1;
-    const limit = query?.limit || 20;
+    tenantId = await this.resolveTenantId(tenantId);
+    const page = Number(query?.page) || 1;
+    const limit = Number(query?.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
     if (query?.active !== undefined) where.active = query.active === 'true';
@@ -26,6 +36,7 @@ export class CouponsService {
   }
 
   async findOne(id: string, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const coupon = await this.prisma.coupon.findFirst({ where: { id, tenantId } });
     if (!coupon) throw new NotFoundException('Cupom não encontrado');
     return coupon;
