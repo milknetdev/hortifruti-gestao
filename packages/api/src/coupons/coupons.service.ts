@@ -43,6 +43,7 @@ export class CouponsService {
   }
 
   async validate(code: string, tenantId: string, orderTotal: number = 0) {
+    tenantId = await this.resolveTenantId(tenantId);
     const coupon = await this.prisma.coupon.findFirst({ where: { code: code.toUpperCase(), tenantId, active: true } });
     if (!coupon) throw new NotFoundException('Cupom inválido');
     if (coupon.validFrom > new Date()) throw new ConflictException('Cupom ainda não válido');
