@@ -42,6 +42,34 @@ export class DashboardService {
       include: { customer: { select: { name: true } }, items: { select: { productName: true, quantity: true } } },
     });
 
+    // Vendas dos últimos 30 dias
+    const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const salesData = await this.prisma.order.findMany({
+      where: { tenantId, status: { not: 'CANCELLED' }, createdAt: { gte: last30Days } },
+      select: { createdAt: true, total: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const salesChart: Array<{ day: string; sales: number; orders: number }> = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dateStr = date.toISOString().split('T')[0];
+      const dayOrders = salesData.filter(o => o.createdAt.toISOString().split('T')[0] === dateStr);
+      salesChart.push({
+        day: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        sales: dayOrders.reduce((sum, o) => sum + Number(o.total), 0),
+        orders: dayOrders.length,
+      });
+    }
+
+    // Pedidos por status
+    const statusCounts = await this.prisma.order.groupBy({
+      by: ['status'],
+      where: { tenantId },
+      _count: { id: true },
+    });
+    const ordersByStatus = statusCounts.map(s => ({ status: s.status, count: s._count.id }));
+
     const lowStockProducts = await this.prisma.product.findMany({
       where: { tenantId, active: true }, select: { id: true, name: true, stock: true, minStock: true },
     });
@@ -52,6 +80,7 @@ export class DashboardService {
       outOfStock: lowStockProducts.filter((p) => p.stock === 0).length,
       lowStock: lowStock.length,
       monthRevenue, monthProfit, totalCustomers, totalEmployees,
+      salesChart, ordersByStatus,
       recentOrders, lowStockAlerts: lowStock.slice(0, 5),
     };
   }
