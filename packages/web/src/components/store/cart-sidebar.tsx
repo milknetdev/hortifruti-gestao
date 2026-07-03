@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Minus, Trash2, ShoppingCart, Tag, Truck, Store } from 'lucide-react';
 import { useCartStore } from '@/stores/cart-store';
 import { formatCurrency, cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface CartSidebarProps {
@@ -30,18 +31,22 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const deliveryFeeAmount = deliveryType === 'delivery' && subtotal < 100 ? 9.90 : 0;
   const total = subtotal - discount + deliveryFeeAmount;
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error('Digite um cupom válido');
       return;
     }
-    // Simulated coupon logic
-    if (couponCode.toUpperCase() === 'FRUTAS10') {
-      setDiscount(subtotal * 0.1);
-      setCouponApplied(true);
-      toast.success('Cupom aplicado! 10% de desconto');
-    } else {
-      toast.error('Cupom inválido ou expirado');
+    try {
+      const { data: result } = await api.get(`/coupons/validate/${couponCode.toUpperCase()}?orderTotal=${subtotal}`);
+      const data = result?.data || result;
+      if (data.valid) {
+        setDiscount(Number(data.discount) || 0);
+        setCouponApplied(true);
+        toast.success('Cupom aplicado!');
+      }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Cupom inválido ou expirado';
+      toast.error(message);
     }
   };
 
