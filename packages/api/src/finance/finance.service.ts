@@ -5,11 +5,21 @@ import { PrismaService } from '../prisma/prisma.service';
 export class FinanceService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async create(data: any, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.financialEntry.create({ data: { ...data, tenantId } });
   }
 
   async findAll(tenantId: string, query: any) {
+    tenantId = await this.resolveTenantId(tenantId);
     const page = query.page || 1;
     const limit = query.limit || 50;
     const skip = (page - 1) * limit;
@@ -30,6 +40,7 @@ export class FinanceService {
   }
 
   async getSummary(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());

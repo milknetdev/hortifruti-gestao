@@ -2,38 +2,36 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
-import { TenantGuard } from '../common/guards/tenant.guard';
-import { CurrentTenant } from '../common/decorators/tenant.decorator';
 
 @ApiTags('Finance')
 @Controller('finance')
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class FinanceController {
   constructor(private financeService: FinanceService) {}
 
   @Post()
   @ApiOperation({ summary: 'Criar lançamento' })
-  create(@Body() data: any, @CurrentTenant() tenant: any) {
-    return this.financeService.create(data, tenant.id);
+  create(@Body() data: any) {
+    return this.financeService.create(data, '');
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar lançamentos' })
-  findAll(@Query() query: any, @CurrentTenant() tenant: any) {
-    return this.financeService.findAll(tenant.id, query);
+  findAll(@Query() query: any) {
+    return this.financeService.findAll('', query);
   }
 
   @Get('summary')
   @ApiOperation({ summary: 'Resumo financeiro' })
-  getSummary(@CurrentTenant() tenant: any) {
-    return this.financeService.getSummary(tenant.id);
+  getSummary() {
+    return this.financeService.getSummary('');
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Atualizar lançamento' })
-  update(@Param('id') id: string, @Body() data: any, @CurrentTenant() tenant: any) {
-    return this.financeService.update(id, data, tenant.id);
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.financeService.update(id, data, '');
   }
 
   @Put(':id/pay')
