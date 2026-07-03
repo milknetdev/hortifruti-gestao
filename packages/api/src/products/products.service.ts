@@ -98,10 +98,31 @@ export class ProductsService {
   }
 
   async update(id: string, data: any, tenantId: string) {
-    await this.findOne(id, tenantId);
+    const product = await this.findOne(id, tenantId);
+    
+    // Calculate profit margin if both prices are provided
     if (data.costPrice && data.salePrice) {
       data.profitMargin = ((data.salePrice - data.costPrice) / data.costPrice * 100).toFixed(2);
     }
+
+    // Track stock changes
+    if (data.stock !== undefined && data.stock !== product.stock) {
+      const diff = data.stock - product.stock;
+      const movementType = diff > 0 ? 'ENTRY' : 'EXIT';
+      
+      await this.prisma.stockMovement.create({
+        data: {
+          tenantId,
+          productId: id,
+          type: movementType,
+          quantity: diff,
+          previousQty: product.stock,
+          newQty: data.stock,
+          reason: 'Atualização via edição de produto',
+        },
+      });
+    }
+
     return this.prisma.product.update({ where: { id }, data });
   }
 
