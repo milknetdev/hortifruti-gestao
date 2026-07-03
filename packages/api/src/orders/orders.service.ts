@@ -86,8 +86,9 @@ export class OrdersService {
   }
 
   async findAll(tenantId: string, query: any) {
-    const page = query.page || 1;
-    const limit = query.limit || 20;
+    tenantId = await this.resolveTenantId(tenantId);
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
     if (query.status) where.status = query.status;
@@ -101,6 +102,7 @@ export class OrdersService {
   }
 
   async findOne(id: string, tenantId?: string) {
+    tenantId = await this.resolveTenantId(tenantId || '');
     const where: any = { id };
     if (tenantId) where.tenantId = tenantId;
     const order = await this.prisma.order.findFirst({ where, include: { customer: true, address: true, items: true, statusHistory: { orderBy: { createdAt: 'asc' } } } });
