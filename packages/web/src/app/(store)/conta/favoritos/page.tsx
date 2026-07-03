@@ -16,8 +16,8 @@ export default function FavoritesPage() {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const { data } = await api.get('/favorites');
-        setFavorites(Array.isArray(data) ? data : data?.items || []);
+        const { data: result } = await api.get('/favorites');
+        setFavorites(Array.isArray(result.data) ? result.data : (Array.isArray(result) ? result : []));
       } catch {
         setFavorites([]);
       } finally {

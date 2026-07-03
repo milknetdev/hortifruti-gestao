@@ -14,10 +14,24 @@ export class StockService {
     if (query.type) where.type = query.type;
 
     const [items, total] = await Promise.all([
-      this.prisma.stockMovement.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { product: { select: { id: true, name: true, sku: true, mainImage: true } }, user: { select: { id: true, name: true } } } }),
+      this.prisma.stockMovement.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { product: { select: { id: true, name: true, sku: true, mainImage: true, stock: true, minStock: true } } } }),
       this.prisma.stockMovement.count({ where }),
     ]);
-    return { data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+
+    // Buscar usuários separadamente para evitar erro de relation
+    const userIds = [...new Set(items.filter(i => i.userId).map(i => i.userId))];
+    let usersMap: Record<string, any> = {};
+    if (userIds.length > 0) {
+      const users = await this.prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } });
+      usersMap = Object.fromEntries(users.map(u => [u.id, u]));
+    }
+
+    const enrichedItems = items.map(item => ({
+      ...item,
+      user: item.userId ? usersMap[item.userId] || null : null,
+    }));
+
+    return { data: enrichedItems, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async addStock(productId: string, quantity: number, tenantId: string, userId?: string, costPrice?: number, reason?: string) {
