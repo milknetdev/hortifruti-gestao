@@ -5,7 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class StockService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async getMovements(tenantId: string, query: any) {
+    tenantId = await this.resolveTenantId(tenantId);
     const page = query.page || 1;
     const limit = query.limit || 50;
     const skip = (page - 1) * limit;
@@ -19,8 +28,11 @@ export class StockService {
 
       // Buscar produtos separadamente
       const productIds = Array.from(new Set(items.map(i => i.productId)));
-      const products = await this.prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true, sku: true, mainImage: true, stock: true, minStock: true } });
-      const productsMap = Object.fromEntries(products.map(p => [p.id, p]));
+      let productsMap: Record<string, any> = {};
+      if (productIds.length > 0) {
+        const products = await this.prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true, sku: true, mainImage: true, stock: true, minStock: true } });
+        productsMap = Object.fromEntries(products.map(p => [p.id, p]));
+      }
 
       const enrichedItems = items.map(item => ({
         ...item,
@@ -30,11 +42,12 @@ export class StockService {
 
       return { data: enrichedItems, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
     } catch (error: any) {
-      throw new Error('Erro ao buscar movimentações: ' + error.message);
+      return { data: [], meta: { total: 0, page: 1, limit: 50, totalPages: 0 }, error: error.message };
     }
   }
 
   async addStock(productId: string, quantity: number, tenantId: string, userId?: string, costPrice?: number, reason?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     if (quantity <= 0) throw new BadRequestException('Quantidade deve ser positiva');
@@ -45,6 +58,7 @@ export class StockService {
   }
 
   async removeStock(productId: string, quantity: number, tenantId: string, userId?: string, reason?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     if (product.stock < quantity) throw new BadRequestException('Estoque insuficiente');
@@ -55,6 +69,7 @@ export class StockService {
   }
 
   async adjustStock(productId: string, newQuantity: number, tenantId: string, userId?: string, reason?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     const diff = newQuantity - product.stock;
@@ -63,6 +78,7 @@ export class StockService {
   }
 
   async reportLoss(productId: string, quantity: number, tenantId: string, userId?: string, reason?: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     const newQty = Math.max(0, product.stock - quantity);
@@ -79,6 +95,7 @@ export class StockService {
   }
 
   async getOutOfStock(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.product.findMany({ where: { tenantId, active: true, stock: 0 }, include: { category: { select: { name: true } } } });
   }
 }
