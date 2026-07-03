@@ -29,18 +29,35 @@ const typeColors: Record<string, string> = {
   'Percentual': 'bg-blue-100 text-blue-700',
   'Valor Fixo': 'bg-purple-100 text-purple-700',
   'Frete Grátis': 'bg-green-100 text-green-700',
+  'PERCENTAGE': 'bg-blue-100 text-blue-700',
+  'FIXED': 'bg-purple-100 text-purple-700',
+  'FREE_SHIPPING': 'bg-green-100 text-green-700',
   'percentage': 'bg-blue-100 text-blue-700',
   'fixed': 'bg-purple-100 text-purple-700',
   'free_shipping': 'bg-green-100 text-green-700',
 };
 
+const typeLabels: Record<string, string> = {
+  'PERCENTAGE': 'Porcentagem',
+  'FIXED': 'Valor Fixo',
+  'FREE_SHIPPING': 'Frete Grátis',
+  'percentage': 'Porcentagem',
+  'fixed': 'Valor Fixo',
+  'free_shipping': 'Frete Grátis',
+  'Valor Fixo': 'Valor Fixo',
+  'Frete Grátis': 'Frete Grátis',
+};
+
 const statusColors: Record<string, string> = {
-  'Ativo': 'bg-green-100 text-green-700',
-  'Expirado': 'bg-gray-100 text-gray-700',
-  'Esgotado': 'bg-yellow-100 text-yellow-700',
   'active': 'bg-green-100 text-green-700',
   'expired': 'bg-gray-100 text-gray-700',
   'exhausted': 'bg-yellow-100 text-yellow-700',
+};
+
+const statusLabels: Record<string, string> = {
+  'active': 'Ativo',
+  'expired': 'Expirado',
+  'exhausted': 'Esgotado',
 };
 
 export default function CuponsPage() {
@@ -152,7 +169,7 @@ export default function CuponsPage() {
       label: 'Tipo',
       render: (value, row) => {
         const v = value || row.tipo;
-        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{v}</Badge>;
+        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{typeLabels[v] || v}</Badge>;
       },
     },
     {
