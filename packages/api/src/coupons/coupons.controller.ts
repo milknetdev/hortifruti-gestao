@@ -24,8 +24,8 @@ export class CouponsController {
 
   @Get('validate/:code')
   @ApiOperation({ summary: 'Validar cupom' })
-  validate(@Param('code') code: string) {
-    return this.couponsService.validate(code, '');
+  validate(@Param('code') code: string, @Query('orderTotal') orderTotal?: string) {
+    return this.couponsService.validate(code, '', Number(orderTotal) || 0);
   }
 
   @Get(':id')
