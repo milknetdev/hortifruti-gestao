@@ -13,7 +13,7 @@ interface Order {
   status: string;
   createdAt: string;
   total: number;
-  items: { name: string; quantity: number }[];
+  items: { name?: string; productName?: string; quantity: number }[];
 }
 
 const statusMap: Record<string, { label: string; color: string }> = {
