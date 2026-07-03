@@ -47,8 +47,13 @@ export class CreateOrderDto {
   @ApiPropertyOptional({ example: 'Sem cebola, por favor' })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(200)
   notes?: string;
+
+  @ApiPropertyOptional({ example: 'A1B2C3D4' })
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }
 
 export class UpdateOrderStatusDto {
