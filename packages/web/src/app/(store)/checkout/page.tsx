@@ -15,6 +15,7 @@ import {
   PackageCheck,
   ArrowLeft,
   Plus,
+  X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '@/stores/cart-store';
@@ -38,6 +39,8 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [showAddresses, setShowAddresses] = useState(false);
 
   const [address, setAddress] = useState({
     street: '',
@@ -48,6 +51,36 @@ export default function CheckoutPage() {
     state: '',
     zipCode: '',
   });
+
+  const fetchSavedAddresses = async () => {
+    try {
+      const userStr = localStorage.getItem('hortifruti-auth');
+      if (!userStr) return;
+      const parsed = JSON.parse(userStr);
+      const userId = parsed?.state?.user?.id;
+      if (!userId) return;
+      const { data: result } = await api.get(`/addresses`);
+      const addresses = result?.data || result || [];
+      setSavedAddresses(Array.isArray(addresses) ? addresses : []);
+      setShowAddresses(true);
+    } catch {
+      toast.error('Erro ao carregar endereços');
+    }
+  };
+
+  const selectSavedAddress = (addr: any) => {
+    setAddress({
+      street: addr.street || '',
+      number: addr.number || '',
+      complement: addr.complement || '',
+      neighborhood: addr.neighborhood || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      zipCode: addr.zipCode || '',
+    });
+    setShowAddresses(false);
+    toast.success('Endereço selecionado!');
+  };
 
   const subtotal = getSubtotal();
   const deliveryFee = deliveryType === 'delivery' && subtotal < 100 ? 9.9 : 0;
@@ -164,7 +197,10 @@ export default function CheckoutPage() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Endereço de Entrega</h2>
                 {isAuthenticated && (
-                  <button className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
+                  <button 
+                    onClick={fetchSavedAddresses}
+                    className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
+                  >
                     <Plus size={14} />
                     Usar endereço salvo
                   </button>
@@ -355,6 +391,39 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de endereços salvos */}
+      {showAddresses && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Selecione um endereço</h3>
+              <button onClick={() => setShowAddresses(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            {savedAddresses.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Nenhum endereço salvo</p>
+            ) : (
+              <div className="space-y-3">
+                {savedAddresses.map((addr: any) => (
+                  <button
+                    key={addr.id}
+                    onClick={() => selectSavedAddress(addr)}
+                    className="w-full text-left p-4 border rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+                  >
+                    <p className="font-medium">{addr.label || 'Endereço'}</p>
+                    <p className="text-sm text-gray-600">{addr.street}, {addr.number}</p>
+                    {addr.complement && <p className="text-sm text-gray-500">{addr.complement}</p>}
+                    <p className="text-sm text-gray-500">{addr.neighborhood} - {addr.city}/{addr.state}</p>
+                    <p className="text-sm text-gray-500">CEP: {addr.zipCode}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
