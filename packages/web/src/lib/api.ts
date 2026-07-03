@@ -24,13 +24,24 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
       try {
+        // Try admin token first, then customer token
+        const adminData = localStorage.getItem('hortifruti-admin');
         const authData = localStorage.getItem('hortifruti-auth');
-        if (authData) {
+
+        let token = null;
+
+        if (adminData) {
+          const parsed = JSON.parse(adminData);
+          token = parsed?.state?.accessToken;
+        }
+
+        if (!token && authData) {
           const parsed = JSON.parse(authData);
-          const token = parsed?.state?.accessToken;
-          if (token && config.headers) {
-            config.headers.Authorization = 'Bearer ' + token;
-          }
+          token = parsed?.state?.accessToken;
+        }
+
+        if (token && config.headers) {
+          config.headers.Authorization = 'Bearer ' + token;
         }
       } catch {
         // Ignore parse errors
