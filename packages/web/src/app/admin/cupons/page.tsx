@@ -95,16 +95,16 @@ export default function CuponsPage() {
     if (coupon) {
       setEditingCoupon(coupon);
       setFormData({
-        codigo: coupon.code || coupon.codigo || '',
-        tipo: coupon.type || coupon.tipo || 'percentage',
-        valor: String(coupon.value || coupon.valor || ''),
-        limiteUso: String(coupon.usageLimit || coupon.limiteUso || ''),
-        validade: coupon.expiresAt || coupon.validade || '',
-        valorMinimo: String(coupon.minimumOrder || coupon.valorMinimo || ''),
+        codigo: coupon.code || '',
+        tipo: coupon.type || 'PERCENTAGE',
+        valor: String(coupon.value || ''),
+        limiteUso: String(coupon.usageLimit || ''),
+        validade: coupon.validUntil ? coupon.validUntil.split('T')[0] : '',
+        valorMinimo: String(coupon.minOrderValue || ''),
       });
     } else {
       setEditingCoupon(null);
-      setFormData({ codigo: '', tipo: 'percentage', valor: '', limiteUso: '', validade: '', valorMinimo: '' });
+      setFormData({ codigo: '', tipo: 'PERCENTAGE', valor: '', limiteUso: '', validade: '', valorMinimo: '' });
     }
     setDialogOpen(true);
   };
@@ -274,18 +274,17 @@ export default function CuponsPage() {
             </div>
             <div className="space-y-2">
               <Label>Tipo</Label>
-              <Select value={formData.tipo} onValueChange={(v) => setFormData({ ...formData, tipo: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="percentage">Percentual</SelectItem>
-                  <SelectItem value="fixed">Valor Fixo</SelectItem>
-                  <SelectItem value="free_shipping">Frete Grátis</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="w-full border rounded-md px-3 py-2 text-sm"
+                value={formData.tipo}
+                onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              >
+                <option value="PERCENTAGE">Porcentagem</option>
+                <option value="FIXED">Valor Fixo</option>
+                <option value="FREE_SHIPPING">Frete Grátis</option>
+              </select>
             </div>
-            {formData.tipo !== 'free_shipping' && (
+            {formData.tipo !== 'FREE_SHIPPING' && (
               <div className="space-y-2">
                 <Label>Valor</Label>
                 <Input
