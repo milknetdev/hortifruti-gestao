@@ -122,40 +122,37 @@ export default function EstoquePage() {
       key: 'createdAt',
       label: 'Data',
       sortable: true,
-      render: (v, row) => v ? new Date(v).toLocaleString('pt-BR') : (row.data || '-'),
+      render: (v) => v ? new Date(v).toLocaleString('pt-BR') : '-',
     },
     {
-      key: 'productName',
+      key: 'product',
       label: 'Produto',
-      sortable: true,
-      render: (v, row) => v || row.produto || row.product?.name || '-',
+      render: (v) => v?.name || '-',
     },
     {
       key: 'type',
       label: 'Tipo',
-      render: (value, row) => {
-        const v = value || row.tipo;
-        const label = typeLabels[v] || v;
-        return <Badge className={cn('border-0', typeColors[v] || 'bg-gray-100 text-gray-700')}>{label}</Badge>;
+      render: (value) => {
+        const label = typeLabels[value] || value;
+        return <Badge className={cn('border-0', typeColors[value] || 'bg-gray-100 text-gray-700')}>{label}</Badge>;
       },
     },
     {
       key: 'quantity',
       label: 'Quantidade',
-      render: (value, row) => {
-        const v = value ?? row.quantidade;
-        const prefix = typeof v === 'string' ? (v.startsWith('+') || v.startsWith('-') ? '' : ((row.type || row.tipo) === 'entry' || (row.type || row.tipo) === 'Entrada' ? '+' : '-')) : (v >= 0 ? '+' : '');
+      render: (value) => {
+        const prefix = value >= 0 ? '+' : '';
         return (
-          <span className={cn('font-medium', (typeof v === 'string' ? v.startsWith('+') : v >= 0) ? 'text-green-600' : 'text-red-600')}>
-            {prefix}{typeof v === 'string' ? v : `${v}`}
+          <span className={cn('font-medium', value >= 0 ? 'text-green-600' : 'text-red-600')}>
+            {prefix}{value}
           </span>
         );
       },
     },
     {
-      key: 'userName',
+      key: 'user',
       label: 'Usuário',
-      render: (v, row) => v || row.usuario || '-',
+      render: (v) => v?.name || 'Sistema',
     },
   ];
 
