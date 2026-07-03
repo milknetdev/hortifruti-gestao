@@ -159,9 +159,7 @@ export default function NovoProdutoPage() {
                 <Label>Categoria *</Label>
                 <Select value={watch('categoryId')} onValueChange={(v) => setValue('categoryId', v)}>
                   <SelectTrigger>
-                    <SelectValue>
-                      {categories.find(c => c.id === watch('categoryId'))?.name || 'Selecione uma categoria'}
-                    </SelectValue>
+                    <SelectValue placeholder={categories.find(c => c.id === watch('categoryId'))?.name || 'Selecione uma categoria'} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
