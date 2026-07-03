@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
+
 const statusColors: Record<string, string> = {
   'PENDING': 'bg-yellow-100 text-yellow-700',
   'PAID': 'bg-blue-100 text-blue-700',
