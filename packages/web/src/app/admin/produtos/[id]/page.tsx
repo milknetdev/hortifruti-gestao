@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -26,14 +26,12 @@ import { api } from '@/lib/api';
 const productSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   slug: z.string().min(1, 'Slug é obrigatório'),
-  sku: z.string().min(1, 'SKU é obrigatório'),
+  sku: z.string().optional(),
   barcode: z.string().optional(),
   categoryId: z.string().min(1, 'Categoria é obrigatória'),
-  supplierId: z.string().optional(),
   costPrice: z.string().min(1, 'Preço de custo é obrigatório'),
   salePrice: z.string().min(1, 'Preço de venda é obrigatório'),
   promotionalPrice: z.string().optional(),
-  commissionValue: z.string().optional(),
   stock: z.string().min(1, 'Estoque é obrigatório'),
   minStock: z.string().min(1, 'Estoque mínimo é obrigatório'),
   weight: z.string().optional(),
@@ -46,55 +44,18 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-const categories = [
-  { id: '1', name: 'Frutas' },
-  { id: '2', name: 'Hortaliças' },
-  { id: '3', name: 'Legumes' },
-  { id: '4', name: 'Temperos' },
-  { id: '5', name: 'Orgânicos' },
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
-const suppliers = [
-  { id: '1', name: 'Fazenda São João' },
-  { id: '2', name: 'Distribuidora Verde' },
-  { id: '3', name: 'Horta Orgânica SP' },
-];
-
-const units = [
-  { value: 'kg', label: 'Quilograma (kg)' },
-  { value: 'g', label: 'Grama (g)' },
-  { value: 'un', label: 'Unidade (un)' },
-  { value: 'cx', label: 'Caixa (cx)' },
-  { value: 'dz', label: 'Dúzia (dz)' },
-  { value: 'maço', label: 'Maço' },
-  { value: 'litro', label: 'Litro (L)' },
-];
-
-// Mock product data
-const mockProduct = {
-  name: 'Tomate Italiano',
-  slug: 'tomate-italiano',
-  sku: 'TOM-001',
-  barcode: '7891234567890',
-  categoryId: '3',
-  supplierId: '1',
-  costPrice: '5.50',
-  salePrice: '8.90',
-  promotionalPrice: '7.50',
-  commissionValue: '0.50',
-  stock: '45',
-  minStock: '10',
-  weight: '1',
-  unit: 'kg',
-  description: 'Tomate italiano fresco, ideal para saladas e molhos. Colhido diariamente.',
-  available: true,
-  featured: true,
-  promotional: true,
-};
-
-export default function EditarProdutoPage({ params }: { params: { id: string } }) {
+export default function EditarProdutoPage() {
   const router = useRouter();
-  const [images, setImages] = useState<string[]>(['🍅']);
+  const params = useParams();
+  const productId = params.id as string;
+
+  const [images, setImages] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -110,45 +71,119 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
   });
 
   useEffect(() => {
-    // Simulate loading product data
-    const timer = setTimeout(() => {
-      reset(mockProduct);
+    fetchData();
+  }, [productId]);
+
+  const fetchData = async () => {
+    try {
+      const [productRes, categoriesRes] = await Promise.all([
+        api.get(`/products/${productId}`),
+        api.get('/categories'),
+      ]);
+
+      const product = productRes.data?.data || productRes.data;
+      const cats = categoriesRes.data?.data || categoriesRes.data || [];
+      setCategories(Array.isArray(cats) ? cats : []);
+
+      if (product) {
+        // Parse images
+        let productImages: string[] = [];
+        if (product.mainImage) productImages.push(product.mainImage);
+        if (product.images) {
+          try {
+            const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+            if (Array.isArray(parsed)) productImages = [...productImages, ...parsed];
+          } catch {}
+        }
+        setImages(productImages);
+
+        // Set form values
+        reset({
+          name: product.name || '',
+          slug: product.slug || '',
+          sku: product.sku || '',
+          barcode: product.barcode || '',
+          categoryId: product.categoryId || '',
+          costPrice: String(product.costPrice || ''),
+          salePrice: String(product.salePrice || ''),
+          promotionalPrice: product.promotionalPrice ? String(product.promotionalPrice) : '',
+          stock: String(product.stock || ''),
+          minStock: String(product.minStock || ''),
+          weight: product.weight ? String(product.weight) : '',
+          unit: product.unit || 'KG',
+          description: product.description || '',
+          available: product.available ?? true,
+          featured: product.featured ?? false,
+          promotional: product.promotional ?? false,
+        });
+      }
+    } catch (err) {
+      toast.error('Erro ao carregar produto');
+      console.error(err);
+    } finally {
       setIsLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [reset]);
+    }
+  };
 
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('Updated product:', data);
+      const payload = {
+        ...data,
+        costPrice: parseFloat(data.costPrice),
+        salePrice: parseFloat(data.salePrice),
+        promotionalPrice: data.promotionalPrice ? parseFloat(data.promotionalPrice) : null,
+        stock: parseInt(data.stock),
+        minStock: parseInt(data.minStock),
+        weight: data.weight ? parseFloat(data.weight) : null,
+        mainImage: images[0] || null,
+        images: JSON.stringify(images),
+      };
+
+      await api.put(`/products/${productId}`, payload);
+      toast.success('Produto atualizado com sucesso!');
       router.push('/admin/produtos');
-    } catch (error) {
-      console.error('Error updating product:', error);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao atualizar produto');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirm('Deseja realmente excluir este produto?')) return;
+    try {
+      await api.delete(`/products/${productId}`);
+      toast.success('Produto removido!');
+      router.push('/admin/produtos');
+    } catch {
+      toast.error('Erro ao remover produto');
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-[#16a34a] rounded-full animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Editar Produto</h1>
-          <p className="text-gray-500">Edite as informações do produto</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Editar Produto</h1>
+            <p className="text-gray-500">Edite as informações do produto</p>
+          </div>
         </div>
+        <Button variant="destructive" onClick={handleDelete}>
+          Excluir Produto
+        </Button>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -170,9 +205,8 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                 {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU *</Label>
+                <Label htmlFor="sku">SKU</Label>
                 <Input id="sku" {...register('sku')} />
-                {errors.sku && <p className="text-sm text-red-500">{errors.sku.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="barcode">Código de Barras</Label>
@@ -182,7 +216,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                 <Label>Categoria *</Label>
                 <Select value={watch('categoryId')} onValueChange={(v) => setValue('categoryId', v)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -190,17 +224,20 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Fornecedor</Label>
-                <Select value={watch('supplierId')} onValueChange={(v) => setValue('supplierId', v)}>
+                <Label>Unidade *</Label>
+                <Select value={watch('unit')} onValueChange={(v) => setValue('unit', v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
+                    <SelectItem value="KG">Quilograma (kg)</SelectItem>
+                    <SelectItem value="UN">Unidade (un)</SelectItem>
+                    <SelectItem value="G">Grama (g)</SelectItem>
+                    <SelectItem value="CX">Caixa (cx)</SelectItem>
+                    <SelectItem value="L">Litro (L)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -208,7 +245,7 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
 
             <div className="space-y-2">
               <Label>Imagens</Label>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 {images.map((img, i) => (
                   <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
                     <img src={img} alt={`Imagem ${i + 1}`} className="w-full h-full object-cover" />
@@ -267,10 +304,12 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               <div className="space-y-2">
                 <Label htmlFor="costPrice">Preço de Custo *</Label>
                 <Input id="costPrice" {...register('costPrice')} type="number" step="0.01" />
+                {errors.costPrice && <p className="text-sm text-red-500">{errors.costPrice.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="salePrice">Preço de Venda *</Label>
                 <Input id="salePrice" {...register('salePrice')} type="number" step="0.01" />
+                {errors.salePrice && <p className="text-sm text-red-500">{errors.salePrice.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="promotionalPrice">Preço Promocional</Label>
@@ -281,32 +320,17 @@ export default function EditarProdutoPage({ params }: { params: { id: string } }
               <div className="space-y-2">
                 <Label htmlFor="stock">Estoque Atual *</Label>
                 <Input id="stock" {...register('stock')} type="number" />
+                {errors.stock && <p className="text-sm text-red-500">{errors.stock.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="minStock">Estoque Mínimo *</Label>
                 <Input id="minStock" {...register('minStock')} type="number" />
+                {errors.minStock && <p className="text-sm text-red-500">{errors.minStock.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="weight">Peso</Label>
                 <Input id="weight" {...register('weight')} type="number" step="0.01" />
               </div>
-              <div className="space-y-2">
-                <Label>Unidade *</Label>
-                <Select value={watch('unit')} onValueChange={(v) => setValue('unit', v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="commissionValue">Valor de Comissão</Label>
-              <Input id="commissionValue" {...register('commissionValue')} type="number" step="0.01" className="max-w-[200px]" />
             </div>
           </CardContent>
         </Card>

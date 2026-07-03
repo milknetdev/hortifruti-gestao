@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,15 +25,12 @@ import { api } from '@/lib/api';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  slug: z.string().min(1, 'Slug é obrigatório'),
-  sku: z.string().min(1, 'SKU é obrigatório'),
-  barcode: z.string().optional(),
+  slug: z.string().optional(),
+  sku: z.string().optional(),
   categoryId: z.string().min(1, 'Categoria é obrigatória'),
-  supplierId: z.string().optional(),
   costPrice: z.string().min(1, 'Preço de custo é obrigatório'),
   salePrice: z.string().min(1, 'Preço de venda é obrigatório'),
   promotionalPrice: z.string().optional(),
-  commissionValue: z.string().optional(),
   stock: z.string().min(1, 'Estoque é obrigatório'),
   minStock: z.string().min(1, 'Estoque mínimo é obrigatório'),
   weight: z.string().optional(),
@@ -46,34 +43,17 @@ const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-const categories = [
-  { id: '1', name: 'Frutas' },
-  { id: '2', name: 'Hortaliças' },
-  { id: '3', name: 'Legumes' },
-  { id: '4', name: 'Temperos' },
-  { id: '5', name: 'Orgânicos' },
-];
-
-const suppliers = [
-  { id: '1', name: 'Fazenda São João' },
-  { id: '2', name: 'Distribuidora Verde' },
-  { id: '3', name: 'Horta Orgânica SP' },
-];
-
-const units = [
-  { value: 'kg', label: 'Quilograma (kg)' },
-  { value: 'g', label: 'Grama (g)' },
-  { value: 'un', label: 'Unidade (un)' },
-  { value: 'cx', label: 'Caixa (cx)' },
-  { value: 'dz', label: 'Dúzia (dz)' },
-  { value: 'maço', label: 'Maço' },
-  { value: 'litro', label: 'Litro (L)' },
-];
+interface Category {
+  id: string;
+  name: string;
+}
 
 export default function NovoProdutoPage() {
   const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
@@ -84,26 +64,63 @@ export default function NovoProdutoPage() {
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
+      unit: 'KG',
       available: true,
       featured: false,
       promotional: false,
-      unit: 'kg',
+      minStock: '10',
     },
   });
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data: result } = await api.get('/categories');
+      const cats = result?.data || result || [];
+      setCategories(Array.isArray(cats) ? cats : []);
+    } catch {
+      setCategories([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log('Product data:', data);
+      const payload = {
+        ...data,
+        slug: data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        costPrice: parseFloat(data.costPrice),
+        salePrice: parseFloat(data.salePrice),
+        promotionalPrice: data.promotionalPrice ? parseFloat(data.promotionalPrice) : null,
+        stock: parseInt(data.stock),
+        minStock: parseInt(data.minStock),
+        weight: data.weight ? parseFloat(data.weight) : null,
+        mainImage: images[0] || null,
+        images: JSON.stringify(images),
+      };
+
+      await api.post('/products', payload);
+      toast.success('Produto criado com sucesso!');
       router.push('/admin/produtos');
-    } catch (error) {
-      console.error('Error creating product:', error);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao criar produto');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -127,28 +144,22 @@ export default function NovoProdutoPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome do Produto *</Label>
-                <Input id="name" {...register('name')} placeholder="Ex: Tomate Italiano" />
+                <Input id="name" {...register('name')} placeholder="Ex: Banana Prata" />
                 {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="slug">Slug</Label>
-                <Input id="slug" {...register('slug')} placeholder="tomate-italiano" />
-                {errors.slug && <p className="text-sm text-red-500">{errors.slug.message}</p>}
+                <Label htmlFor="slug">Slug (gerado automaticamente)</Label>
+                <Input id="slug" {...register('slug')} placeholder="banana-prata" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU *</Label>
-                <Input id="sku" {...register('sku')} placeholder="TOM-001" />
-                {errors.sku && <p className="text-sm text-red-500">{errors.sku.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="barcode">Código de Barras</Label>
-                <Input id="barcode" {...register('barcode')} placeholder="7891234567890" />
+                <Label htmlFor="sku">SKU</Label>
+                <Input id="sku" {...register('sku')} placeholder="BAN-001" />
               </div>
               <div className="space-y-2">
                 <Label>Categoria *</Label>
-                <Select onValueChange={(v) => setValue('categoryId', v)}>
+                <Select value={watch('categoryId')} onValueChange={(v) => setValue('categoryId', v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a categoria" />
+                    <SelectValue placeholder="Selecione uma categoria" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -159,24 +170,25 @@ export default function NovoProdutoPage() {
                 {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>Fornecedor</Label>
-                <Select onValueChange={(v) => setValue('supplierId', v)}>
+                <Label>Unidade *</Label>
+                <Select value={watch('unit')} onValueChange={(v) => setValue('unit', v)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o fornecedor" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
+                    <SelectItem value="KG">Quilograma (kg)</SelectItem>
+                    <SelectItem value="UN">Unidade (un)</SelectItem>
+                    <SelectItem value="G">Grama (g)</SelectItem>
+                    <SelectItem value="CX">Caixa (cx)</SelectItem>
+                    <SelectItem value="L">Litro (L)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Images */}
             <div className="space-y-2">
               <Label>Imagens</Label>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 {images.map((img, i) => (
                   <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
                     <img src={img} alt={`Imagem ${i + 1}`} className="w-full h-full object-cover" />
@@ -220,12 +232,7 @@ export default function NovoProdutoPage() {
 
             <div className="space-y-2">
               <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                {...register('description')}
-                placeholder="Descreva o produto..."
-                rows={4}
-              />
+              <Textarea id="description" {...register('description')} rows={4} placeholder="Descreva o produto..." />
             </div>
           </CardContent>
         </Card>
@@ -239,53 +246,34 @@ export default function NovoProdutoPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="costPrice">Preço de Custo *</Label>
-                <Input id="costPrice" {...register('costPrice')} placeholder="0.00" type="number" step="0.01" />
+                <Input id="costPrice" {...register('costPrice')} type="number" step="0.01" placeholder="0.00" />
                 {errors.costPrice && <p className="text-sm text-red-500">{errors.costPrice.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="salePrice">Preço de Venda *</Label>
-                <Input id="salePrice" {...register('salePrice')} placeholder="0.00" type="number" step="0.01" />
+                <Input id="salePrice" {...register('salePrice')} type="number" step="0.01" placeholder="0.00" />
                 {errors.salePrice && <p className="text-sm text-red-500">{errors.salePrice.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="promotionalPrice">Preço Promocional</Label>
-                <Input id="promotionalPrice" {...register('promotionalPrice')} placeholder="0.00" type="number" step="0.01" />
+                <Input id="promotionalPrice" {...register('promotionalPrice')} type="number" step="0.01" placeholder="0.00" />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="stock">Estoque Atual *</Label>
-                <Input id="stock" {...register('stock')} placeholder="0" type="number" />
+                <Input id="stock" {...register('stock')} type="number" placeholder="0" />
                 {errors.stock && <p className="text-sm text-red-500">{errors.stock.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="minStock">Estoque Mínimo *</Label>
-                <Input id="minStock" {...register('minStock')} placeholder="0" type="number" />
+                <Input id="minStock" {...register('minStock')} type="number" placeholder="10" />
                 {errors.minStock && <p className="text-sm text-red-500">{errors.minStock.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="weight">Peso</Label>
-                <Input id="weight" {...register('weight')} placeholder="0.00" type="number" step="0.01" />
+                <Input id="weight" {...register('weight')} type="number" step="0.01" placeholder="0.00" />
               </div>
-              <div className="space-y-2">
-                <Label>Unidade *</Label>
-                <Select onValueChange={(v) => setValue('unit', v)} defaultValue="kg">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((u) => (
-                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="commissionValue">Valor de Comissão</Label>
-              <Input id="commissionValue" {...register('commissionValue')} placeholder="0.00" type="number" step="0.01" className="max-w-[200px]" />
             </div>
           </CardContent>
         </Card>
@@ -301,10 +289,7 @@ export default function NovoProdutoPage() {
                 <p className="font-medium text-gray-900">Produto Disponível</p>
                 <p className="text-sm text-gray-500">O produto estará visível e disponível para compra</p>
               </div>
-              <Switch
-                checked={watch('available')}
-                onCheckedChange={(v) => setValue('available', v)}
-              />
+              <Switch checked={watch('available')} onCheckedChange={(v) => setValue('available', v)} />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -312,10 +297,7 @@ export default function NovoProdutoPage() {
                 <p className="font-medium text-gray-900">Produto em Destaque</p>
                 <p className="text-sm text-gray-500">Aparecerá na seção de destaque da loja</p>
               </div>
-              <Switch
-                checked={watch('featured')}
-                onCheckedChange={(v) => setValue('featured', v)}
-              />
+              <Switch checked={watch('featured')} onCheckedChange={(v) => setValue('featured', v)} />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -323,28 +305,16 @@ export default function NovoProdutoPage() {
                 <p className="font-medium text-gray-900">Produto Promocional</p>
                 <p className="text-sm text-gray-500">Aparecerá na seção de ofertas da loja</p>
               </div>
-              <Switch
-                checked={watch('promotional')}
-                onCheckedChange={(v) => setValue('promotional', v)}
-              />
+              <Switch checked={watch('promotional')} onCheckedChange={(v) => setValue('promotional', v)} />
             </div>
           </CardContent>
         </Card>
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-4">
-          <Button variant="outline" type="button" onClick={() => router.back()}>
-            Cancelar
-          </Button>
+          <Button variant="outline" type="button" onClick={() => router.back()}>Cancelar</Button>
           <Button type="submit" className="bg-[#16a34a] hover:bg-[#15803d]" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Salvando...
-              </>
-            ) : (
-              'Salvar Produto'
-            )}
+            {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</> : 'Criar Produto'}
           </Button>
         </div>
       </form>
