@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { ShoppingCart, Plus, Minus, Heart } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { Product } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
 import { formatCurrency, cn } from '@/lib/utils';
-import { Product } from '@/types';
+import { api } from '@/lib/api';
+import toast from 'react-hot-toast';
 
 interface ProductCardProps {
   product: Product;
@@ -32,6 +33,19 @@ export function ProductCard({ product }: ProductCardProps) {
     setShowQty(false);
   };
 
+  const handleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const { data: result } = await api.post(`/favorites/${product.id}`);
+      const data = result?.data || result;
+      setIsFavorited(data.favorited);
+      toast.success(data.favorited ? 'Adicionado aos favoritos!' : 'Removido dos favoritos');
+    } catch {
+      toast.error('Faça login para favoritar produtos');
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -53,10 +67,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           )}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              setIsFavorited(!isFavorited);
-            }}
+            onClick={handleFavorite}
             className={cn(
               'absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all',
               isFavorited
