@@ -43,10 +43,15 @@ const statusLabels: Record<string, string> = {
 };
 
 interface DashboardData {
-  ordersToday?: number;
+  todayOrders?: number;
   pendingOrders?: number;
-  monthlyRevenue?: number;
-  monthlyProfit?: number;
+  deliveredOrders?: number;
+  outOfStock?: number;
+  lowStock?: number;
+  monthRevenue?: number;
+  monthProfit?: number;
+  totalCustomers?: number;
+  totalEmployees?: number;
   salesChart?: Array<{ day: string; sales: number; orders: number }>;
   ordersByStatus?: Array<{ status: string; count: number }>;
   recentOrders?: Array<any>;
@@ -151,7 +156,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Pedidos Hoje"
-          value={String(dashboard.ordersToday ?? 0)}
+          value={String(dashboard.todayOrders ?? 0)}
           icon={ShoppingBag}
           trend={{ value: 12, isPositive: true }}
           iconBgColor="bg-blue-50"
