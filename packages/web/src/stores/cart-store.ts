@@ -12,7 +12,7 @@ interface CartState {
   notes: string;
 
   // Actions
-  addItem: (product: Product, quantity?: number) => void;
+  addItem: (product: Product, quantity?: number) => { success: boolean; message: string };
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -44,6 +44,7 @@ export const useCartStore = create<CartState>()(
       notes: '',
 
       addItem: (product: Product, quantity?: number) => {
+        const result = { success: false, message: '' };
         set((state) => {
           const existingIndex = state.items.findIndex(
             (item) => item.productId === product.id
@@ -56,6 +57,20 @@ export const useCartStore = create<CartState>()(
           
           // Garantir que quantidade é válida
           const qty = Number(quantity) || Number(product.minQuantity) || 1;
+          
+          // Verificar estoque
+          const stock = Number(product.stock) || 0;
+          const currentInCart = existingIndex >= 0 ? Number(state.items[existingIndex].quantity) : 0;
+          
+          if (stock <= 0) {
+            result.message = 'Produto sem estoque';
+            return state;
+          }
+          
+          if (currentInCart + qty > stock) {
+            result.message = `Estoque insuficiente. Disponível: ${stock}`;
+            return state;
+          }
 
           if (existingIndex >= 0) {
             const updatedItems = [...state.items];
@@ -66,6 +81,7 @@ export const useCartStore = create<CartState>()(
               quantity: newQuantity,
               totalPrice: newQuantity * (Number(existing.unitPrice) || 0),
             };
+            result.success = true;
             return { items: updatedItems };
           }
 
@@ -78,8 +94,10 @@ export const useCartStore = create<CartState>()(
             totalPrice: qty * unitPrice,
           };
 
+          result.success = true;
           return { items: [...state.items, newItem] };
         });
+        return result;
       },
 
       removeItem: (productId: string) => {
@@ -95,6 +113,15 @@ export const useCartStore = create<CartState>()(
             return {
               items: state.items.filter((item) => item.productId !== productId),
             };
+          }
+
+          // Verificar estoque
+          const item = state.items.find((i) => i.productId === productId);
+          if (item) {
+            const stock = Number(item.product?.stock) || 0;
+            if (qty > stock) {
+              return state; // Não atualizar se exceder estoque
+            }
           }
 
           return {

@@ -25,12 +25,14 @@ export function ProductCard({ product }: ProductCardProps) {
   const hasPromo = product.promotionalPrice != null && product.promotionalPrice < product.salePrice;
 
   const handleAdd = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
+    const result = addItem(product, quantity);
+    if (result.success) {
+      toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
+      setQuantity(1);
+      setShowQty(false);
+    } else {
+      toast.error(result.message || 'Erro ao adicionar ao carrinho');
     }
-    toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
-    setQuantity(1);
-    setShowQty(false);
   };
 
   const handleFavorite = async (e: React.MouseEvent) => {
