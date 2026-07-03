@@ -86,14 +86,17 @@ export default function EditarProdutoPage() {
       setCategories(Array.isArray(cats) ? cats : []);
 
       if (product) {
-        // Parse images
+        // Parse images - avoid duplicates
         let productImages: string[] = [];
-        if (product.mainImage) productImages.push(product.mainImage);
         if (product.images) {
           try {
             const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
-            if (Array.isArray(parsed)) productImages = [...productImages, ...parsed];
+            if (Array.isArray(parsed) && parsed.length > 0) productImages = parsed;
           } catch {}
+        }
+        // Only add mainImage if not already in the array
+        if (product.mainImage && !productImages.includes(product.mainImage)) {
+          productImages.unshift(product.mainImage);
         }
         setImages(productImages);
 
