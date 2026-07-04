@@ -2,8 +2,6 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
-import { TenantGuard } from '../common/guards/tenant.guard';
-import { CurrentTenant } from '../common/decorators/tenant.decorator';
 
 @ApiTags('Banners')
 @Controller('banners')
@@ -11,52 +9,52 @@ export class BannersController {
   constructor(private bannersService: BannersService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Criar banner' })
-  create(@Body() data: any, @CurrentTenant() tenant: any) {
-    return this.bannersService.create(data, tenant.id);
+  create(@Body() data: any) {
+    return this.bannersService.create(data, '');
   }
 
   @Get()
   @ApiOperation({ summary: 'Listar banners' })
-  findAll(@Query('active') active: string, @CurrentTenant() tenant: any) {
-    return this.bannersService.findAll(tenant?.id, active === 'true' ? true : active === 'false' ? false : undefined);
+  findAll(@Query('active') active: string) {
+    return this.bannersService.findAll('', active === 'true' ? true : active === 'false' ? false : undefined);
   }
 
   @Get('active')
   @ApiOperation({ summary: 'Banners ativos (público)' })
-  findActive(@CurrentTenant() tenant: any) {
-    return this.bannersService.findActive(tenant?.id);
+  findActive() {
+    return this.bannersService.findActive('');
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Detalhes do banner' })
-  findOne(@Param('id') id: string, @CurrentTenant() tenant: any) {
-    return this.bannersService.findOne(id, tenant?.id);
+  findOne(@Param('id') id: string) {
+    return this.bannersService.findOne(id, '');
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Atualizar banner' })
-  update(@Param('id') id: string, @Body() data: any, @CurrentTenant() tenant: any) {
-    return this.bannersService.update(id, data, tenant.id);
+  update(@Param('id') id: string, @Body() data: any) {
+    return this.bannersService.update(id, data, '');
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Remover banner' })
-  remove(@Param('id') id: string, @CurrentTenant() tenant: any) {
-    return this.bannersService.remove(id, tenant.id);
+  remove(@Param('id') id: string) {
+    return this.bannersService.remove(id, '');
   }
 
   @Post('reorder')
-  @UseGuards(JwtAuthGuard, TenantGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reordenar banners' })
-  reorder(@Body() body: { items: { id: string; sortOrder: number }[] }, @CurrentTenant() tenant: any) {
-    return this.bannersService.reorder(tenant.id, body.items);
+  reorder(@Body() body: { items: { id: string; sortOrder: number }[] }) {
+    return this.bannersService.reorder('', body.items);
   }
 }

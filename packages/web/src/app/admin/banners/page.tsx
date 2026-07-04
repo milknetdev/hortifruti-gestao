@@ -218,6 +218,18 @@ export default function BannersPage() {
                 onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
                 placeholder="https://..."
               />
+              {formData.imagem && (
+                <div className="mt-2 border rounded-lg overflow-hidden">
+                  <img 
+                    src={formData.imagem} 
+                    alt="Preview" 
+                    className="w-full h-32 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Link</Label>
