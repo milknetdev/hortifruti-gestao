@@ -35,9 +35,11 @@ export default function ProductDetailPage() {
   const addItem = useCartStore((s) => s.addItem);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
   const [productSettings, setProductSettings] = useState({
     deliveryPromise: 'Entrega rápida em até 2 horas',
     guarantee: 'Garantia de frescor ou devolvemos seu dinheiro',
