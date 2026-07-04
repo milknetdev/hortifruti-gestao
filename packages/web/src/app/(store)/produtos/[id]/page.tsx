@@ -35,11 +35,15 @@ export default function ProductDetailPage() {
   const addItem = useCartStore((s) => s.addItem);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [productSettings, setProductSettings] = useState({
+    deliveryPromise: 'Entrega rápida em até 2 horas',
+    guarantee: 'Garantia de frescor ou devolvemos seu dinheiro',
+    showStock: true,
+    showDeliveryTime: true,
+  });
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -47,6 +51,20 @@ export default function ProductDetailPage() {
       try {
         const { data: res } = await api.get(`/products/slug/${slug}`); const data = res?.data || res;
         setProduct(data);
+
+        // Fetch product settings
+        try {
+          const { data: settingsRes } = await api.get('/settings/product-display');
+          const settings = settingsRes?.data || settingsRes;
+          if (settings) {
+            setProductSettings({
+              deliveryPromise: settings.deliveryPromise || 'Entrega rápida em até 2 horas',
+              guarantee: settings.guarantee || 'Garantia de frescor ou devolvemos seu dinheiro',
+              showStock: settings.showStock !== false,
+              showDeliveryTime: settings.showDeliveryTime !== false,
+            });
+          }
+        } catch {}
 
         // Fetch related products
         if (data?.category?.slug) {
@@ -325,13 +343,15 @@ export default function ProductDetailPage() {
 
           {/* Benefits */}
           <div className="space-y-3 p-4 bg-green-50 rounded-xl">
-            <div className="flex items-center gap-3 text-sm text-green-700">
-              <Truck size={18} />
-              <span>Entrega rápida em até 2 horas</span>
-            </div>
+            {productSettings.showDeliveryTime && (
+              <div className="flex items-center gap-3 text-sm text-green-700">
+                <Truck size={18} />
+                <span>{productSettings.deliveryPromise}</span>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-sm text-green-700">
               <ShieldCheck size={18} />
-              <span>Garantia de frescor ou devolvemos seu dinheiro</span>
+              <span>{productSettings.guarantee}</span>
             </div>
           </div>
         </div>

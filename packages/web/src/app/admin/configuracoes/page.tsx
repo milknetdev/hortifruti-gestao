@@ -42,6 +42,12 @@ export default function ConfiguracoesPage() {
       cash: true,
       boleto: false,
     },
+    productDisplay: {
+      deliveryPromise: 'Entrega rápida em até 2 horas',
+      guarantee: 'Garantia de frescor ou devolvemos seu dinheiro',
+      showStock: true,
+      showDeliveryTime: true,
+    },
     autoBackup: true,
   });
 
@@ -148,6 +154,7 @@ export default function ConfiguracoesPage() {
           <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
           <TabsTrigger value="backup">Backup</TabsTrigger>
           <TabsTrigger value="pagamentos">Pagamentos</TabsTrigger>
+          <TabsTrigger value="produtos">Produtos</TabsTrigger>
         </TabsList>
 
         {/* Geral */}
@@ -359,6 +366,82 @@ export default function ConfiguracoesPage() {
                   {i < paymentLabels.length - 1 && <Separator className="mt-4" />}
                 </div>
               ))}
+              <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Produtos */}
+        <TabsContent value="produtos" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Exibição de Produtos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="deliveryPromise">Promessa de Entrega</Label>
+                <Input
+                  id="deliveryPromise"
+                  value={settings.productDisplay.deliveryPromise}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    productDisplay: { ...prev.productDisplay, deliveryPromise: e.target.value }
+                  }))}
+                  placeholder="Ex: Entrega rápida em até 2 horas"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Texto exibido na página do produto
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="guarantee">Garantia</Label>
+                <Input
+                  id="guarantee"
+                  value={settings.productDisplay.guarantee}
+                  onChange={(e) => setSettings(prev => ({
+                    ...prev,
+                    productDisplay: { ...prev.productDisplay, guarantee: e.target.value }
+                  }))}
+                  placeholder="Ex: Garantia de frescor ou devolvemos seu dinheiro"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Texto de garantia exibido na página do produto
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">Mostrar Estoque</p>
+                  <p className="text-sm text-gray-500">Exibir "Em estoque" na página do produto</p>
+                </div>
+                <Switch
+                  checked={settings.productDisplay.showStock}
+                  onCheckedChange={(v) => setSettings(prev => ({
+                    ...prev,
+                    productDisplay: { ...prev.productDisplay, showStock: v }
+                  }))}
+                />
+              </div>
+
+              <Separator />
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">Mostrar Tempo de Entrega</p>
+                  <p className="text-sm text-gray-500">Exibir estimativa de tempo de entrega</p>
+                </div>
+                <Switch
+                  checked={settings.productDisplay.showDeliveryTime}
+                  onCheckedChange={(v) => setSettings(prev => ({
+                    ...prev,
+                    productDisplay: { ...prev.productDisplay, showDeliveryTime: v }
+                  }))}
+                />
+              </div>
+
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
               </Button>
