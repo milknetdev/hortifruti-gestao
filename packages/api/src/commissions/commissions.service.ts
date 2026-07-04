@@ -26,7 +26,7 @@ export class CommissionsService {
     if (query?.period) where.period = query.period;
 
     const [items, total] = await Promise.all([
-      this.prisma.commission.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, name: true } }, product: { select: { id: true, name: true } } } }),
+      this.prisma.commission.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, name: true } } } }),
       this.prisma.commission.count({ where }),
     ]);
     return { data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
