@@ -75,10 +75,9 @@ export default function BannersPage() {
     try {
       const payload: any = {
         title: formData.titulo,
-        link: formData.link,
-        startDate: formData.dataInicio,
-        endDate: formData.dataFim,
-        position: formData.posicao,
+        link: formData.link || undefined,
+        startDate: formData.dataInicio ? new Date(formData.dataInicio.split('/').reverse().join('-')).toISOString() : undefined,
+        endDate: formData.dataFim ? new Date(formData.dataFim.split('/').reverse().join('-')).toISOString() : undefined,
         image: formData.imagem,
       };
       if (editingBanner) {
