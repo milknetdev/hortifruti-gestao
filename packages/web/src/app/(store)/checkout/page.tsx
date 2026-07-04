@@ -107,8 +107,24 @@ export default function CheckoutPage() {
   };
 
   const subtotal = getSubtotal();
-  const deliveryFee = deliveryType === 'delivery' && subtotal < 100 ? 9.9 : 0;
+  const [deliverySettings, setDeliverySettings] = useState({ deliveryFee: 9.90, freeAbove: 100 });
+  const deliveryFee = deliveryType === 'delivery' && subtotal < deliverySettings.freeAbove ? deliverySettings.deliveryFee : 0;
   const total = subtotal + deliveryFee;
+
+  // Fetch delivery settings
+  useEffect(() => {
+    const loadDeliverySettings = async () => {
+      try {
+        const { data: result } = await api.get('/delivery/settings');
+        const settings = result?.data || result;
+        setDeliverySettings({
+          deliveryFee: Number(settings?.deliveryFee || 9.90),
+          freeAbove: Number(settings?.freeAbove || 100),
+        });
+      } catch {}
+    };
+    loadDeliverySettings();
+  }, []);
 
   // Fetch pickup points
   useEffect(() => {

@@ -62,4 +62,50 @@ export class DeliveryService {
     await this.prisma.deliveryZone.delete({ where: { id } });
     return { message: 'Zona removida' };
   }
+
+  async getSettings(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
+    const settings = await this.prisma.tenantSetting.findMany({
+      where: { tenantId, group: 'delivery' },
+    });
+    
+    const settingsMap: any = {};
+    settings.forEach(s => { settingsMap[s.key] = s.value; });
+    
+    return {
+      deliveryFee: Number(settingsMap.deliveryFee || 9.90),
+      freeAbove: Number(settingsMap.freeAbove || 100),
+      enabled: settingsMap.deliveryEnabled !== 'false',
+    };
+  }
+
+  async updateSettings(tenantId: string, data: { deliveryFee?: number; freeAbove?: number; enabled?: boolean }) {
+    tenantId = await this.resolveTenantId(tenantId);
+    
+    const updates = [];
+    if (data.deliveryFee !== undefined) {
+      updates.push(this.prisma.tenantSetting.upsert({
+        where: { tenantId_key: { tenantId, key: 'deliveryFee' } },
+        update: { value: String(data.deliveryFee) },
+        create: { tenantId, key: 'deliveryFee', value: String(data.deliveryFee), group: 'delivery' },
+      }));
+    }
+    if (data.freeAbove !== undefined) {
+      updates.push(this.prisma.tenantSetting.upsert({
+        where: { tenantId_key: { tenantId, key: 'freeAbove' } },
+        update: { value: String(data.freeAbove) },
+        create: { tenantId, key: 'freeAbove', value: String(data.freeAbove), group: 'delivery' },
+      }));
+    }
+    if (data.enabled !== undefined) {
+      updates.push(this.prisma.tenantSetting.upsert({
+        where: { tenantId_key: { tenantId, key: 'deliveryEnabled' } },
+        update: { value: String(data.enabled) },
+        create: { tenantId, key: 'deliveryEnabled', value: String(data.enabled), group: 'delivery' },
+      }));
+    }
+    
+    await Promise.all(updates);
+    return { message: 'Configurações atualizadas' };
+  }
 }

@@ -49,4 +49,18 @@ export class DeliveryController {
   remove(@Param('id') id: string) {
     return this.deliveryService.remove(id, '');
   }
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Configurações de entrega' })
+  getSettings() {
+    return this.deliveryService.getSettings('');
+  }
+
+  @Put('settings')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualizar configurações de entrega' })
+  updateSettings(@Body() data: any) {
+    return this.deliveryService.updateSettings('', data);
+  }
 }
