@@ -56,11 +56,57 @@ export class CommissionsService {
   }
 
   async markAsPaid(id: string) {
-    return this.prisma.commission.update({ where: { id }, data: { paid: true, paidAt: new Date() } });
+    const commission = await this.prisma.commission.update({ 
+      where: { id }, 
+      data: { paid: true, paidAt: new Date() },
+      include: { user: { select: { name: true } } },
+    });
+
+    // Criar despesa no financeiro
+    if (commission.commissionValue && Number(commission.commissionValue) > 0) {
+      await this.prisma.financialEntry.create({
+        data: {
+          tenantId: commission.tenantId,
+          type: 'EXPENSE',
+          category: 'Comissões',
+          description: `Comissão - ${commission.user?.name || 'Vendedor'} - ${commission.notes || ''}`.trim(),
+          amount: commission.commissionValue,
+          paid: true,
+          paidAt: new Date(),
+          dueDate: new Date(),
+        },
+      });
+    }
+
+    return commission;
   }
 
   async markBatchAsPaid(ids: string[]) {
+    const commissions = await this.prisma.commission.findMany({
+      where: { id: { in: ids } },
+      include: { user: { select: { name: true } } },
+    });
+
     await this.prisma.commission.updateMany({ where: { id: { in: ids } }, data: { paid: true, paidAt: new Date() } });
+
+    // Criar despesas no financeiro para cada comissão
+    for (const commission of commissions) {
+      if (commission.commissionValue && Number(commission.commissionValue) > 0) {
+        await this.prisma.financialEntry.create({
+          data: {
+            tenantId: commission.tenantId,
+            type: 'EXPENSE',
+            category: 'Comissões',
+            description: `Comissão - ${commission.user?.name || 'Vendedor'} - ${commission.notes || ''}`.trim(),
+            amount: commission.commissionValue,
+            paid: true,
+            paidAt: new Date(),
+            dueDate: new Date(),
+          },
+        });
+      }
+    }
+
     return { message: `${ids.length} comissões marcadas como pagas` };
   }
 }
