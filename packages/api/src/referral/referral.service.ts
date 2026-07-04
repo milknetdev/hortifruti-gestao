@@ -103,4 +103,24 @@ export class ReferralService {
       },
     };
   }
+
+  async updateCommissionSettings(userId: string, data: { commissionRate?: number }) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('Usuário não encontrado');
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { commissionRate: data.commissionRate },
+    });
+
+    return { success: true, message: 'Configurações atualizadas' };
+  }
+
+  async getAllSellers(tenantId: string) {
+    const sellers = await this.prisma.user.findMany({
+      where: { tenantId, active: true, role: { in: ['SELLER', 'EMPLOYEE', 'ADMIN'] } },
+      select: { id: true, name: true, email: true, referralCode: true, commissionRate: true },
+    });
+    return { success: true, data: sellers };
+  }
 }

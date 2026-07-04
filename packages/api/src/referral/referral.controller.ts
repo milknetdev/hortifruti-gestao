@@ -56,4 +56,20 @@ export class ReferralController {
   async getMyStats(@CurrentUser() user: any) {
     return this.referralService.getMyStats(user.id);
   }
+
+  @Put('settings')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualizar configurações de comissão' })
+  async updateSettings(@CurrentUser() user: any, @Body() data: { commissionRate?: number }) {
+    return this.referralService.updateCommissionSettings(user.id, data);
+  }
+
+  @Get('sellers')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar vendedores' })
+  async getSellers(@CurrentUser() user: any) {
+    return this.referralService.getAllSellers(user.tenantId);
+  }
 }
