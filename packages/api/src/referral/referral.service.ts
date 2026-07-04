@@ -94,6 +94,7 @@ export class ReferralService {
         referralCode: user.referralCode,
         referralLink: user.referralCode ? `https://hortifruti-gestao.vercel.app/?ref=${user.referralCode}` : null,
         commissionRate: user.commissionRate,
+        commissionType: user.commissionType || 'PERCENTAGE',
         totalOrders,
         totalRevenue: totalRevenue._sum.total || 0,
         totalCommissions: totalCommissions._sum.commissionValue || 0,
@@ -104,13 +105,17 @@ export class ReferralService {
     };
   }
 
-  async updateCommissionSettings(userId: string, data: { commissionRate?: number }) {
+  async updateCommissionSettings(userId: string, data: { commissionRate?: number; commissionType?: string }) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('Usuário não encontrado');
 
+    const updateData: any = {};
+    if (data.commissionRate !== undefined) updateData.commissionRate = data.commissionRate;
+    if (data.commissionType !== undefined) updateData.commissionType = data.commissionType;
+
     await this.prisma.user.update({
       where: { id: userId },
-      data: { commissionRate: data.commissionRate },
+      data: updateData,
     });
 
     return { success: true, message: 'Configurações atualizadas' };

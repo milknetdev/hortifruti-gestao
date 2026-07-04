@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards, Req, Res } from '@nestjs/common';
+import { Controller, Get, Put, Param, Query, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReferralService } from './referral.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
@@ -61,7 +61,7 @@ export class ReferralController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Atualizar configurações de comissão' })
-  async updateSettings(@CurrentUser() user: any, @Body() data: { commissionRate?: number }) {
+  async updateSettings(@CurrentUser() user: any, @Body() data: { commissionRate?: number; commissionType?: string }) {
     return this.referralService.updateCommissionSettings(user.id, data);
   }
 

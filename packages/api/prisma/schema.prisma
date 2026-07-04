@@ -79,6 +79,7 @@ model User {
   active          Boolean   @default(true)
   referralCode    String?   @unique
   commissionRate  Decimal?  @default(10)
+  commissionType  String?   @default("PERCENTAGE")
   lastLoginAt     DateTime?
   refreshToken    String?
   createdAt       DateTime  @default(now())

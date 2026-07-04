@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StatCard } from '@/components/admin/stat-card';
 import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,41 +22,86 @@ export default function ComissoesPage() {
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [periodFilter, setPeriodFilter] = useState('all');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [summary, setSummary] = useState({ total: 0, paid: 0, pending: 0, sellers: 0 });
 
-  useEffect(() => {
-    fetchCommissions();
-  }, []);
-
-  const fetchCommissions = async () => {
+  const fetchCommissions = useCallback(async (currentPage = page) => {
     try {
-      const { data: result } = await api.get('/commissions?limit=100');
-      const data = result?.data || [];
-      const list = Array.isArray(data) ? data : (data.items || data.commissions || []);
-      setCommissions(list);
+      setLoading(true);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: '15',
+      });
+      if (statusFilter === 'paid') params.set('paid', 'true');
+      if (statusFilter === 'pending') params.set('paid', 'false');
 
-      const total = list.reduce((sum: number, c: any) => sum + Number(c.commissionValue || c.orderValue || 0), 0);
-      const paid = list.filter((c: any) => c.paid === true).reduce((sum: number, c: any) => sum + Number(c.commissionValue || c.orderValue || 0), 0);
-      const sellerNames = new Set(list.map((c: any) => c.user?.name || ''));
-      setSummary({ total, paid, pending: total - paid, sellers: sellerNames.size });
+      const { data: result } = await api.get(`/commissions?${params.toString()}`);
+
+      // API returns { data: [...], meta: { total, page, limit, totalPages } }
+      const list = Array.isArray(result?.data) ? result.data : [];
+      const meta = result?.meta || {};
+
+      setCommissions(list);
+      setTotalPages(meta.totalPages || 1);
+      setTotalItems(meta.total || list.length);
     } catch {
       setCommissions([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter]);
+
+  const fetchSummary = useCallback(async () => {
+    try {
+      const { data: result } = await api.get('/commissions/summary');
+      const total = Number(result?.totalCommissions || 0);
+      const paid = Number(result?.paidCommissions || 0);
+      const pending = Number(result?.unpaidCommissions || 0);
+      setSummary({ total, paid, pending, sellers: 0 });
+    } catch {
+      // Fallback: compute from current list
+    }
+  }, []);
+
+  const fetchSellers = useCallback(async () => {
+    try {
+      const { data: result } = await api.get('/commissions?limit=1000');
+      const allItems = Array.isArray(result?.data) ? result.data : [];
+      const sellerNames = new Set(allItems.map((c: any) => c.user?.name || '').filter(Boolean));
+      setSummary((prev) => ({ ...prev, sellers: sellerNames.size }));
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCommissions(page);
+  }, [page, statusFilter, fetchCommissions]);
+
+  useEffect(() => {
+    fetchSummary();
+    fetchSellers();
+  }, [fetchSummary, fetchSellers]);
 
   const handlePayPending = async () => {
-    const pendingIds = commissions.filter((c: any) => !c.paid).map((c: any) => c.id);
-    if (pendingIds.length === 0) {
-      toast.error('Nenhuma comissão pendente');
-      return;
-    }
     try {
+      // Get all pending commission IDs
+      const { data: result } = await api.get('/commissions?limit=1000&paid=false');
+      const pendingList = Array.isArray(result?.data) ? result.data : [];
+      const pendingIds = pendingList.map((c: any) => c.id);
+
+      if (pendingIds.length === 0) {
+        toast.error('Nenhuma comissão pendente');
+        return;
+      }
+
       await api.post('/commissions/batch-pay', { ids: pendingIds });
-      toast.success('Comissões pendentes marcadas como pagas!');
-      fetchCommissions();
+      toast.success(`${pendingIds.length} comissões marcadas como pagas!`);
+      fetchCommissions(page);
+      fetchSummary();
+      fetchSellers();
     } catch {
       toast.error('Erro ao pagar comissões');
     }
@@ -85,7 +130,7 @@ export default function ComissoesPage() {
       key: 'commissionValue',
       label: 'Valor',
       sortable: true,
-      render: (v, row) => `R$ ${Number(v || row.orderValue || 0).toFixed(2)}`,
+      render: (v, row) => `R$ ${Number(v || row.value || row.orderValue || 0).toFixed(2)}`,
     },
     {
       key: 'paid',
@@ -104,11 +149,16 @@ export default function ComissoesPage() {
     {
       key: 'period',
       label: 'Período',
-      render: (v, row) => v || row.periodo || '-',
+      render: (v) => v || '-',
+    },
+    {
+      key: 'createdAt',
+      label: 'Data',
+      render: (v) => v ? new Date(v).toLocaleDateString('pt-BR') : '-',
     },
   ];
 
-  if (loading) {
+  if (loading && commissions.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="animate-spin text-green-600" size={32} />
@@ -166,12 +216,14 @@ export default function ComissoesPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Comissões</CardTitle>
-            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+            <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1); }}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue />
+                <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos os Períodos</SelectItem>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                <SelectItem value="paid">Pagos</SelectItem>
+                <SelectItem value="pending">Pendentes</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -183,8 +235,8 @@ export default function ComissoesPage() {
             searchable
             searchPlaceholder="Pesquisar por usuário ou produto..."
             page={page}
-            totalPages={Math.ceil(commissions.length / 15) || 1}
-            totalItems={commissions.length}
+            totalPages={totalPages}
+            totalItems={totalItems}
             onPageChange={setPage}
           />
         </CardContent>

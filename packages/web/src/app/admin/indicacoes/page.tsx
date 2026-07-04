@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, DollarSign, ShoppingBag, Users, TrendingUp, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { Copy, DollarSign, ShoppingBag, Users, TrendingUp, CheckCircle, Clock, Loader2, Settings, Save } from 'lucide-react';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -13,6 +13,9 @@ export default function ReferralPage() {
   const [stats, setStats] = useState<any>(null);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [commissionType, setCommissionType] = useState<string>('PERCENTAGE');
+  const [commissionValue, setCommissionValue] = useState<string>('10');
 
   useEffect(() => {
     fetchData();
@@ -24,8 +27,20 @@ export default function ReferralPage() {
         api.get('/referral/stats'),
         api.get('/referral/my-commissions?limit=50'),
       ]);
-      setStats(statsRes.data?.data || statsRes.data);
-      setCommissions(commRes.data?.data || []);
+      
+      // Handle double nesting: response.data.data.data || response.data.data || response.data
+      const statsData = statsRes.data?.data?.data || statsRes.data?.data || statsRes.data;
+      setStats(statsData);
+      
+      // Handle commissions - may also be nested
+      const commData = commRes.data?.data?.data || commRes.data?.data || commRes.data;
+      setCommissions(Array.isArray(commData) ? commData : []);
+      
+      // Initialize settings from stats
+      if (statsData) {
+        setCommissionType(statsData.commissionType || 'PERCENTAGE');
+        setCommissionValue(String(statsData.commissionRate || 10));
+      }
     } catch {
       setStats(null);
     } finally {
@@ -44,6 +59,22 @@ export default function ReferralPage() {
     if (stats?.referralCode) {
       navigator.clipboard.writeText(stats.referralCode);
       toast.success('Código copiado!');
+    }
+  };
+
+  const saveSettings = async () => {
+    setSaving(true);
+    try {
+      await api.put('/referral/settings', {
+        commissionRate: parseFloat(commissionValue),
+        commissionType,
+      });
+      toast.success('Configurações salvas!');
+      fetchData(); // Refresh data
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao salvar configurações');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -73,7 +104,7 @@ export default function ReferralPage() {
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 Código: <span className="font-mono font-bold">{stats?.referralCode}</span> • 
-                Comissão: <span className="font-bold">{stats?.commissionRate || 10}%</span>
+                Comissão: <span className="font-bold">{stats?.commissionRate || 10}{stats?.commissionType === 'FIXED' ? '' : '%'}</span>
               </p>
             </div>
             <div className="flex gap-2">
@@ -148,6 +179,63 @@ export default function ReferralPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Configurações de Comissão */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings size={20} />
+            Configurações de Comissão
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Comissão
+              </label>
+              <select
+                value={commissionType}
+                onChange={(e) => setCommissionType(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="PERCENTAGE">Porcentagem (%)</option>
+                <option value="FIXED">Valor Fixo (R$)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Valor da Comissão
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  {commissionType === 'FIXED' ? 'R$' : '%'}
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step={commissionType === 'FIXED' ? '0.01' : '1'}
+                  value={commissionValue}
+                  onChange={(e) => setCommissionValue(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <Button
+              onClick={saveSettings}
+              disabled={saving}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {saving ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <Save size={16} className="mr-2" />
+              )}
+              Salvar Configurações
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabela de comissões */}
       <Card>
