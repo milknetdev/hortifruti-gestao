@@ -67,6 +67,7 @@ export class OrdersService {
     const order = await this.prisma.order.create({
       data: {
         tenantId: data.tenantId, customerId: data.customerId, addressId: data.addressId,
+        pickupPointId: data.pickupPointId || null,
         userId: data.userId, referredBy, orderNumber, status: 'PENDING',
         deliveryType: data.deliveryType || 'DELIVERY', paymentMethod: data.paymentMethod || 'PIX',
         subtotal, deliveryFee: data.deliveryFee || 0, discount, total,
@@ -126,7 +127,7 @@ export class OrdersService {
     tenantId = await this.resolveTenantId(tenantId || '');
     const where: any = { id };
     if (tenantId) where.tenantId = tenantId;
-    const order = await this.prisma.order.findFirst({ where, include: { customer: true, address: true, items: true, statusHistory: { orderBy: { createdAt: 'asc' } } } });
+    const order = await this.prisma.order.findFirst({ where, include: { customer: true, address: true, pickupPoint: true, items: true, statusHistory: { orderBy: { createdAt: 'asc' } } } });
     if (!order) throw new NotFoundException('Pedido não encontrado');
     return order;
   }

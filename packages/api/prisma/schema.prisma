@@ -269,6 +269,7 @@ model Order {
   tenantId        String
   customerId      String?
   addressId       String?
+  pickupPointId   String?
   userId          String?
   referredBy      String?
   orderNumber     Int
@@ -296,6 +297,7 @@ model Order {
   tenant          Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   customer        Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
   address         Address?       @relation(fields: [addressId], references: [id], onDelete: SetNull)
+  pickupPoint     PickupPoint?   @relation(fields: [pickupPointId], references: [id], onDelete: SetNull)
   user            User?          @relation("OrderUser", fields: [userId], references: [id], onDelete: SetNull)
   referrer        User?          @relation("OrderReferrer", fields: [referredBy], references: [id], onDelete: SetNull)
   items           OrderItem[]
@@ -425,6 +427,7 @@ model PickupPoint {
   updatedAt       DateTime @updatedAt
 
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders          Order[]
 
   @@map("pickup_points")
 }

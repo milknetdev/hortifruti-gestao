@@ -25,6 +25,7 @@ import {
   PackageCheck,
   XCircle,
   Loader2,
+  Store,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
@@ -227,7 +228,37 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
           </Card>
 
           {/* Address */}
-          {address && (address.street || address.rua) && (
+          {order.deliveryType === 'pickup' ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4 text-gray-500" />
+                  <CardTitle className="text-base">Ponto de Retirada</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700">
+                  {order.pickupPoint?.name || 'Retirada na loja'}
+                </p>
+                {order.pickupPoint?.address && (
+                  <p className="text-sm text-gray-500">{order.pickupPoint.address}</p>
+                )}
+                {order.pickupPoint?.neighborhood && (
+                  <p className="text-sm text-gray-500">
+                    {order.pickupPoint.neighborhood} - {order.pickupPoint.city}/{order.pickupPoint.state}
+                  </p>
+                )}
+                {order.pickupPoint?.zipCode && (
+                  <p className="text-sm text-gray-500">CEP: {order.pickupPoint.zipCode}</p>
+                )}
+                {order.pickupPoint?.startTime && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Horário: {order.pickupPoint.startTime} - {order.pickupPoint.endTime}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          ) : address && (address.street || address.rua) ? (
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -242,7 +273,20 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
                 <p className="text-sm text-gray-500">CEP: {address.zipCode || address.cep}</p>
               </CardContent>
             </Card>
-          )}
+          ) : order.deliveryType === 'delivery' ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-gray-500" />
+                  <CardTitle className="text-base">Tipo de Entrega</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700">Entrega em domicílio</p>
+                <p className="text-xs text-gray-400">Endereço não informado</p>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Payment */}
           <Card>
