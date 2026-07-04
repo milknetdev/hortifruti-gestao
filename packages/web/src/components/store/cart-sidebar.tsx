@@ -17,19 +17,32 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal, deliveryFee: cartDeliveryFee, setDeliveryFee } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const [couponApplied, setCouponApplied] = useState(false);
   const [freeShipping, setFreeShipping] = useState(false);
   const [discount, setDiscount] = useState(0);
+  const [deliverySettings, setDeliverySettings] = useState({ deliveryFee: 9.90, freeAbove: 100 });
 
   useEffect(() => {
     cleanInvalidItems();
+    // Fetch delivery settings
+    const loadSettings = async () => {
+      try {
+        const { data: result } = await api.get('/delivery/settings');
+        const settings = result?.data || result;
+        setDeliverySettings({
+          deliveryFee: Number(settings?.deliveryFee || 9.90),
+          freeAbove: Number(settings?.freeAbove || 100),
+        });
+      } catch {}
+    };
+    loadSettings();
   }, []);
 
   const subtotal = getSubtotal();
-  const baseDeliveryFee = subtotal >= 100 ? 0 : 9.90;
+  const baseDeliveryFee = subtotal >= deliverySettings.freeAbove ? 0 : deliverySettings.deliveryFee;
   const deliveryFeeAmount = deliveryType === 'pickup' ? 0 : (freeShipping ? 0 : baseDeliveryFee);
   const total = subtotal - discount + deliveryFeeAmount;
 
