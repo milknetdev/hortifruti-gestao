@@ -54,6 +54,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   referralCode?: string;
+
+  @ApiPropertyOptional({ example: 'pickup-point-uuid' })
+  @IsOptional()
+  @IsString()
+  pickupPointId?: string;
 }
 
 export class UpdateOrderStatusDto {
