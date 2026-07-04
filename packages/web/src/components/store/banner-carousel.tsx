@@ -47,9 +47,10 @@ export function BannerCarousel() {
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const { data } = await api.get('/banners/active');
-        if (Array.isArray(data) && data.length > 0) {
-          setBanners(data);
+        const { data: result } = await api.get('/banners/active');
+        const bannerList = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+        if (bannerList.length > 0) {
+          setBanners(bannerList);
         } else {
           setBanners(fallbackBanners);
         }
@@ -103,7 +104,7 @@ export function BannerCarousel() {
           {/* Background image overlay */}
           <div
             className="absolute inset-0 bg-cover bg-center opacity-20"
-            style={{ backgroundImage: `url(${banner.imageUrl})` }}
+            style={{ backgroundImage: `url(${banner.image || banner.imageUrl})` }}
           />
 
           {/* Content */}
