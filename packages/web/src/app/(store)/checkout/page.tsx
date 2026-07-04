@@ -23,6 +23,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api';
 import { formatCurrency, cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const paymentMethods = [
   { id: 'pix', label: 'PIX', icon: QrCode, description: 'Aprovação instantânea', color: 'text-green-600' },
