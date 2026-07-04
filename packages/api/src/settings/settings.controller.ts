@@ -8,6 +8,29 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 export class SettingsController {
   constructor(private settingsService: SettingsService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Buscar todas as configurações' })
+  getAllSettings() {
+    return this.settingsService.getSettings('', 'general');
+  }
+
+  @Put()
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualizar configurações gerais' })
+  updateAllSettings(@Body() data: any) {
+    // Separar productDisplay das outras configurações
+    const { productDisplay, ...generalSettings } = data;
+    
+    const updates = [];
+    if (productDisplay) {
+      updates.push(this.settingsService.updateProductDisplaySettings('', productDisplay));
+    }
+    updates.push(this.settingsService.updateSettings('', 'general', generalSettings));
+    
+    return Promise.all(updates).then(() => ({ message: 'Configurações atualizadas' }));
+  }
+
   @Get('product-display')
   @ApiOperation({ summary: 'Configurações de exibição de produto' })
   getProductDisplay() {
