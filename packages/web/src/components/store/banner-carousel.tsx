@@ -10,6 +10,7 @@ interface Banner {
   id: string;
   title: string;
   subtitle?: string;
+  image?: string;
   imageUrl: string;
   link?: string;
   backgroundColor?: string;
