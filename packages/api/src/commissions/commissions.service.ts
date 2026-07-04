@@ -13,15 +13,17 @@ export class CommissionsService {
     return tenantId;
   }
 
-  async findAll(tenantId: string, query: { page?: number; limit?: number; userId?: string; paid?: boolean; period?: string }) {
+  async findAll(tenantId: string, query: any) {
     tenantId = await this.resolveTenantId(tenantId);
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 20;
+    const page = Number(query?.page) || 1;
+    const limit = Number(query?.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
-    if (query.userId) where.userId = query.userId;
-    if (query.paid !== undefined) where.paid = query.paid === true || query.paid === 'true';
-    if (query.period) where.period = query.period;
+    if (query?.userId) where.userId = query.userId;
+    if (query?.paid !== undefined && query?.paid !== '') {
+      where.paid = query.paid === true || query.paid === 'true';
+    }
+    if (query?.period) where.period = query.period;
 
     const [items, total] = await Promise.all([
       this.prisma.commission.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, name: true } }, product: { select: { id: true, name: true } } } }),
