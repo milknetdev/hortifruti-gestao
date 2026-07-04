@@ -8,6 +8,26 @@ import { JwtAuthGuard } from '../auth/auth.guard';
 export class DeliveryController {
   constructor(private deliveryService: DeliveryService) {}
 
+  @Get('settings')
+  @ApiOperation({ summary: 'Configurações de entrega' })
+  getSettings() {
+    return this.deliveryService.getSettings('');
+  }
+
+  @Put('settings')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualizar configurações de entrega' })
+  updateSettings(@Body() data: any) {
+    return this.deliveryService.updateSettings('', data);
+  }
+
+  @Get('calculate')
+  @ApiOperation({ summary: 'Calcular frete' })
+  calculate(@Query() query: any) {
+    return this.deliveryService.calculateDelivery('', query);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -20,12 +40,6 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Listar zonas de entrega' })
   findAll() {
     return this.deliveryService.findAll('');
-  }
-
-  @Get('calculate')
-  @ApiOperation({ summary: 'Calcular frete' })
-  calculate(@Query() query: any) {
-    return this.deliveryService.calculateDelivery('', query);
   }
 
   @Get(':id')
@@ -48,19 +62,5 @@ export class DeliveryController {
   @ApiOperation({ summary: 'Remover zona' })
   remove(@Param('id') id: string) {
     return this.deliveryService.remove(id, '');
-  }
-
-  @Get('settings')
-  @ApiOperation({ summary: 'Configurações de entrega' })
-  getSettings() {
-    return this.deliveryService.getSettings('');
-  }
-
-  @Put('settings')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Atualizar configurações de entrega' })
-  updateSettings(@Body() data: any) {
-    return this.deliveryService.updateSettings('', data);
   }
 }
