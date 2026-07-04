@@ -170,7 +170,7 @@ export default function CheckoutPage() {
         })),
         deliveryType,
         paymentMethod,
-        pickupPointId: deliveryType === 'pickup' ? selectedPickupPoint : undefined,
+        pickupPointId: deliveryType === 'pickup' && selectedPickupPoint ? selectedPickupPoint : undefined,
         notes: notes || undefined,
         referralCode: referralCode || undefined,
       });
