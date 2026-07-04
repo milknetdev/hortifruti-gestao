@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Plus,
   X,
+  Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '@/stores/cart-store';
@@ -33,9 +34,8 @@ const paymentMethods = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { items, subtotal: getSubtotal, total: getTotalAmount, clearCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const { items, subtotal: getSubtotal, total: getTotalAmount, clearCart, deliveryType: storeDeliveryType, setDeliveryType: setStoreDeliveryType } = useCartStore();
   const [paymentMethod, setPaymentMethod] = useState('pix');
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
@@ -43,7 +43,10 @@ export default function CheckoutPage() {
   const [showAddresses, setShowAddresses] = useState(false);
   const [pickupPoints, setPickupPoints] = useState<any[]>([]);
   const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>('');
-
+  const [deliveryType, setDeliveryTypeLocal] = useState<'delivery' | 'pickup'>(storeDeliveryType === 'pickup' ? 'pickup' : 'delivery');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState(false);
+  const [discount, setDiscount] = useState(0);
   const [address, setAddress] = useState({
     street: '',
     number: '',
@@ -109,7 +112,7 @@ export default function CheckoutPage() {
   const subtotal = getSubtotal();
   const [deliverySettings, setDeliverySettings] = useState({ deliveryFee: 9.90, freeAbove: 100 });
   const deliveryFee = deliveryType === 'delivery' && subtotal < deliverySettings.freeAbove ? deliverySettings.deliveryFee : 0;
-  const total = subtotal + deliveryFee;
+  const total = subtotal - discount + deliveryFee;
 
   // Fetch delivery settings
   useEffect(() => {
@@ -137,6 +140,30 @@ export default function CheckoutPage() {
     };
     loadPickupPoints();
   }, []);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Digite um cupom válido');
+      return;
+    }
+    try {
+      const { data: result } = await api.get(`/coupons/validate/${couponCode.toUpperCase()}?orderTotal=${subtotal}`);
+      const data = result?.data || result;
+      if (data.valid) {
+        const couponType = data.coupon?.type;
+        if (couponType === 'FREE_SHIPPING' || couponType === 'free_shipping') {
+          setDiscount(0);
+        } else {
+          setDiscount(Number(data.discount) || 0);
+        }
+        setCouponApplied(true);
+        toast.success('Cupom aplicado!');
+      }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || 'Cupom inválido ou expirado';
+      toast.error(message);
+    }
+  };
 
   const handleConfirm = async () => {
     if (!isAuthenticated) {
@@ -174,6 +201,7 @@ export default function CheckoutPage() {
         paymentMethod,
         pickupPointId: deliveryType === 'pickup' && selectedPickupPoint ? selectedPickupPoint : undefined,
         notes: notes || undefined,
+        couponCode: couponApplied && couponCode ? couponCode : undefined,
         referralCode: referralCode || undefined,
       });
       clearCart();
@@ -221,7 +249,7 @@ export default function CheckoutPage() {
             <h2 className="text-lg font-semibold mb-4">Tipo de Entrega</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setDeliveryType('delivery')}
+                onClick={() => { setDeliveryTypeLocal('delivery'); setStoreDeliveryType('delivery'); }}
                 className={cn(
                   'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
                   deliveryType === 'delivery'
@@ -236,7 +264,7 @@ export default function CheckoutPage() {
                 </div>
               </button>
               <button
-                onClick={() => setDeliveryType('pickup')}
+                onClick={() => { setDeliveryTypeLocal('pickup'); setStoreDeliveryType('pickup'); }}
                 className={cn(
                   'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
                   deliveryType === 'pickup'
@@ -423,6 +451,44 @@ export default function CheckoutPage() {
           </div>
         </div>
 
+        {/* Coupon */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold mb-4">Cupom de Desconto</h2>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Tag size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="Digite seu cupom"
+                disabled={couponApplied}
+                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none disabled:bg-gray-100"
+              />
+            </div>
+            <Button
+              onClick={handleApplyCoupon}
+              disabled={couponApplied || !couponCode.trim()}
+              variant="outline"
+              className={cn(
+                couponApplied
+                  ? 'bg-green-100 text-green-700 border-green-300'
+                  : ''
+              )}
+            >
+              {couponApplied ? 'Aplicado' : 'Aplicar'}
+            </Button>
+          </div>
+          {couponApplied && (
+            <button
+              onClick={() => { setCouponApplied(false); setCouponCode(''); setDiscount(0); }}
+              className="text-sm text-red-500 hover:text-red-700 mt-2"
+            >
+              Remover cupom
+            </button>
+          )}
+        </div>
+
         {/* Order Summary */}
         <div>
           <div className="sticky top-24 bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
@@ -458,6 +524,12 @@ export default function CheckoutPage() {
                 <span className="text-gray-600">Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Desconto</span>
+                  <span>-{formatCurrency(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Frete</span>
                 <span>

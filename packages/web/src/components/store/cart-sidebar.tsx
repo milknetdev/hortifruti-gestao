@@ -17,13 +17,19 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal } = useCartStore();
+  const { items, removeItem, updateQuantity, clearCart, cleanInvalidItems, subtotal: getSubtotal, deliveryType: storeDeliveryType, setDeliveryType: setStoreDeliveryType } = useCartStore();
   const [couponCode, setCouponCode] = useState('');
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+  const [deliveryType, setDeliveryTypeLocal] = useState<'delivery' | 'pickup'>(storeDeliveryType === 'pickup' ? 'pickup' : 'delivery');
   const [couponApplied, setCouponApplied] = useState(false);
   const [freeShipping, setFreeShipping] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [deliverySettings, setDeliverySettings] = useState({ deliveryFee: 9.90, freeAbove: 100 });
+
+  // Sync local state with store
+  const handleDeliveryTypeChange = (type: 'delivery' | 'pickup') => {
+    setDeliveryTypeLocal(type);
+    setStoreDeliveryType(type);
+  };
 
   useEffect(() => {
     cleanInvalidItems();
@@ -235,7 +241,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                 {/* Delivery toggle */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setDeliveryType('delivery')}
+                    onClick={() => handleDeliveryTypeChange('delivery')}
                     className={cn(
                       'flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium border transition-colors',
                       deliveryType === 'delivery'
@@ -247,7 +253,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                     Entrega
                   </button>
                   <button
-                    onClick={() => setDeliveryType('pickup')}
+                    onClick={() => handleDeliveryTypeChange('pickup')}
                     className={cn(
                       'flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium border transition-colors',
                       deliveryType === 'pickup'
