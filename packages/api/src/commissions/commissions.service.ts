@@ -15,12 +15,12 @@ export class CommissionsService {
 
   async findAll(tenantId: string, query: { page?: number; limit?: number; userId?: string; paid?: boolean; period?: string }) {
     tenantId = await this.resolveTenantId(tenantId);
-    const page = query.page || 1;
-    const limit = query.limit || 20;
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 20;
     const skip = (page - 1) * limit;
     const where: any = { tenantId };
     if (query.userId) where.userId = query.userId;
-    if (query.paid !== undefined) where.paid = query.paid;
+    if (query.paid !== undefined) where.paid = query.paid === true || query.paid === 'true';
     if (query.period) where.period = query.period;
 
     const [items, total] = await Promise.all([
