@@ -5,21 +5,33 @@ import { PrismaService } from '../prisma/prisma.service';
 export class DeliveryService {
   constructor(private prisma: PrismaService) {}
 
+  private async resolveTenantId(tenantId: string): Promise<string> {
+    if (!tenantId) {
+      const tenant = await this.prisma.tenant.findFirst();
+      if (tenant) return tenant.id;
+    }
+    return tenantId;
+  }
+
   async create(data: any, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.deliveryZone.create({ data: { ...data, tenantId } });
   }
 
   async findAll(tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     return this.prisma.deliveryZone.findMany({ where: { tenantId }, orderBy: { fee: 'asc' } });
   }
 
   async findOne(id: string, tenantId: string) {
+    tenantId = await this.resolveTenantId(tenantId);
     const zone = await this.prisma.deliveryZone.findFirst({ where: { id, tenantId } });
     if (!zone) throw new NotFoundException('Zona de entrega não encontrada');
     return zone;
   }
 
   async calculateDelivery(tenantId: string, query: any) {
+    tenantId = await this.resolveTenantId(tenantId);
     const zones = await this.prisma.deliveryZone.findMany({ where: { tenantId, active: true } });
     const matching = zones.filter((z) => {
       try {

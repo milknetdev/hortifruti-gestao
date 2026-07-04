@@ -41,6 +41,7 @@ model Tenant {
   customers     Customer[]
   coupons       Coupon[]
   deliveryZones DeliveryZone[]
+  pickupPoints  PickupPoint[]
   banners       Banner[]
   settings      TenantSetting[]
   paymentMethods PaymentMethod[]
@@ -402,6 +403,30 @@ model DeliveryZone {
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("delivery_zones")
+}
+
+model PickupPoint {
+  id              String   @id @default(uuid())
+  tenantId        String
+  name            String
+  address         String
+  zipCode         String
+  city            String?
+  state           String?
+  neighborhood    String?
+  complement      String?
+  reference       String?
+  phone           String?
+  startTime       String   @default("08:00")
+  endTime         String   @default("18:00")
+  availableDays   String   @default("[1,2,3,4,5]")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("pickup_points")
 }
 
 // ==================== PAYMENTS ====================
