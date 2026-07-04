@@ -32,12 +32,6 @@ export default function ReferralPage() {
       // Handle commissions - may also be nested
       const commData = commRes.data?.data?.data || commRes.data?.data || commRes.data;
       setCommissions(Array.isArray(commData) ? commData : []);
-      
-      // Initialize settings from stats
-      if (statsData) {
-        setCommissionType(statsData.commissionType || 'PERCENTAGE');
-        setCommissionValue(String(statsData.commissionRate || 10));
-      }
     } catch {
       setStats(null);
     } finally {
