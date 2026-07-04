@@ -41,6 +41,8 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [showAddresses, setShowAddresses] = useState(false);
+  const [pickupPoints, setPickupPoints] = useState<any[]>([]);
+  const [selectedPickupPoint, setSelectedPickupPoint] = useState<string>('');
 
   const [address, setAddress] = useState({
     street: '',
@@ -108,6 +110,18 @@ export default function CheckoutPage() {
   const deliveryFee = deliveryType === 'delivery' && subtotal < 100 ? 9.9 : 0;
   const total = subtotal + deliveryFee;
 
+  // Fetch pickup points
+  useEffect(() => {
+    const loadPickupPoints = async () => {
+      try {
+        const { data: result } = await api.get('/pickup-points');
+        const list = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+        setPickupPoints(list);
+      } catch {}
+    };
+    loadPickupPoints();
+  }, []);
+
   const handleConfirm = async () => {
     if (!isAuthenticated) {
       toast.error('Faça login para finalizar o pedido');
@@ -140,6 +154,7 @@ export default function CheckoutPage() {
         })),
         deliveryType,
         paymentMethod,
+        pickupPointId: deliveryType === 'pickup' ? selectedPickupPoint : undefined,
         notes: notes || undefined,
         referralCode: referralCode || undefined,
       });
@@ -219,6 +234,39 @@ export default function CheckoutPage() {
               </button>
             </div>
           </div>
+
+          {/* Pickup Points */}
+          {deliveryType === 'pickup' && pickupPoints.length > 0 && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h2 className="text-lg font-semibold mb-4">Escolha o ponto de retirada</h2>
+              <div className="space-y-3">
+                {pickupPoints.map((point: any) => (
+                  <button
+                    key={point.id}
+                    onClick={() => setSelectedPickupPoint(point.id)}
+                    className={cn(
+                      'w-full text-left p-4 rounded-xl border-2 transition-all',
+                      selectedPickupPoint === point.id
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Store size={20} className={selectedPickupPoint === point.id ? 'text-green-600' : 'text-gray-400'} />
+                      <div>
+                        <p className="font-medium">{point.name}</p>
+                        <p className="text-sm text-gray-500">{point.address}</p>
+                        {point.neighborhood && (
+                          <p className="text-xs text-gray-400">{point.neighborhood} - {point.city}/{point.state}</p>
+                        )}
+                        <p className="text-xs text-gray-400">Horário: {point.startTime} - {point.endTime}</p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Address */}
           {deliveryType === 'delivery' && (
