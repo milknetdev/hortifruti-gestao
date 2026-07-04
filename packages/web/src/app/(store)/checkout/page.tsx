@@ -164,10 +164,12 @@ export default function CheckoutPage() {
         ?.split('=')[1];
 
       await api.post('/orders', {
-        items: items.map((item) => ({ 
-          productId: item.productId || item.id, 
-          quantity: Number(item.quantity) || 1 
-        })),
+        items: items
+          .filter((item) => item.productId && item.productId.length === 36) // Valid UUID
+          .map((item) => ({ 
+            productId: item.productId, 
+            quantity: Number(item.quantity) || 1 
+          })),
         deliveryType,
         paymentMethod,
         pickupPointId: deliveryType === 'pickup' && selectedPickupPoint ? selectedPickupPoint : undefined,
