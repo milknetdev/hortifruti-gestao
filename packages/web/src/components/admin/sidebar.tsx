@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Leaf,
   X,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -66,6 +67,7 @@ const menuGroups: MenuGroup[] = [
       { label: 'Pontos de Retirada', href: '/admin/pontos-retirada', icon: Store },
       { label: 'Cupons', href: '/admin/cupons', icon: Ticket },
       { label: 'Entregas', href: '/admin/entregas', icon: Truck },
+      { label: 'Exportar', href: '/admin/exportar', icon: FileSpreadsheet },
     ],
   },
   {

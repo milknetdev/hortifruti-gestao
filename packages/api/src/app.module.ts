@@ -18,6 +18,7 @@ import { CouponsModule } from './coupons/coupons.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { PickupPointsModule } from './pickup-points/pickup-points.module';
 import { SettingsModule } from './settings/settings.module';
+import { ExportModule } from './export/export.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BannersModule } from './banners/banners.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -47,6 +48,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     DeliveryModule,
     PickupPointsModule,
     SettingsModule,
+    ExportModule,
     PaymentsModule,
     BannersModule,
     DashboardModule,
