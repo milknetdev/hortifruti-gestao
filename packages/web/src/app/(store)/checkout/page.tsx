@@ -183,6 +183,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (deliveryType === 'pickup' && !selectedPickupPoint) {
+      toast.error('Selecione um ponto de retirada');
+      return;
+    }
+
     setLoading(true);
     try {
       // Get referral code from cookie
