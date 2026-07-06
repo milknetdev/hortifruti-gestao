@@ -186,12 +186,16 @@ export default function CuponsPage() {
     {
       key: 'usage',
       label: 'Uso',
-      render: (v, row) => `${row.currentUsage || v || 0}/${row.usageLimit || row.limiteUso || '∞'}`,
+      render: (v, row) => `${row.usageCount || 0}/${row.usageLimit || '∞'}`,
     },
     {
       key: 'expiresAt',
       label: 'Validade',
-      render: (v, row) => v || row.validade || '-',
+      render: (v, row) => {
+        const date = row.validUntil || v;
+        if (!date) return '-';
+        return new Date(date).toLocaleDateString('pt-BR');
+      },
     },
     {
       key: 'active',
