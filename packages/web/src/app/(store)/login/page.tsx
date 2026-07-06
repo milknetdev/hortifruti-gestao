@@ -31,9 +31,11 @@ function LoginForm() {
     setLoading(true);
     try {
       const { data: result } = await api.post('/auth/customer/login', { email, password });
-      login(result.data.user, result.data.accessToken);
+      login(result.data.user, result.data.accessToken, result.data.refreshToken);
       toast.success('Bem-vindo de volta!');
-      router.push(redirect);
+      setTimeout(() => {
+        window.location.href = redirect || '/';
+      }, 300);
     } catch (err: any) {
       toast.error(err?.message || 'Email ou senha incorretos');
     } finally {

@@ -34,7 +34,10 @@ export default function AdminLoginPage() {
       const data = result.data || result;
       login(data.user, data.accessToken, data.refreshToken);
       toast.success('Login realizado com sucesso!');
-      router.push('/admin');
+      // Use window.location for reliable redirect after login
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 300);
     } catch (error: any) {
       const message = error?.response?.data?.message || 'Credenciais invalidas';
       toast.error(message);

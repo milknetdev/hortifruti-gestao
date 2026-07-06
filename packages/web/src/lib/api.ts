@@ -27,20 +27,46 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
       try {
-        // Try admin token first, then customer token
-        const adminData = localStorage.getItem('hortifruti-admin');
-        const authData = localStorage.getItem('hortifruti-auth');
-
+        const url = config.url || '';
+        
+        // For customer-specific endpoints, prioritize customer token
+        const isCustomerEndpoint = url.includes('/favorites') || 
+          url.includes('/customer/') || 
+          url.includes('/addresses') ||
+          url.includes('/orders/my');
+        
         let token = null;
-
-        if (adminData) {
-          const parsed = JSON.parse(adminData);
-          token = parsed?.state?.accessToken;
-        }
-
-        if (!token && authData) {
-          const parsed = JSON.parse(authData);
-          token = parsed?.state?.accessToken;
+        
+        if (isCustomerEndpoint) {
+          // Try customer token first for customer endpoints
+          const authData = localStorage.getItem('hortifruti-auth');
+          if (authData) {
+            const parsed = JSON.parse(authData);
+            token = parsed?.state?.accessToken;
+          }
+          // Fallback to admin token if no customer token
+          if (!token) {
+            const adminData = localStorage.getItem('hortifruti-admin');
+            if (adminData) {
+              const parsed = JSON.parse(adminData);
+              token = parsed?.state?.accessToken;
+            }
+          }
+        } else {
+          // For admin endpoints, try admin token first
+          const adminData = localStorage.getItem('hortifruti-admin');
+          if (adminData) {
+            const parsed = JSON.parse(adminData);
+            token = parsed?.state?.accessToken;
+          }
+          // Fallback to customer token
+          if (!token) {
+            const authData = localStorage.getItem('hortifruti-auth');
+            if (authData) {
+              const parsed = JSON.parse(authData);
+              token = parsed?.state?.accessToken;
+            }
+          }
         }
 
         if (token && config.headers) {

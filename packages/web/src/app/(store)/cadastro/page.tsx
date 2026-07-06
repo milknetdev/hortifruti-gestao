@@ -51,9 +51,11 @@ export default function RegisterPage() {
     try {
       const { confirmPassword, ...payload } = data;
       const { data: result } = await api.post('/auth/customer/register', payload);
-      login(result.data.user, result.data.accessToken);
+      login(result.data.user, result.data.accessToken, result.data.refreshToken);
       toast.success('Conta criada com sucesso!');
-      router.push('/conta');
+      setTimeout(() => {
+        window.location.href = '/conta';
+      }, 300);
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao criar conta. Tente novamente.');
     } finally {
