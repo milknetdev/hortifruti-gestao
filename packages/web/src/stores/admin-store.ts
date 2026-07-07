@@ -20,6 +20,7 @@ interface AdminAuthState {
 
   login: (user: AdminUser, accessToken: string, refreshToken?: string) => void;
   logout: () => void;
+  setUser: (user: AdminUser) => void;
   hydrate: () => void;
 }
 
@@ -58,6 +59,8 @@ export const useAdminStore = create<AdminAuthState>()(
           isLoading: false,
         });
       },
+
+      setUser: (user: AdminUser) => set({ user }),
 
       hydrate: () => {
         const state = get();
