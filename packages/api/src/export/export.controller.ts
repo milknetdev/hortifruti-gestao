@@ -34,8 +34,9 @@ export class ExportController {
       },
       include: {
         customer: { select: { name: true, email: true, phone: true } },
+        address: { select: { street: true, number: true, complement: true, neighborhood: true, city: true, state: true, zipCode: true } },
         items: { include: { product: { select: { name: true, unit: true } } } },
-        pickupPoint: { select: { name: true } },
+        pickupPoint: { select: { name: true, address: true, city: true, state: true } },
       },
       orderBy: { createdAt: 'desc' },
     });

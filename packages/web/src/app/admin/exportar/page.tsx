@@ -61,7 +61,7 @@ export default function ExportarPage() {
         'Email': o.customer?.email || '-',
         'Telefone': o.customer?.phone || '-',
         'Tipo': o.deliveryType === 'pickup' ? 'Retirada' : 'Entrega',
-        'Ponto de Retirada': o.pickupPoint?.name || '-',
+        'Endereço': o.address ? `${o.address.street}, ${o.address.number} - ${o.address.neighborhood}, ${o.address.city}/${o.address.state} - CEP: ${o.address.zipCode}` : (o.pickupPoint ? `Retirada: ${o.pickupPoint.name} - ${o.pickupPoint.address}, ${o.pickupPoint.city}/${o.pickupPoint.state}` : '-'),
         'Pagamento': o.paymentMethod || '-',
         'Status': o.status,
         'Subtotal': Number(o.subtotal).toFixed(2),
