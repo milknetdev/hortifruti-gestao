@@ -91,18 +91,35 @@ export class AuthService {
     if (exists) throw new ConflictException('Email ja cadastrado');
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
+    
+    // Generate referral code
+    const referralCode = this.generateReferralCode(data.name);
 
     const user = await this.prisma.user.create({
-      data: { email, password: hashedPassword, name: data.name.trim(), role: data.role || 'ADMIN', tenantId: data.tenantId },
+      data: { 
+        email, 
+        password: hashedPassword, 
+        name: data.name.trim(), 
+        role: data.role || 'ADMIN', 
+        tenantId: data.tenantId,
+        referralCode,
+      },
     });
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.prisma.user.update({ where: { id: user.id }, data: { refreshToken: tokens.refreshToken } });
 
     return {
-      user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, referralCode: user.referralCode },
       ...tokens,
     };
+  }
+
+  private generateReferralCode(name: string): string {
+    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const prefix = cleanName.substring(0, 4).padEnd(4, 'X');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}${random}`;
   }
 
   async registerCustomer(data: { email: string; password: string; name: string; phone?: string; cpf?: string; tenantId?: string }) {

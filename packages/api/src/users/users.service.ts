@@ -19,10 +19,21 @@ export class UsersService {
     const exists = await this.prisma.user.findFirst({ where: { email: data.email, tenantId } });
     if (exists) throw new ConflictException('Email já cadastrado nesta loja');
     const hashedPassword = await bcrypt.hash(data.password || '123456', 12);
+    
+    // Generate referral code
+    const referralCode = this.generateReferralCode(data.name || 'User');
+    
     return this.prisma.user.create({
-      data: { ...data, password: hashedPassword, tenantId },
-      select: { id: true, email: true, name: true, role: true, active: true, createdAt: true },
+      data: { ...data, password: hashedPassword, tenantId, referralCode },
+      select: { id: true, email: true, name: true, role: true, active: true, referralCode: true, createdAt: true },
     });
+  }
+
+  private generateReferralCode(name: string): string {
+    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const prefix = cleanName.substring(0, 4).padEnd(4, 'X');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}${random}`;
   }
 
   async findAll(tenantId: string, query: { page?: number; limit?: number; search?: string; role?: string }) {
