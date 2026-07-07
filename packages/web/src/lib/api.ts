@@ -33,7 +33,8 @@ api.interceptors.request.use(
         const isCustomerEndpoint = url.includes('/favorites') || 
           url.includes('/customer/') || 
           url.includes('/addresses') ||
-          url.includes('/orders/my');
+          url.includes('/orders/my') ||
+          (url.includes('/orders') && !url.includes('/orders/my') && config.method === 'post');
         
         let token = null;
         
