@@ -57,9 +57,23 @@ export default function ConfiguracoesPage() {
 
   const fetchSettings = async () => {
     try {
-      const { data: result } = await api.get('/settings');
-      const data = result?.data || result || {};
-      setSettings((prev) => ({ ...prev, ...data }));
+      const [generalRes, productRes] = await Promise.all([
+        api.get('/settings'),
+        api.get('/settings/product-display'),
+      ]);
+      const generalData = generalRes?.data?.data || generalRes?.data || {};
+      const productData = productRes?.data?.data || productRes?.data || {};
+      setSettings((prev) => ({
+        ...prev,
+        ...generalData,
+        productDisplay: {
+          ...prev.productDisplay,
+          deliveryPromise: productData.deliveryPromise || prev.productDisplay.deliveryPromise,
+          guarantee: productData.guarantee || prev.productDisplay.guarantee,
+          showStock: productData.showStock !== undefined ? productData.showStock : prev.productDisplay.showStock,
+          showDeliveryTime: productData.showDeliveryTime !== undefined ? productData.showDeliveryTime : prev.productDisplay.showDeliveryTime,
+        },
+      }));
     } catch {
       // Use defaults
     } finally {
