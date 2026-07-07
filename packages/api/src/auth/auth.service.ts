@@ -187,6 +187,47 @@ export class AuthService {
     };
   }
 
+  async changePassword(userId: string, userType: string, currentPassword: string, newPassword: string) {
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException('Senha atual e nova senha são obrigatórias');
+    }
+    if (newPassword.length < 6) {
+      throw new BadRequestException('Nova senha deve ter pelo menos 6 caracteres');
+    }
+
+    let hashedPassword: string;
+    let currentHash: string;
+
+    if (userType === 'customer') {
+      const customer = await this.prisma.customer.findUnique({ where: { id: userId } });
+      if (!customer) throw new NotFoundException('Cliente não encontrado');
+      currentHash = customer.password;
+    } else {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new NotFoundException('Usuário não encontrado');
+      currentHash = user.password;
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, currentHash);
+    if (!isValid) throw new UnauthorizedException('Senha atual incorreta');
+
+    hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    if (userType === 'customer') {
+      await this.prisma.customer.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      });
+    } else {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedPassword },
+      });
+    }
+
+    return { message: 'Senha alterada com sucesso' };
+  }
+
   async getCustomerByEmail(email: string) {
     const customer = await this.prisma.customer.findFirst({
       where: { email: email.toLowerCase().trim() },

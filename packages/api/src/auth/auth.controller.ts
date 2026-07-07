@@ -73,4 +73,12 @@ export class AuthController {
   async updateProfile(@CurrentUser() user: any, @Body() data: any) {
     return this.authService.updateCustomerProfile(user.email, data);
   }
+
+  @Put('change-password')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Alterar senha' })
+  async changePassword(@CurrentUser() user: any, @Body() data: { currentPassword: string; newPassword: string }) {
+    return this.authService.changePassword(user.id, user.type, data.currentPassword, data.newPassword);
+  }
 }

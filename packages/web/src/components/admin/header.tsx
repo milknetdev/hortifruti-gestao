@@ -94,11 +94,11 @@ export function AdminHeader({ onMenuToggle, notificationCount = 0 }: HeaderProps
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => router.push('/perfil')} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => router.push('/admin/perfil')} className="cursor-pointer">
               <User className="w-4 h-4 mr-2" />
               Perfil
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/configuracoes')} className="cursor-pointer">
+            <DropdownMenuItem onClick={() => router.push('/admin/configuracoes')} className="cursor-pointer">
               <Settings className="w-4 h-4 mr-2" />
               Configurações
             </DropdownMenuItem>
