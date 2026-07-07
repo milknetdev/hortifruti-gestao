@@ -23,6 +23,34 @@ export default function ExportarPage() {
     return `${d}/${m}/${y}`;
   };
 
+  const translatePayment = (method: string) => {
+    const map: Record<string, string> = {
+      'pix': 'PIX',
+      'credit_card': 'Cartão de Crédito',
+      'debit_card': 'Cartão de Débito',
+      'cash': 'Dinheiro',
+      'pay_on_delivery': 'Pagar na Entrega',
+      'pay_on_pickup': 'Pagar na Retirada',
+    };
+    return map[method] || method;
+  };
+
+  const translateStatus = (status: string) => {
+    const map: Record<string, string> = {
+      'PENDING': 'Pendente',
+      'AWAITING_PAYMENT': 'Aguardando Pagamento',
+      'PAID': 'Pago',
+      'PROCESSING': 'Preparando',
+      'READY': 'Pronto',
+      'OUT_FOR_DELIVERY': 'Saiu para Entrega',
+      'DELIVERED': 'Entregue',
+      'CANCELLED': 'Cancelado',
+      'PICKUP_AVAILABLE': 'Pronto para Retirada',
+      'PICKED_UP': 'Retirado',
+    };
+    return map[status] || status;
+  };
+
   const downloadCSV = (data: any[], filename: string, headers: string[]) => {
     const csvContent = [
       headers.join(';'),
@@ -62,8 +90,8 @@ export default function ExportarPage() {
         'Telefone': o.customer?.phone || '-',
         'Tipo': o.deliveryType === 'pickup' ? 'Retirada' : 'Entrega',
         'Endereço': o.address ? `${o.address.street}, ${o.address.number} - ${o.address.neighborhood}, ${o.address.city}/${o.address.state} - CEP: ${o.address.zipCode}` : (o.pickupPoint ? `Retirada: ${o.pickupPoint.name} - ${o.pickupPoint.address}, ${o.pickupPoint.city}/${o.pickupPoint.state}` : '-'),
-        'Pagamento': o.paymentMethod || '-',
-        'Status': o.status,
+        'Pagamento': translatePayment(o.paymentMethod || '-'),
+        'Status': translateStatus(o.status),
         'Subtotal': Number(o.subtotal).toFixed(2),
         'Frete': Number(o.deliveryFee).toFixed(2),
         'Desconto': Number(o.discount).toFixed(2),
