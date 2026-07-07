@@ -80,12 +80,9 @@ export function AdminHeader({ onMenuToggle, notificationCount = 0 }: HeaderProps
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.avatar} alt={user?.name} />
-                <AvatarFallback className="bg-[#16a34a] text-white text-sm">
-                  {user?.name?.charAt(0)?.toUpperCase() || 'A'}
-                </AvatarFallback>
-              </Avatar>
+              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <User className="h-4 w-4 text-gray-600" />
+              </div>
               <div className="hidden md:flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-700">{user?.name || 'Administrador'}</span>
                 <span className="text-xs text-gray-500">{user?.email || 'admin@hortifruti.com'}</span>
