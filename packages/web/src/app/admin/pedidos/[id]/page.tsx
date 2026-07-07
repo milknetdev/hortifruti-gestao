@@ -197,7 +197,7 @@ export default function PedidoDetailPage({ params }: { params: { id: string } })
               </div>
               <div className="flex justify-end gap-8">
                 <span className="text-sm text-gray-500">Frete:</span>
-                <span className="text-sm font-medium">R$ {Number(order.shipping || order.freight || 0).toFixed(2)}</span>
+                <span className="text-sm font-medium">R$ {Number(order.deliveryFee || order.shipping || order.freight || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-end gap-8">
                 <span className="text-sm text-gray-500">Desconto:</span>
