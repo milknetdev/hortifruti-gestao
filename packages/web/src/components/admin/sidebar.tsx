@@ -124,7 +124,7 @@ function SidebarContent({ collapsed, pathname, onClose }: { collapsed: boolean; 
       <ScrollArea className="flex-1 py-2">
         <nav className="px-2 space-y-6">
           {menuGroups.map((group) => {
-            const filteredItems = group.items.filter((item: any) => {
+            const filteredItems = group.items.filter((item) => {
               if (item.superAdminOnly && !isSuperAdmin) return false;
               return true;
             });
@@ -139,7 +139,7 @@ function SidebarContent({ collapsed, pathname, onClose }: { collapsed: boolean; 
                   </p>
                 )}
                 <div className="space-y-1">
-                  {filteredItems.map((item: any) => {
+                  {filteredItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                     const Icon = item.icon;
                     return (
