@@ -221,6 +221,7 @@ export default function CheckoutPage() {
           })),
         deliveryType,
         paymentMethod,
+        deliveryFee: deliveryFee || 0,
         deliveryAddressId: deliveryType === 'delivery' ? await saveAddress() : undefined,
         pickupPointId: deliveryType === 'pickup' && selectedPickupPoint ? selectedPickupPoint : undefined,
         notes: notes || undefined,
