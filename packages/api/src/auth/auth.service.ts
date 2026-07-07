@@ -126,9 +126,6 @@ export class AuthService {
     if (exists) throw new ConflictException('Email ja cadastrado nesta loja');
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
-    
-    // Generate unique referral code
-    const referralCode = this.generateReferralCode(data.name);
 
     const customer = await this.prisma.customer.create({
       data: { 
@@ -138,7 +135,6 @@ export class AuthService {
         phone: data.phone?.trim(), 
         cpf: data.cpf?.trim(), 
         tenantId,
-        referralCode,
       },
     });
 
@@ -154,18 +150,10 @@ export class AuthService {
         name: customer.name, 
         phone: customer.phone, 
         cpf: customer.cpf, 
-        referralCode: customer.referralCode,
         type: 'customer' 
       }, 
       accessToken 
     };
-  }
-
-  private generateReferralCode(name: string): string {
-    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
-    const prefix = cleanName.substring(0, 4).padEnd(4, 'X');
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `${prefix}${random}`;
   }
 
   async refresh(refreshToken: string) {

@@ -126,22 +126,21 @@ model UserPermission {
 // ==================== CUSTOMERS ====================
 
 model Customer {
-  id           String   @id @default(uuid())
-  tenantId     String
-  email        String
-  password     String
-  name         String
-  cpf          String?
-  phone        String?
-  avatar       String?
-  referralCode String?
-  active       Boolean  @default(true)
-  vip          Boolean  @default(false)
-  totalSpent   Decimal  @default(0)
-  lastOrderAt  DateTime?
-  notes        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id          String   @id @default(uuid())
+  tenantId    String
+  email       String
+  password    String
+  name        String
+  cpf         String?
+  phone       String?
+  avatar      String?
+  active      Boolean  @default(true)
+  vip         Boolean  @default(false)
+  totalSpent  Decimal  @default(0)
+  lastOrderAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   addresses   Address[]
@@ -149,7 +148,6 @@ model Customer {
   favorites   Favorite[]
 
   @@unique([tenantId, email])
-  @@unique([tenantId, referralCode])
   @@map("customers")
 }
 

@@ -36,11 +36,8 @@ export class ReferralController {
   @Get('my-code')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Obter código de indicação' })
+  @ApiOperation({ summary: 'Obter código de indicação do vendedor' })
   async getMyCode(@CurrentUser() user: any) {
-    if (user.type === 'customer') {
-      return this.referralService.getCustomerReferralCode(user.id);
-    }
     return this.referralService.getOrCreateReferralCode(user.id, user.tenantId);
   }
 
@@ -57,9 +54,6 @@ export class ReferralController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Estatísticas de indicações' })
   async getMyStats(@CurrentUser() user: any) {
-    if (user.type === 'customer') {
-      return this.referralService.getCustomerStats(user.id);
-    }
     return this.referralService.getMyStats(user.id);
   }
 
