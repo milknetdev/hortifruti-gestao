@@ -59,6 +59,11 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   pickupPointId?: string;
+
+  @ApiPropertyOptional({ example: 9.90 })
+  @IsOptional()
+  @IsNumber()
+  deliveryFee?: number;
 }
 
 export class UpdateOrderStatusDto {
