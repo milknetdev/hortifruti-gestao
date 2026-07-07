@@ -126,9 +126,20 @@ export class AuthService {
     if (exists) throw new ConflictException('Email ja cadastrado nesta loja');
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
+    
+    // Generate unique referral code
+    const referralCode = this.generateReferralCode(data.name);
 
     const customer = await this.prisma.customer.create({
-      data: { email, password: hashedPassword, name: data.name.trim(), phone: data.phone?.trim(), cpf: data.cpf?.trim(), tenantId },
+      data: { 
+        email, 
+        password: hashedPassword, 
+        name: data.name.trim(), 
+        phone: data.phone?.trim(), 
+        cpf: data.cpf?.trim(), 
+        tenantId,
+        referralCode,
+      },
     });
 
     const accessToken = this.jwt.sign(
@@ -136,7 +147,25 @@ export class AuthService {
       { secret: this.config.get('JWT_SECRET'), expiresIn: '24h' },
     );
 
-    return { user: { id: customer.id, email: customer.email, name: customer.name, phone: customer.phone, cpf: customer.cpf, type: 'customer' }, accessToken };
+    return { 
+      user: { 
+        id: customer.id, 
+        email: customer.email, 
+        name: customer.name, 
+        phone: customer.phone, 
+        cpf: customer.cpf, 
+        referralCode: customer.referralCode,
+        type: 'customer' 
+      }, 
+      accessToken 
+    };
+  }
+
+  private generateReferralCode(name: string): string {
+    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const prefix = cleanName.substring(0, 4).padEnd(4, 'X');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}${random}`;
   }
 
   async refresh(refreshToken: string) {

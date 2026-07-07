@@ -128,4 +128,72 @@ export class ReferralService {
     });
     return { success: true, data: sellers };
   }
+
+  async getCustomerReferralCode(customerId: string) {
+    const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) throw new Error('Cliente não encontrado');
+
+    if (customer.referralCode) {
+      return {
+        success: true,
+        data: {
+          referralCode: customer.referralCode,
+          referralLink: `https://hortifruti-gestao.vercel.app/?ref=${customer.referralCode}`,
+          commissionRate: 10,
+        },
+      };
+    }
+
+    // Generate code if not exists
+    const code = this.generateCode(customer.name);
+    await this.prisma.customer.update({
+      where: { id: customerId },
+      data: { referralCode: code },
+    });
+
+    return {
+      success: true,
+      data: {
+        referralCode: code,
+        referralLink: `https://hortifruti-gestao.vercel.app/?ref=${code}`,
+        commissionRate: 10,
+      },
+    };
+  }
+
+  async getCustomerStats(customerId: string) {
+    const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
+    if (!customer) throw new Error('Cliente não encontrado');
+
+    // Ensure referral code exists
+    let referralCode = customer.referralCode;
+    if (!referralCode) {
+      referralCode = this.generateCode(customer.name);
+      await this.prisma.customer.update({
+        where: { id: customerId },
+        data: { referralCode },
+      });
+    }
+
+    const referredOrders = await this.prisma.order.count({
+      where: { notes: { contains: referralCode } },
+    });
+
+    return {
+      success: true,
+      data: {
+        referralCode,
+        referralLink: `https://hortifruti-gestao.vercel.app/?ref=${referralCode}`,
+        commissionRate: 10,
+        totalReferrals: referredOrders,
+      },
+    };
+  }
+
+  private generateCode(name: string): string {
+    const cleanName = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+    const prefix = cleanName.substring(0, 4).padEnd(4, 'X');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}${random}`;
+  }
 }
