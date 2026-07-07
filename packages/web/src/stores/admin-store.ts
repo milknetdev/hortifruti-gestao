@@ -7,6 +7,7 @@ interface AdminUser {
   name: string;
   role: string;
   avatar?: string;
+  phone?: string;
   tenantId: string;
   tenant?: { id: string; name: string; slug: string };
 }
