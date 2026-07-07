@@ -160,7 +160,7 @@ export default function EquipePage() {
       ),
     },
     {
-      key: 'lastLogin',
+      key: 'lastLoginAt',
       label: 'Último Login',
       render: (v) => v ? new Date(v).toLocaleString('pt-BR') : '-',
     },
