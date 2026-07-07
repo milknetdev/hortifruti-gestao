@@ -36,6 +36,7 @@ interface MenuItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  superAdminOnly?: boolean;
 }
 
 interface MenuGroup {
