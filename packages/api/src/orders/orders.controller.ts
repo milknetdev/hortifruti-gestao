@@ -91,6 +91,7 @@ export class OrdersController {
       ...dto, 
       tenantId, 
       customerId,
+      addressId: dto.deliveryAddressId,
     });
   }
 
