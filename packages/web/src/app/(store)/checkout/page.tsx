@@ -88,6 +88,22 @@ export default function CheckoutPage() {
     toast.success('Endereço selecionado!');
   };
 
+  const saveAddress = async (): Promise<string | undefined> => {
+    try {
+      if (!address.street || !address.number || !address.city) return undefined;
+      
+      const { data: result } = await api.post('/addresses', {
+        ...address,
+        label: 'Principal',
+        isDefault: true,
+      });
+      
+      return result?.data?.id || result?.id;
+    } catch {
+      return undefined;
+    }
+  };
+
   const fetchAddressByCep = async (cep: string) => {
     const cleanCep = cep.replace(/\D/g, '');
     if (cleanCep.length !== 8) return;
@@ -205,6 +221,7 @@ export default function CheckoutPage() {
           })),
         deliveryType,
         paymentMethod,
+        addressId: deliveryType === 'delivery' ? await saveAddress() : undefined,
         pickupPointId: deliveryType === 'pickup' && selectedPickupPoint ? selectedPickupPoint : undefined,
         notes: notes || undefined,
         couponCode: couponApplied && couponCode ? couponCode : undefined,
