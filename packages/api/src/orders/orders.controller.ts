@@ -34,11 +34,24 @@ export class OrdersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Meus pedidos' })
   async findMyOrders(@Req() req: any) {
+    const userId = req.user?.id;
     const email = req.user?.email;
+    const userType = req.user?.type;
     const tenantId = await this.ordersService.resolveTenantId('');
-    const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
-    if (!customer) return [];
-    return this.ordersService.findByCustomer(customer.id);
+    
+    let customerId: string | null = null;
+    
+    if (userType === 'customer' && userId) {
+      // Customer token - ID is the customer ID directly
+      customerId = userId;
+    } else if (email) {
+      // Admin/user token - find customer by email
+      const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
+      if (customer) customerId = customer.id;
+    }
+    
+    if (!customerId) return [];
+    return this.ordersService.findByCustomer(customerId);
   }
 
   @Get(':id')
@@ -55,13 +68,23 @@ export class OrdersController {
   @ApiOperation({ summary: 'Criar pedido' })
   async create(@Body() dto: CreateOrderDto, @Req() req: any) {
     const tenantId = await this.ordersService.resolveTenantId('');
+    const userId = req.user?.id;
     const email = req.user?.email;
+    const userType = req.user?.type;
     
-    // Buscar customer pelo email
+    // Buscar customer pelo email ou pelo ID do usuário
     let customerId = dto.customerId;
-    if (!customerId && email) {
-      const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
-      if (customer) customerId = customer.id;
+    
+    if (!customerId) {
+      if (userType === 'customer' && userId) {
+        // Se é um customer logado, buscar pelo ID
+        const customer = await this.ordersService.findCustomerById(userId);
+        if (customer) customerId = customer.id;
+      } else if (email) {
+        // Se é um admin/user logado, buscar customer pelo email
+        const customer = await this.ordersService.findCustomerByEmail(email, tenantId);
+        if (customer) customerId = customer.id;
+      }
     }
     
     return this.ordersService.create({ 

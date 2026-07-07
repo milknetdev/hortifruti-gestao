@@ -18,6 +18,11 @@ export class OrdersService {
     return this.prisma.customer.findFirst({ where: { email, tenantId } });
   }
 
+  async findCustomerById(id: string) {
+    if (!id) return null;
+    return this.prisma.customer.findUnique({ where: { id } });
+  }
+
   async create(data: any) {
     const products = await this.prisma.product.findMany({
       where: { id: { in: data.items.map((i: any) => i.productId) }, tenantId: data.tenantId },
