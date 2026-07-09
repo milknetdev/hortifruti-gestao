@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Save, Loader2 } from 'lucide-react';
+import { Upload, Save, Loader2, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -327,6 +327,72 @@ export default function PersonalizacaoPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Preview */}
+      <Card className="mt-6 border-dashed border-2 border-green-200 bg-green-50/30">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Eye className="w-4 h-4 text-green-600" />
+            Preview
+            <span className="text-sm font-normal text-gray-500">— Assim vai aparecer no site</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Header Preview */}
+          <div className="bg-white rounded-t-xl border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {settings.logo ? (
+                  <img src={settings.logo} alt="Logo" className="w-8 h-8 rounded" />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-green-600 flex items-center justify-center text-white font-bold text-sm">
+                    {settings.storeName?.charAt(0) || 'H'}
+                  </div>
+                )}
+                <div>
+                  <h2 className="font-bold text-gray-900" style={{ color: settings.primaryColor }}>{settings.storeName || 'HortiFruti'}</h2>
+                  <p className="text-xs text-gray-500">{settings.slogan || 'Frutas e verduras frescas'}</p>
+                </div>
+              </div>
+              <div className="flex gap-4 text-sm text-gray-500">
+                <span>Início</span>
+                <span>Produtos</span>
+                <span>Contato</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Colors Preview */}
+          <div className="bg-gray-50 border-x border-gray-200 p-4">
+            <p className="text-xs text-gray-500 mb-2">Cores do tema:</p>
+            <div className="flex gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: settings.primaryColor }}></div>
+                <span className="text-xs">Primária</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: settings.secondaryColor }}></div>
+                <span className="text-xs">Secundária</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: settings.accentColor }}></div>
+                <span className="text-xs">Destaque</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Preview */}
+          <div className="bg-gray-900 rounded-b-xl p-4 text-gray-300 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-green-400">{settings.storeName || 'HortiFruti'}</span>
+              <span>{settings.footerText || '© 2026 HortiFruti'}</span>
+            </div>
+            {settings.paymentText && (
+              <p className="mt-1 text-gray-500">{settings.paymentText}</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
