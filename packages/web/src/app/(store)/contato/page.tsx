@@ -143,7 +143,7 @@ export default function ContactPage() {
     const fetchFaqs = async () => {
       try {
         const { data: result } = await api.get('/faqs');
-        const faqs = result?.data || result || [];
+        const faqs = result?.data?.data || result?.data || result || [];
         if (Array.isArray(faqs) && faqs.length > 0) {
           setFaqItems(faqs.map(f => ({ icon: f.icon, question: f.question, answer: f.answer })));
         }
