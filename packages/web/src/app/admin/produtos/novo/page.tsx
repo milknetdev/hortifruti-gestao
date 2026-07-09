@@ -197,13 +197,14 @@ export default function NovoProdutoPage() {
                   variant="outline"
                   size="sm"
                   onClick={async () => {
-                    if (!formData.name) {
+                    const name = watch('name');
+                    if (!name) {
                       toast.error('Preencha o nome do produto primeiro');
                       return;
                     }
                     setSearchImages(true);
                     try {
-                      const { data: result } = await api.get(`/images/search?query=${encodeURIComponent(formData.name)}`);
+                      const { data: result } = await api.get(`/images/search?query=${encodeURIComponent(name)}`);
                       if (result?.data?.length > 0) {
                         setImageResults(result.data);
                         setShowImageModal(true);
