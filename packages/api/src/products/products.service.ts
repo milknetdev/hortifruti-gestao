@@ -32,6 +32,15 @@ export class ProductsService {
       { sku: { contains: query.search, mode: 'insensitive' } },
     ];
     if (query.categoryId) where.categoryId = query.categoryId;
+    
+    // Filter by category slug
+    if (query.category && !query.categoryId) {
+      const category = await this.prisma.category.findFirst({
+        where: { slug: query.category, tenantId },
+      });
+      if (category) where.categoryId = category.id;
+    }
+    
     if (query.featured !== undefined) where.featured = query.featured === 'true';
     if (query.promotional !== undefined) where.promotional = query.promotional === 'true';
 
