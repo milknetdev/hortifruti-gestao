@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, Trash2, HelpCircle, Truck, RefreshCw, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, HelpCircle, RefreshCw, Truck, RefreshCw, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -146,7 +146,11 @@ export default function SacPage() {
           <h1 className="text-2xl font-bold text-gray-900">SAC / FAQ</h1>
           <p className="text-gray-500">Gerencie as perguntas frequentes exibidas na página de contato</p>
         </div>
-        <Button onClick={() => handleOpenDialog()} className="bg-green-600 hover:bg-green-700">
+        <div className="flex gap-2">
+          <Button onClick={() => { setIsLoading(true); fetchFaqs(); }} variant="outline" size="icon">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => handleOpenDialog()} className="bg-green-600 hover:bg-green-700">
           <Plus className="w-4 h-4 mr-2" />
           Nova Pergunta
         </Button>
