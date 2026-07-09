@@ -28,7 +28,15 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [storeSettings, setStoreSettings] = useState({ storeName: 'HortiFruti', slogan: '', logo: '' });
+  const [storeSettings, setStoreSettings] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('store-settings');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return { storeName: 'HortiFruti', slogan: '', logo: '' };
+  });
   const { items } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
 
@@ -36,11 +44,13 @@ export function Header() {
     try {
       const { data: result } = await api.get('/settings/general');
       const data = result?.data || result || {};
-      setStoreSettings({
-        storeName: data.storeName || 'HortiFruti',
-        slogan: data.slogan || '',
-        logo: data.logo || '',
-      });
+      const newSettings = {
+              storeName: data.storeName || 'HortiFruti',
+              slogan: data.slogan || '',
+              logo: data.logo || '',
+            };
+            setStoreSettings(newSettings);
+            try { localStorage.setItem('store-settings', JSON.stringify(newSettings)); } catch {}
     } catch {}
   };
 

@@ -8,7 +8,15 @@ import { api } from '@/lib/api';
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const [whatsappLink, setWhatsappLink] = useState('');
-  const [storeName, setStoreName] = useState('HortiFruti');
+  const [storeName, setStoreName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('store-settings');
+        if (cached) return JSON.parse(cached).storeName || 'HortiFruti';
+      } catch {}
+    }
+    return 'HortiFruti';
+  });
   const [socialLinks, setSocialLinks] = useState({ phone: '', instagram: '', facebook: '' });
   const [quickLinks, setQuickLinks] = useState([
     { href: '/', label: 'Início' },
@@ -28,6 +36,10 @@ export function Footer() {
           const data = settingsRes.value?.data?.data || settingsRes.value?.data || {};
           setWhatsappLink(data.whatsappGroupLink || '');
           setStoreName(data.storeName || 'HortiFruti');
+          try { 
+            const cached = JSON.parse(localStorage.getItem('store-settings') || '{}');
+            localStorage.setItem('store-settings', JSON.stringify({ ...cached, storeName: data.storeName || 'HortiFruti' }));
+          } catch {}
           setSocialLinks({
             phone: data.socialPhone || '',
             instagram: data.socialInstagram || '',
