@@ -91,14 +91,14 @@ export default function PersonalizacaoPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Personalização</h1>
-        <p className="text-gray-500">Personalize a aparência da loja</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Personalização</h1>
+          <p className="text-gray-500">Personalize a aparência da loja</p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="icon">
           <RefreshCw className="w-4 h-4" />
         </Button>
-      </div>
       </div>
 
       <Tabs defaultValue="geral">
