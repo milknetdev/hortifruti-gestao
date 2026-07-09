@@ -82,12 +82,15 @@ export function Header() {
 
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-9 h-9 rounded-xl gradient-forest flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                <Leaf size={20} className="text-white" />
-              </div>
-              <span className="text-xl md:text-2xl font-heading font-bold">
-                <span className="text-forest">{storeSettings.storeName || 'HortiFruti'}</span>
-                
+              {storeSettings.logo ? (
+                <img src={storeSettings.logo} alt={storeSettings.storeName} className="h-9 w-auto max-w-[120px] object-contain" />
+              ) : (
+                <div className="w-9 h-9 rounded-xl gradient-forest flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                  <Leaf size={20} className="text-white" />
+                </div>
+              )}
+              <span className="text-xl md:text-2xl font-heading font-bold text-forest">
+                {storeSettings.storeName}
               </span>
             </Link>
 
