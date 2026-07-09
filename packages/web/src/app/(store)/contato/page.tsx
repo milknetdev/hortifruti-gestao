@@ -61,15 +61,31 @@ const faqItems = [
   },
 ];
 
-const iconMap: Record<string, any> = {  'truck': Truck,  'refresh-cw': RotateCcw,  'shield': Shield,  'calendar': Clock,  'credit-card': Mail,  'package': MapPin,  'help-circle': HelpCircle,};function getIconComponent(iconName: string | any) {  if (typeof iconName === 'string') {    return iconMap[iconName] || HelpCircle;  }  return iconName;}
+const iconMap: Record<string, any> = {
+  'truck': Truck,
+  'refresh-cw': RotateCcw,
+  'shield': Shield,
+  'calendar': Clock,
+  'credit-card': Mail,
+  'package': MapPin,
+  'help-circle': HelpCircle,
+};
+
+function getIconComponent(iconName: string | any) {
+  if (typeof iconName === 'string') {
+    return iconMap[iconName] || HelpCircle;
+  }
+  return iconName;
+}
+
 function AccordionItem({ icon: iconName, question, answer, isOpen, onToggle }: {
-  const Icon = getIconComponent(iconName);
   icon: any;
   question: string;
   answer: string;
   isOpen: boolean;
   onToggle: () => void;
 }) {
+  const Icon = getIconComponent(iconName);
   return (
     <div className={cn(
       'border rounded-2xl overflow-hidden transition-all',
