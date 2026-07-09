@@ -150,9 +150,10 @@ export default function FeatureBannersPage() {
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button onClick={() => handleOpenDialog()} className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Banner
-        </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Banner
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

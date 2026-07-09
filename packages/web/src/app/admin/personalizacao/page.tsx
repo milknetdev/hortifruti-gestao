@@ -99,7 +99,6 @@ export default function PersonalizacaoPage() {
           <RefreshCw className="w-4 h-4" />
         </Button>
       </div>
-      <div>
       </div>
 
       <Tabs defaultValue="geral">

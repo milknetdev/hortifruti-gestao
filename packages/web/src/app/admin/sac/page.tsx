@@ -151,9 +151,10 @@ export default function SacPage() {
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button onClick={() => handleOpenDialog()} className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Pergunta
-        </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Pergunta
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">

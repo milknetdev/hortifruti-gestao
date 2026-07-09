@@ -75,7 +75,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           <motion.div
             key={category.id}
             variants={item}
-            className={cn('')})
+            className=''
           >
             <Link
               href={`/produtos?category=${category.slug}`}
