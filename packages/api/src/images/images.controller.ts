@@ -14,77 +14,110 @@ export class ImagesController {
     }
 
     try {
-      // Use Unsplash API (free tier)
-      const accessKey = process.env.UNSPLASH_ACCESS_KEY || 'demo';
+      // Use Unsplash source for direct image URLs based on search
+      // This doesn't require an API key and returns relevant food images
+      const searchTerms = query.toLowerCase().trim();
       
-      // If no API key, use placeholder images
-      if (accessKey === 'demo') {
-        return {
-          success: true,
-          data: this.getPlaceholderImages(query),
-        };
-      }
+      // Food-specific search terms for better results
+      const foodCategories: Record<string, string> = {
+        'banana': 'banana,fruit,yellow',
+        'maçã': 'apple,fruit,red',
+        'maca': 'apple,fruit,red',
+        'laranja': 'orange,fruit,citrus',
+        'limão': 'lemon,fruit,citrus',
+        'limao': 'lemon,fruit,citrus',
+        'abacaxi': 'pineapple,fruit,tropical',
+        'uva': 'grape,fruit,purple',
+        'morango': 'strawberry,fruit,red',
+        'melancia': 'watermelon,fruit,summer',
+        'mamão': 'papaya,fruit,tropical',
+        'mamao': 'papaya,fruit,tropical',
+        'pera': 'pear,fruit,green',
+        'pêssego': 'peach,fruit',
+        'pessego': 'peach,fruit',
+        'kiwi': 'kiwi,fruit,green',
+        'manga': 'mango,fruit,tropical',
+        'abacate': 'avocado,fruit,green',
+        'coco': 'coconut,fruit,tropical',
+        'cebola': 'onion,vegetable',
+        'tomate': 'tomato,vegetable,red',
+        'alface': 'lettuce,vegetable,salad',
+        'cenoura': 'carrot,vegetable,orange',
+        'batata': 'potato,vegetable',
+        'beterraba': 'beetroot,vegetable,purple',
+        'abobrinha': 'zucchini,vegetable,green',
+        'abóbora': 'pumpkin,vegetable,orange',
+        'abobora': 'pumpkin,vegetable,orange',
+        'pepino': 'cucumber,vegetable,green',
+        'pimentão': 'pepper,vegetable,colorful',
+        'pimentao': 'pepper,vegetable,colorful',
+        'brócolis': 'broccoli,vegetable,green',
+        'brocolis': 'broccoli,vegetable,green',
+        'couve': 'kale,vegetable,green',
+        'espinafre': 'spinach,vegetable,green',
+        'alho': 'garlic,vegetable',
+        'gengibre': 'ginger,root,spice',
+        'chuchu': 'chayote,vegetable',
+        'berinjela': 'eggplant,vegetable,purple',
+        'milho': 'corn,vegetable,yellow',
+        'ervilha': 'peas,vegetable,green',
+        'feijão': 'beans,legume',
+        'feijao': 'beans,legume',
+        'arroz': 'rice,grain',
+        'batata doce': 'sweet potato,vegetable',
+        'mandioca': 'cassava,root',
+        'couve-flor': 'cauliflower,vegetable',
+        'salsinha': 'parsley,herb,fresh',
+        'cebolinha': 'green onion,herb',
+        'coentro': 'cilantro,herb,fresh',
+        'hortelã': 'mint,herb,fresh',
+        'hortela': 'mint,herb,fresh',
+        'manjericão': 'basil,herb,fresh',
+        'manjericao': 'basil,herb,fresh',
+        'alecrim': 'rosemary,herb',
+        'tomilho': 'thyme,herb',
+        'sálvia': 'sage,herb',
+        'salvia': 'sage,herb',
+      };
 
-      const response = await fetch(
-        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + ' food fruit vegetable')}&per_page=6&orientation=squarish`,
-        {
-          headers: {
-            'Authorization': `Client-ID ${accessKey}`,
-          },
+      // Find matching category or use generic search
+      let searchTerm = searchTerms;
+      for (const [key, value] of Object.entries(foodCategories)) {
+        if (searchTerms.includes(key)) {
+          searchTerm = value;
+          break;
         }
-      );
-
-      if (!response.ok) {
-        return {
-          success: true,
-          data: this.getPlaceholderImages(query),
-        };
       }
 
-      const data = await response.json();
-      
-      const images = data.results?.map((photo: any) => ({
-        url: photo.urls.regular,
-        thumb: photo.urls.small,
-        alt: photo.alt_description || query,
-        author: photo.user?.name,
-        authorUrl: photo.user?.links?.html,
-      })) || [];
+      // Generate multiple relevant images using Unsplash source
+      // Each URL will redirect to a different relevant image
+      const images = [];
+      const variations = [
+        `${searchTerm} food fresh organic`,
+        `${searchTerm} vegetable fruit`,
+        `${searchTerm} healthy natural`,
+      ];
+
+      for (let i = 0; i < 6; i++) {
+        const variation = variations[i % variations.length];
+        const seed = `${searchTerm}-${i}-${Date.now()}`;
+        images.push({
+          url: `https://source.unsplash.com/400x400/?${encodeURIComponent(variation)}&sig=${seed}`,
+          thumb: `https://source.unsplash.com/200x200/?${encodeURIComponent(variation)}&sig=${seed}`,
+          alt: `${query} - Imagem ${i + 1}`,
+          author: 'Unsplash',
+        });
+      }
 
       return {
         success: true,
-        data: images.length > 0 ? images : this.getPlaceholderImages(query),
+        data: images,
       };
     } catch (error) {
       return {
-        success: true,
-        data: this.getPlaceholderImages(query),
+        success: false,
+        message: 'Erro ao buscar imagens',
       };
     }
-  }
-
-  private getPlaceholderImages(query: string) {
-    // Generate placeholder images using picsum.photos
-    const seed = query.toLowerCase().replace(/[^a-z0-9]/g, '');
-    return [
-      {
-        url: `https://picsum.photos/seed/${seed}1/400/400`,
-        thumb: `https://picsum.photos/seed/${seed}1/200/200`,
-        alt: query,
-        author: 'Placeholder',
-      },
-      {
-        url: `https://picsum.photos/seed/${seed}2/400/400`,
-        thumb: `https://picsum.photos/seed/${seed}2/200/200`,
-        alt: query,
-        author: 'Placeholder',
-      },
-      {
-        url: `https://picsum.photos/seed/${seed}3/400/400`,
-        thumb: `https://picsum.photos/seed/${seed}3/200/200`,
-        alt: query,
-        author: 'Placeholder',
-      },
-    ];
   }
 }
