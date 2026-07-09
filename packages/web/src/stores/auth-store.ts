@@ -2,6 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/types';
 
+function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 interface AuthState {
   user: User | null;
   accessToken: string | null;
@@ -65,10 +75,21 @@ export const useAuthStore = create<AuthState>()(
 
       hydrate: () => {
         const state = get();
-        set({
-          isAuthenticated: !!state.accessToken && !!state.user,
-          isLoading: false,
-        });
+        if (state.accessToken && isTokenExpired(state.accessToken)) {
+          // Token expired - clear auth state silently
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        } else {
+          set({
+            isAuthenticated: !!state.accessToken && !!state.user,
+            isLoading: false,
+          });
+        }
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
