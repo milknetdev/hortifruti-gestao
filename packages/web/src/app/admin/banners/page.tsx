@@ -26,11 +26,13 @@ export default function BannersPage() {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
+    subtitulo: '',
     link: '',
     dataInicio: '',
     dataFim: '',
     posicao: '',
     imagem: '',
+    corFundo: '#154212',
   });
 
   useEffect(() => {
@@ -53,15 +55,17 @@ export default function BannersPage() {
       setEditingBanner(banner);
       setFormData({
         titulo: banner.title || banner.titulo || '',
+        subtitulo: banner.subtitle || banner.subtitulo || '',
         link: banner.link || '',
         dataInicio: banner.startDate || banner.dataInicio || '',
         dataFim: banner.endDate || banner.dataFim || '',
         posicao: banner.position || banner.posicao || '',
         imagem: banner.image || banner.imagem || '',
+        corFundo: banner.backgroundColor || banner.corFundo || '#154212',
       });
     } else {
       setEditingBanner(null);
-      setFormData({ titulo: '', link: '', dataInicio: '', dataFim: '', posicao: '', imagem: '' });
+      setFormData({ titulo: '', subtitulo: '', link: '', dataInicio: '', dataFim: '', posicao: '', imagem: '', corFundo: '#154212' });
     }
     setDialogOpen(true);
   };
@@ -75,10 +79,12 @@ export default function BannersPage() {
     try {
       const payload: any = {
         title: formData.titulo,
+        subtitle: formData.subtitulo || undefined,
         link: formData.link || undefined,
         startDate: formData.dataInicio ? new Date(formData.dataInicio.split('/').reverse().join('-')).toISOString() : undefined,
         endDate: formData.dataFim ? new Date(formData.dataFim.split('/').reverse().join('-')).toISOString() : undefined,
         image: formData.imagem,
+        backgroundColor: formData.corFundo || undefined,
       };
       if (editingBanner) {
         await api.put(`/banners/${editingBanner.id}`, payload);
@@ -209,6 +215,41 @@ export default function BannersPage() {
                 onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
                 placeholder="Título do banner"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Subtítulo</Label>
+              <Input
+                value={formData.subtitulo}
+                onChange={(e) => setFormData({ ...formData, subtitulo: e.target.value })}
+                placeholder="Descrição do banner"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Cor de Fundo</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={formData.corFundo}
+                    onChange={(e) => setFormData({ ...formData, corFundo: e.target.value })}
+                    className="w-10 h-10 rounded cursor-pointer"
+                  />
+                  <Input
+                    value={formData.corFundo}
+                    onChange={(e) => setFormData({ ...formData, corFundo: e.target.value })}
+                    placeholder="#154212"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Link</Label>
+                <Input
+                  value={formData.link}
+                  onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                  placeholder="/produtos"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>URL da Imagem</Label>

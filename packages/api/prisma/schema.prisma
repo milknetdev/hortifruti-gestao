@@ -538,6 +538,7 @@ model Banner {
   active      Boolean  @default(true)
   startDate   DateTime?
   endDate     DateTime?
+  backgroundColor String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
