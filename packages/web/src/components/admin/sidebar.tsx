@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Star, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { useAdminStore } from '@/stores/admin-store';
-import {
+import { Star, usePathname } from 'next/navigation';
+import { Star, cn } from '@/lib/utils';
+import { Star, useAdminStore } from '@/stores/admin-store';
+import { Star,
   LayoutDashboard,
   ShoppingBag,
   Package,
@@ -28,9 +28,9 @@ import {
   FileSpreadsheet,
   History,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Star, Button } from '@/components/ui/button';
+import { Star, Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Star, ScrollArea } from '@/components/ui/scroll-area';
 
 interface MenuItem {
   label: string;
@@ -77,6 +77,7 @@ const menuGroups: MenuGroup[] = [
     title: 'Marketing',
     items: [
       { label: 'Banners', href: '/admin/banners', icon: Megaphone },
+      { label: 'Beneficios', href: '/admin/beneficios', icon: Star },
     ],
   },
   {

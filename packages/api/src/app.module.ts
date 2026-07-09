@@ -20,6 +20,7 @@ import { PickupPointsModule } from './pickup-points/pickup-points.module';
 import { SettingsModule } from './settings/settings.module';
 import { ExportModule } from './export/export.module';
 import { AuditModule } from './audit/audit.module';
+import { FeatureBannersModule } from './feature-banners/feature-banners.module';
 import { ImagesModule } from './images/images.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BannersModule } from './banners/banners.module';
@@ -52,6 +53,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     SettingsModule,
     ExportModule,
     AuditModule,
+    FeatureBannersModule,
     ImagesModule,
     PaymentsModule,
     BannersModule,

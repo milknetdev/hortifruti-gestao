@@ -48,6 +48,7 @@ model Tenant {
   commissions   Commission[]
   stockMovements StockMovement[]
   financialEntries FinancialEntry[]
+  featureBanners FeatureBanner[]
   suppliers     Supplier[]
   notifications Notification[]
 
@@ -582,4 +583,20 @@ model AuditLog {
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+model FeatureBanner {
+  id          String   @id @default(uuid())
+  tenantId    String
+  title       String
+  description String?
+  icon        String   @default("truck")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("feature_banners")
 }
