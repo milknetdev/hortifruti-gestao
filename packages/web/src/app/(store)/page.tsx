@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ChevronRight, Loader2, Truck, ShieldCheck, Leaf, Clock, ArrowRight } from 'lucide-react';
+import { ChevronRight, Loader2, Truck, ShieldCheck, Leaf, Clock, ArrowRight, RotateCcw, Star, Heart, Zap, Award, HelpCircle, Calendar, CreditCard, Package } from 'lucide-react';
 import { BannerCarousel } from '@/components/store/banner-carousel';
 import { CategoryGrid } from '@/components/store/category-grid';
 import { ProductCard } from '@/components/store/product-card';
@@ -47,7 +47,7 @@ function SectionHeader({ title, subtitle, href, linkLabel }: { title: string; su
   );
 }
 
-const features = [
+const defaultFeatures = [
   { icon: Truck, title: 'Entrega Rápida', desc: 'No mesmo dia para toda a cidade' },
   { icon: Leaf, title: '100% Frescos', desc: 'Direto do produtor para você' },
   { icon: ShieldCheck, title: 'Qualidade Garantida', desc: 'Satisfação ou devolvemos seu dinheiro' },
@@ -60,17 +60,19 @@ export default function HomePage() {
   const [promotional, setPromotional] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
   const [aboutSettings, setAboutSettings] = useState<any>({});
+  const [features, setFeatures] = useState(defaultFeatures);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [catData, featData, promoData, bestData, aboutData] = await Promise.allSettled([
+        const [catData, featData, promoData, bestData, aboutData, featureBannersData] = await Promise.allSettled([
           api.get('/categories'),
           api.get('/products/featured?limit=8'),
           api.get('/products/promotional?limit=8'),
           api.get('/products/best-sellers?limit=8'),
           api.get('/settings/about'),
+          api.get('/feature-banners'),
         ]);
 
         if (catData.status === 'fulfilled') {
@@ -92,6 +94,17 @@ export default function HomePage() {
         if (aboutData.status === 'fulfilled') {
           const about = aboutData.value?.data?.data || aboutData.value?.data || {};
           setAboutSettings(about);
+        }
+        if (featureBannersData.status === 'fulfilled') {
+          const iconMap: Record<string, any> = { 'truck': Truck, 'leaf': Leaf, 'shield': ShieldCheck, 'refresh-cw': RotateCcw, 'clock': Clock, 'star': Star, 'heart': Heart, 'zap': Zap, 'award': Award, 'help-circle': HelpCircle, 'calendar': Calendar, 'credit-card': CreditCard, 'package': Package };
+          const banners = featureBannersData.value?.data?.data || featureBannersData.value?.data || [];
+          if (Array.isArray(banners) && banners.length > 0) {
+            setFeatures(banners.filter((b: any) => b.active).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((b: any) => ({
+              icon: iconMap[b.icon] || HelpCircle,
+              title: b.title,
+              desc: b.description || '',
+            })));
+          }
         }
       } catch {
         // handled by Promise.allSettled
