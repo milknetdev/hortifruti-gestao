@@ -7,7 +7,7 @@ import { ReferralTracker } from '@/components/store/referral-tracker';
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50/50">
       <Suspense fallback={null}>
         <ReferralTracker />
       </Suspense>

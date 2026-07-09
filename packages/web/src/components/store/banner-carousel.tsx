@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -22,21 +22,21 @@ const fallbackBanners: Banner[] = [
     title: 'Frutas Frescas Todo Dia',
     subtitle: 'Direto do produtor para a sua mesa. Entrega rápida e garantia de frescor!',
     imageUrl: '/images/banner-frutas.jpg',
-    backgroundColor: '#16a34a',
+    backgroundColor: '#154212',
   },
   {
     id: '2',
     title: 'Promoções da Semana',
     subtitle: 'Até 30% de desconto em frutas e verduras selecionadas.',
     imageUrl: '/images/banner-promo.jpg',
-    backgroundColor: '#f97316',
+    backgroundColor: '#ff9800',
   },
   {
     id: '3',
     title: 'Orgânicos Certificados',
     subtitle: 'Produtos orgânicos com certificação e qualidade garantida.',
     imageUrl: '/images/banner-organicos.jpg',
-    backgroundColor: '#15803d',
+    backgroundColor: '#4CAF50',
   },
 ];
 
@@ -80,7 +80,7 @@ export function BannerCarousel() {
 
   if (loading) {
     return (
-      <div className="w-full h-[200px] md:h-[360px] lg:h-[420px] bg-gray-200 animate-pulse rounded-xl" />
+      <div className="w-full h-[200px] md:h-[360px] lg:h-[420px] bg-gray-100 animate-pulse rounded-3xl" />
     );
   }
 
@@ -89,7 +89,7 @@ export function BannerCarousel() {
   const banner = banners[current];
 
   return (
-    <div className="relative w-full h-[200px] md:h-[360px] lg:h-[420px] rounded-xl overflow-hidden group">
+    <div className="relative w-full h-[200px] md:h-[360px] lg:h-[420px] rounded-3xl overflow-hidden group shadow-lg">
       <AnimatePresence mode="wait">
         <motion.div
           key={banner.id}
@@ -99,7 +99,7 @@ export function BannerCarousel() {
           transition={{ duration: 0.5 }}
           className="absolute inset-0 flex items-center"
           style={{
-            backgroundColor: banner.backgroundColor || '#16a34a',
+            backgroundColor: banner.backgroundColor || '#154212',
           }}
         >
           {/* Background image overlay */}
@@ -108,13 +108,25 @@ export function BannerCarousel() {
             style={{ backgroundImage: `url(${banner.image || banner.imageUrl})` }}
           />
 
+          {/* Decorative elements */}
+          <div className="absolute top-8 right-8 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute bottom-8 left-8 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+
           {/* Content */}
           <div className="relative container mx-auto px-6 md:px-12 z-10">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-heading font-semibold mb-4 uppercase tracking-wider"
+            >
+              HortiFruti
+            </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-2 md:mb-4 max-w-lg"
+              className="text-2xl md:text-4xl lg:text-5xl font-heading font-bold text-white mb-2 md:mb-4 max-w-lg leading-tight"
             >
               {banner.title}
             </motion.h2>
@@ -123,7 +135,7 @@ export function BannerCarousel() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
-                className="text-sm md:text-lg text-white/90 max-w-md"
+                className="text-sm md:text-lg text-white/80 max-w-md"
               >
                 {banner.subtitle}
               </motion.p>
@@ -134,9 +146,10 @@ export function BannerCarousel() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
-                className="inline-block mt-4 px-6 py-2 bg-white text-green-700 font-semibold rounded-full hover:bg-gray-100 transition-colors text-sm md:text-base"
+                className="inline-flex items-center gap-2 mt-5 px-8 py-3 bg-white text-forest font-heading font-semibold rounded-xl hover:bg-white/90 transition-colors text-sm md:text-base shadow-lg"
               >
                 Ver Ofertas
+                <ArrowRight size={18} />
               </motion.a>
             )}
           </div>
@@ -148,14 +161,14 @@ export function BannerCarousel() {
         <>
           <button
             onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/50"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-2xl bg-black/20 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40"
             aria-label="Banner anterior"
           >
             <ChevronLeft size={24} />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/50"
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-2xl bg-black/20 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40"
             aria-label="Próximo banner"
           >
             <ChevronRight size={24} />
@@ -171,10 +184,10 @@ export function BannerCarousel() {
               key={index}
               onClick={() => setCurrent(index)}
               className={cn(
-                'w-2.5 h-2.5 rounded-full transition-all duration-300',
+                'h-2 rounded-full transition-all duration-300',
                 index === current
-                  ? 'bg-white w-6'
-                  : 'bg-white/50 hover:bg-white/75'
+                  ? 'bg-white w-8'
+                  : 'bg-white/40 w-2 hover:bg-white/60'
               )}
               aria-label={`Ir para banner ${index + 1}`}
             />

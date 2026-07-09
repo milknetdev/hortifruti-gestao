@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,9 +12,9 @@
     --card-foreground: 142 10% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 142 10% 10%;
-    --primary: 142 76% 36%;
+    --primary: 130 76% 17%;     /* #154212 forest green */
     --primary-foreground: 0 0% 98%;
-    --secondary: 24 94% 53%;
+    --secondary: 24 94% 53%;    /* orange */
     --secondary-foreground: 0 0% 98%;
     --muted: 120 5% 96%;
     --muted-foreground: 142 5% 45%;
@@ -23,7 +25,7 @@
     --border: 120 10% 90%;
     --input: 120 10% 90%;
     --ring: 142 76% 36%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -32,12 +34,55 @@
     @apply border-gray-200;
   }
   body {
-    @apply bg-white text-gray-900 antialiased;
+    @apply bg-white text-earth-gray antialiased;
+    font-family: 'Open Sans', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-lg border border-white/30 shadow-lg;
+  }
+  .glass-card-dark {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20;
+  }
+  .btn-primary {
+    @apply bg-forest text-white font-heading font-semibold rounded-xl
+      hover:bg-forest/90 transition-all duration-200 shadow-md hover:shadow-lg;
+  }
+  .btn-secondary {
+    @apply bg-leafy-green text-white font-heading font-semibold rounded-xl
+      hover:bg-leafy-green/90 transition-all duration-200;
+  }
+  .btn-gold {
+    @apply bg-harvest-gold text-earth-gray font-heading font-semibold rounded-xl
+      hover:bg-harvest-gold/90 transition-all duration-200;
+  }
+  .section-title {
+    @apply font-heading text-2xl md:text-3xl font-bold text-forest;
+  }
+  .section-subtitle {
+    @apply text-earth-gray/60 text-sm md:text-base max-w-2xl;
+  }
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
   }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .gradient-forest {
+    background: linear-gradient(135deg, #154212 0%, #4CAF50 100%);
+  }
+  .gradient-warm {
+    background: linear-gradient(135deg, #ff9800 0%, #FBC02D 100%);
+  }
+  .gradient-fresh {
+    background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
   }
 }

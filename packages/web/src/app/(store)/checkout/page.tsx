@@ -17,6 +17,8 @@ import {
   Plus,
   X,
   Tag,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCartStore } from '@/stores/cart-store';
@@ -26,11 +28,11 @@ import { formatCurrency, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 const paymentMethods = [
-  { id: 'pix', label: 'PIX', icon: QrCode, description: 'Aprovação instantânea', color: 'text-green-600' },
+  { id: 'pix', label: 'PIX', icon: QrCode, description: 'Aprovação instantânea', color: 'text-forest' },
   { id: 'credit_card', label: 'Cartão de Crédito', icon: CreditCard, description: 'Visa, Mastercard, Elo', color: 'text-blue-600' },
   { id: 'debit_card', label: 'Cartão de Débito', icon: CreditCard, description: 'Débito à vista', color: 'text-purple-600' },
-  { id: 'cash', label: 'Dinheiro', icon: Banknote, description: 'Pagamento na entrega', color: 'text-yellow-600' },
-  { id: 'pay_on_delivery', label: 'Pagar na Entrega', icon: CircleDollarSign, description: 'PIX ou dinheiro na entrega', color: 'text-orange-600' },
+  { id: 'cash', label: 'Dinheiro', icon: Banknote, description: 'Pagamento na entrega', color: 'text-harvest-gold' },
+  { id: 'pay_on_delivery', label: 'Pagar na Entrega', icon: CircleDollarSign, description: 'PIX ou dinheiro na entrega', color: 'text-orange-500' },
 ];
 
 export default function CheckoutPage() {
@@ -240,13 +242,15 @@ export default function CheckoutPage() {
 
   if (items.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <PackageCheck size={64} className="mx-auto text-gray-300 mb-6" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Carrinho vazio</h1>
-        <p className="text-gray-500 mb-6">Adicione produtos antes de finalizar.</p>
+      <div className="container mx-auto px-4 py-20 text-center">
+        <div className="w-24 h-24 rounded-3xl bg-forest/10 flex items-center justify-center mx-auto mb-6">
+          <PackageCheck size={48} className="text-forest/40" />
+        </div>
+        <h1 className="text-2xl font-heading font-bold text-earth-gray mb-2">Carrinho vazio</h1>
+        <p className="text-earth-gray/50 mb-8">Adicione produtos antes de finalizar.</p>
         <button
           onClick={() => router.push('/produtos')}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+          className="px-8 py-3.5 bg-forest text-white rounded-xl hover:bg-forest/90 font-heading font-semibold shadow-md hover:shadow-lg transition-all"
         >
           Ver Produtos
         </button>
@@ -258,48 +262,58 @@ export default function CheckoutPage() {
     <div className="container mx-auto px-4 py-6">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-gray-500 hover:text-green-600 mb-6"
+        className="flex items-center gap-1.5 text-sm text-earth-gray/50 hover:text-forest mb-6 font-medium transition-colors"
       >
         <ArrowLeft size={16} />
         Voltar
       </button>
 
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Finalizar Pedido</h1>
+      <h1 className="text-2xl md:text-3xl font-heading font-bold text-earth-gray mb-8">Finalizar Pedido</h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {/* Delivery Type */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4">Tipo de Entrega</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
+            <h2 className="text-lg font-heading font-semibold text-earth-gray mb-4">Tipo de Entrega</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => { setDeliveryTypeLocal('delivery'); setStoreDeliveryType('delivery'); }}
                 className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                  'flex items-center gap-3 p-4 rounded-2xl border-2 transition-all',
                   deliveryType === 'delivery'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-forest bg-forest/5 shadow-sm'
+                    : 'border-forest/10 hover:border-forest/20'
                 )}
               >
-                <Truck size={24} className={deliveryType === 'delivery' ? 'text-green-600' : 'text-gray-400'} />
+                <div className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center',
+                  deliveryType === 'delivery' ? 'bg-forest text-white' : 'bg-forest/10 text-earth-gray/40'
+                )}>
+                  <Truck size={24} />
+                </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">Entrega</p>
-                  <p className="text-xs text-gray-500">Receba em casa</p>
+                  <p className="font-heading font-semibold text-sm text-earth-gray">Entrega</p>
+                  <p className="text-xs text-earth-gray/50">Receba em casa</p>
                 </div>
               </button>
               <button
                 onClick={() => { setDeliveryTypeLocal('pickup'); setStoreDeliveryType('pickup'); }}
                 className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                  'flex items-center gap-3 p-4 rounded-2xl border-2 transition-all',
                   deliveryType === 'pickup'
-                    ? 'border-green-500 bg-green-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-forest bg-forest/5 shadow-sm'
+                    : 'border-forest/10 hover:border-forest/20'
                 )}
               >
-                <Store size={24} className={deliveryType === 'pickup' ? 'text-green-600' : 'text-gray-400'} />
+                <div className={cn(
+                  'w-12 h-12 rounded-xl flex items-center justify-center',
+                  deliveryType === 'pickup' ? 'bg-forest text-white' : 'bg-forest/10 text-earth-gray/40'
+                )}>
+                  <Store size={24} />
+                </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">Retirada</p>
-                  <p className="text-xs text-gray-500">Retire na loja</p>
+                  <p className="font-heading font-semibold text-sm text-earth-gray">Retirada</p>
+                  <p className="text-xs text-earth-gray/50">Retire na loja</p>
                 </div>
               </button>
             </div>
@@ -307,29 +321,34 @@ export default function CheckoutPage() {
 
           {/* Pickup Points */}
           {deliveryType === 'pickup' && pickupPoints.length > 0 && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold mb-4">Escolha o ponto de retirada</h2>
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
+              <h2 className="text-lg font-heading font-semibold text-earth-gray mb-4">Escolha o ponto de retirada</h2>
               <div className="space-y-3">
                 {pickupPoints.map((point: any) => (
                   <button
                     key={point.id}
                     onClick={() => setSelectedPickupPoint(point.id)}
                     className={cn(
-                      'w-full text-left p-4 rounded-xl border-2 transition-all',
+                      'w-full text-left p-4 rounded-2xl border-2 transition-all',
                       selectedPickupPoint === point.id
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-forest bg-forest/5 shadow-sm'
+                        : 'border-forest/10 hover:border-forest/20'
                     )}
                   >
                     <div className="flex items-center gap-3">
-                      <Store size={20} className={selectedPickupPoint === point.id ? 'text-green-600' : 'text-gray-400'} />
+                      <div className={cn(
+                        'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+                        selectedPickupPoint === point.id ? 'bg-forest text-white' : 'bg-forest/10 text-earth-gray/40'
+                      )}>
+                        <Store size={20} />
+                      </div>
                       <div>
-                        <p className="font-medium">{point.name}</p>
-                        <p className="text-sm text-gray-500">{point.address}</p>
+                        <p className="font-heading font-semibold text-earth-gray">{point.name}</p>
+                        <p className="text-sm text-earth-gray/60">{point.address}</p>
                         {point.neighborhood && (
-                          <p className="text-xs text-gray-400">{point.neighborhood} - {point.city}/{point.state}</p>
+                          <p className="text-xs text-earth-gray/40">{point.neighborhood} - {point.city}/{point.state}</p>
                         )}
-                        <p className="text-xs text-gray-400">Horário: {point.startTime} - {point.endTime}</p>
+                        <p className="text-xs text-earth-gray/40">Horário: {point.startTime} - {point.endTime}</p>
                       </div>
                     </div>
                   </button>
@@ -340,13 +359,13 @@ export default function CheckoutPage() {
 
           {/* Address */}
           {deliveryType === 'delivery' && (
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">Endereço de Entrega</h2>
+                <h2 className="text-lg font-heading font-semibold text-earth-gray">Endereço de Entrega</h2>
                 {isAuthenticated && (
                   <button 
                     onClick={fetchSavedAddresses}
-                    className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
+                    className="text-sm text-forest hover:text-leafy-green flex items-center gap-1 font-heading font-semibold transition-colors"
                   >
                     <Plus size={14} />
                     Usar endereço salvo
@@ -355,64 +374,64 @@ export default function CheckoutPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">CEP</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">CEP</label>
                   <input
                     type="text"
                     value={address.zipCode}
                     onChange={(e) => setAddress({ ...address, zipCode: e.target.value })}
                     onBlur={(e) => fetchAddressByCep(e.target.value)}
                     placeholder="00000-000"
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Rua</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">Rua</label>
                   <input
                     type="text"
                     value={address.street}
                     onChange={(e) => setAddress({ ...address, street: e.target.value })}
                     placeholder="Nome da rua"
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Número</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">Número</label>
                   <input
                     type="text"
                     value={address.number}
                     onChange={(e) => setAddress({ ...address, number: e.target.value })}
                     placeholder="Nº"
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Complemento</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">Complemento</label>
                   <input
                     type="text"
                     value={address.complement}
                     onChange={(e) => setAddress({ ...address, complement: e.target.value })}
                     placeholder="Apto, bloco, etc."
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Bairro</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">Bairro</label>
                   <input
                     type="text"
                     value={address.neighborhood}
                     onChange={(e) => setAddress({ ...address, neighborhood: e.target.value })}
                     placeholder="Bairro"
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Cidade</label>
+                  <label className="text-sm font-heading font-medium text-earth-gray mb-1.5 block">Cidade</label>
                   <input
                     type="text"
                     value={address.city}
                     onChange={(e) => setAddress({ ...address, city: e.target.value })}
                     placeholder="Cidade"
-                    className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none bg-white transition-all"
                   />
                 </div>
               </div>
@@ -420,8 +439,8 @@ export default function CheckoutPage() {
           )}
 
           {/* Payment Method */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4">Forma de Pagamento</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
+            <h2 className="text-lg font-heading font-semibold text-earth-gray mb-4">Forma de Pagamento</h2>
             <div className="space-y-3">
               {paymentMethods.map((method) => {
                 const Icon = method.icon;
@@ -430,29 +449,31 @@ export default function CheckoutPage() {
                     key={method.id}
                     onClick={() => setPaymentMethod(method.id)}
                     className={cn(
-                      'w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left',
+                      'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left',
                       paymentMethod === method.id
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-forest bg-forest/5 shadow-sm'
+                        : 'border-forest/10 hover:border-forest/20'
                     )}
                   >
-                    <Icon
-                      size={24}
-                      className={paymentMethod === method.id ? method.color : 'text-gray-400'}
-                    />
+                    <div className={cn(
+                      'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0',
+                      paymentMethod === method.id ? 'bg-forest text-white' : 'bg-forest/10 text-earth-gray/40'
+                    )}>
+                      <Icon size={22} />
+                    </div>
                     <div>
-                      <p className="font-medium text-sm">{method.label}</p>
-                      <p className="text-xs text-gray-500">{method.description}</p>
+                      <p className="font-heading font-semibold text-sm text-earth-gray">{method.label}</p>
+                      <p className="text-xs text-earth-gray/50">{method.description}</p>
                     </div>
                     <div className="ml-auto">
                       <div
                         className={cn(
-                          'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                          paymentMethod === method.id ? 'border-green-500' : 'border-gray-300'
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                          paymentMethod === method.id ? 'border-forest' : 'border-forest/20'
                         )}
                       >
                         {paymentMethod === method.id && (
-                          <div className="w-3 h-3 rounded-full bg-green-500" />
+                          <div className="w-3 h-3 rounded-full bg-forest" />
                         )}
                       </div>
                     </div>
@@ -463,157 +484,176 @@ export default function CheckoutPage() {
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="text-lg font-semibold mb-4">Observações</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
+            <h2 className="text-lg font-heading font-semibold text-earth-gray mb-4">Observações</h2>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Alguma observação sobre o pedido? Ex: frutas bem maduras, sem cebola..."
               rows={3}
-              className="w-full px-3 py-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
+              className="w-full px-4 py-3 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none resize-none bg-white transition-all"
             />
           </div>
         </div>
 
-        {/* Coupon */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4">Cupom de Desconto</h2>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Tag size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                placeholder="Digite seu cupom"
-                disabled={couponApplied}
-                className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none disabled:bg-gray-100"
-              />
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Coupon */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-forest/5">
+            <h2 className="text-lg font-heading font-semibold text-earth-gray mb-4">Cupom de Desconto</h2>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Tag size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-earth-gray/30" />
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Digite seu cupom"
+                  disabled={couponApplied}
+                  className="w-full pl-10 pr-3 py-2.5 border border-forest/10 rounded-xl text-sm focus:ring-2 focus:ring-forest/30 focus:border-forest/30 outline-none disabled:bg-gray-50 transition-all"
+                />
+              </div>
+              <Button
+                onClick={handleApplyCoupon}
+                disabled={couponApplied || !couponCode.trim()}
+                variant="outline"
+                className={cn(
+                  'rounded-xl font-heading font-semibold border-forest/20',
+                  couponApplied
+                    ? 'bg-forest/10 text-forest border-forest/20'
+                    : 'hover:bg-forest/5'
+                )}
+              >
+                {couponApplied ? 'Aplicado' : 'Aplicar'}
+              </Button>
             </div>
-            <Button
-              onClick={handleApplyCoupon}
-              disabled={couponApplied || !couponCode.trim()}
-              variant="outline"
-              className={cn(
-                couponApplied
-                  ? 'bg-green-100 text-green-700 border-green-300'
-                  : ''
-              )}
-            >
-              {couponApplied ? 'Aplicado' : 'Aplicar'}
-            </Button>
+            {couponApplied && (
+              <button
+                onClick={() => { setCouponApplied(false); setCouponCode(''); setDiscount(0); }}
+                className="text-sm text-red-500 hover:text-red-700 mt-2 font-medium transition-colors"
+              >
+                Remover cupom
+              </button>
+            )}
           </div>
-          {couponApplied && (
-            <button
-              onClick={() => { setCouponApplied(false); setCouponCode(''); setDiscount(0); }}
-              className="text-sm text-red-500 hover:text-red-700 mt-2"
-            >
-              Remover cupom
-            </button>
-          )}
-        </div>
 
-        {/* Order Summary */}
-        <div>
-          <div className="sticky top-24 bg-white rounded-xl p-6 shadow-sm border border-gray-100 space-y-4">
-            <h2 className="text-lg font-semibold">Resumo do Pedido</h2>
+          {/* Order Summary */}
+          <div>
+            <div className="sticky top-28 bg-white rounded-2xl p-6 shadow-sm border border-forest/5 space-y-4">
+              <h2 className="text-lg font-heading font-semibold text-earth-gray">Resumo do Pedido</h2>
 
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {items.map((item) => (
-                <div key={item.id} className="flex gap-3">
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-50 flex-shrink-0">
-                    <Image
-                      src={item.product.mainImage || '/images/placeholder-product.jpg'}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover"
-                      sizes="48px"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.product.name}</p>
-                    <p className="text-xs text-gray-500">
-                      {item.quantity}x {formatCurrency(item.unitPrice)}
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {items.map((item) => (
+                  <div key={item.id} className="flex gap-3">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-forest/5">
+                      <Image
+                        src={item.product.mainImage || '/images/placeholder-product.jpg'}
+                        alt={item.product.name}
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-heading font-semibold text-earth-gray truncate">{item.product.name}</p>
+                      <p className="text-xs text-earth-gray/50">
+                        {item.quantity}x {formatCurrency(item.unitPrice)}
+                      </p>
+                    </div>
+                    <p className="text-sm font-heading font-bold text-earth-gray">
+                      {formatCurrency(item.unitPrice * item.quantity)}
                     </p>
                   </div>
-                  <p className="text-sm font-medium">
-                    {formatCurrency(item.unitPrice * item.quantity)}
-                  </p>
+                ))}
+              </div>
+
+              <div className="space-y-2.5 pt-4 border-t border-forest/5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-earth-gray/60">Subtotal</span>
+                  <span className="font-medium">{formatCurrency(subtotal)}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="space-y-2 pt-4 border-t text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Desconto</span>
-                  <span>-{formatCurrency(discount)}</span>
+                {discount > 0 && (
+                  <div className="flex justify-between text-forest">
+                    <span className="font-medium">Desconto</span>
+                    <span className="font-medium">-{formatCurrency(discount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-earth-gray/60">Frete</span>
+                  <span>
+                    {deliveryFee > 0 ? formatCurrency(deliveryFee) : (
+                      <span className="text-forest font-medium">Grátis</span>
+                    )}
+                  </span>
                 </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-gray-600">Frete</span>
-                <span>
-                  {deliveryFee > 0 ? formatCurrency(deliveryFee) : (
-                    <span className="text-green-600">Grátis</span>
-                  )}
-                </span>
+                <div className="flex justify-between text-lg font-heading font-bold pt-3 border-t border-forest/5">
+                  <span className="text-earth-gray">Total</span>
+                  <span className="text-forest">{formatCurrency(total)}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-lg font-bold pt-3 border-t">
-                <span>Total</span>
-                <span className="text-green-600">{formatCurrency(total)}</span>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleConfirm}
+                disabled={loading}
+                className="w-full py-4 bg-forest text-white font-heading font-semibold rounded-xl hover:bg-forest/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed text-lg shadow-lg hover:shadow-xl"
+              >
+                {loading ? 'Processando...' : 'Confirmar Pedido'}
+              </motion.button>
+
+              <div className="flex items-center justify-center gap-2 text-xs text-earth-gray/40">
+                <Lock size={12} />
+                <span>Pagamento seguro e protegido</span>
               </div>
             </div>
-
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={handleConfirm}
-              disabled={loading}
-              className="w-full py-3.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-lg"
-            >
-              {loading ? 'Processando...' : 'Confirmar Pedido'}
-            </motion.button>
-
-            <p className="text-xs text-gray-400 text-center">
-              Ao confirmar, você concorda com nossos termos de uso.
-            </p>
           </div>
         </div>
       </div>
 
       {/* Modal de endereços salvos */}
       {showAddresses && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Selecione um endereço</h3>
-              <button onClick={() => setShowAddresses(false)} className="text-gray-400 hover:text-gray-600">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-heading font-bold text-earth-gray">Selecione um endereço</h3>
+              <button onClick={() => setShowAddresses(false)} className="p-2 hover:bg-forest/5 rounded-xl transition-colors text-earth-gray/50 hover:text-earth-gray">
                 <X size={20} />
               </button>
             </div>
             {savedAddresses.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Nenhum endereço salvo</p>
+              <div className="text-center py-10">
+                <MapPin size={40} className="mx-auto text-forest/20 mb-3" />
+                <p className="text-earth-gray/50">Nenhum endereço salvo</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {savedAddresses.map((addr: any) => (
                   <button
                     key={addr.id}
                     onClick={() => selectSavedAddress(addr)}
-                    className="w-full text-left p-4 border rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+                    className="w-full text-left p-4 border border-forest/10 rounded-2xl hover:border-forest hover:bg-forest/5 transition-all"
                   >
-                    <p className="font-medium">{addr.label || 'Endereço'}</p>
-                    <p className="text-sm text-gray-600">{addr.street}, {addr.number}</p>
-                    {addr.complement && <p className="text-sm text-gray-500">{addr.complement}</p>}
-                    <p className="text-sm text-gray-500">{addr.neighborhood} - {addr.city}/{addr.state}</p>
-                    <p className="text-sm text-gray-500">CEP: {addr.zipCode}</p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-forest/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin size={16} className="text-forest" />
+                      </div>
+                      <div>
+                        <p className="font-heading font-semibold text-sm text-earth-gray">{addr.label || 'Endereço'}</p>
+                        <p className="text-sm text-earth-gray/60">{addr.street}, {addr.number}</p>
+                        {addr.complement && <p className="text-sm text-earth-gray/50">{addr.complement}</p>}
+                        <p className="text-sm text-earth-gray/50">{addr.neighborhood} - {addr.city}/{addr.state}</p>
+                        <p className="text-xs text-earth-gray/40">CEP: {addr.zipCode}</p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

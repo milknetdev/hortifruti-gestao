@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Plus, Minus, Heart } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Heart, Scale } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Product } from '@/types';
 import { useCartStore } from '@/stores/cart-store';
@@ -24,7 +24,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const displayPrice = product.promotionalPrice || product.salePrice;
   const hasPromo = product.promotionalPrice != null && product.promotionalPrice < product.salePrice;
 
-  const handleAdd = () => {
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     const result = addItem(product, quantity);
     if (result.success) {
       toast.success(`${quantity}x ${product.name} adicionado ao carrinho!`);
@@ -50,12 +52,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-      className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      className="group relative bg-white rounded-2xl overflow-hidden card-hover border border-forest/5"
     >
       <Link href={`/produtos/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden bg-gray-50">
+        <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
           <Image
             src={product.mainImage || '/images/placeholder-product.jpg'}
             alt={product.name}
@@ -63,18 +65,29 @@ export function ProductCard({ product }: ProductCardProps) {
             className="object-cover group-hover:scale-110 transition-transform duration-500"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
-          {hasPromo && (
-            <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-              PROMO
-            </span>
-          )}
+
+          {/* Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+            {hasPromo && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm uppercase tracking-wide">
+                Promo
+              </span>
+            )}
+            {product.isFeatured && !hasPromo && (
+              <span className="bg-forest text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm uppercase tracking-wide">
+                Destaque
+              </span>
+            )}
+          </div>
+
+          {/* Favorite button */}
           <button
             onClick={handleFavorite}
             className={cn(
-              'absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all',
+              'absolute top-3 right-3 w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-sm',
               isFavorited
                 ? 'bg-red-500 text-white'
-                : 'bg-white/80 text-gray-400 hover:text-red-500'
+                : 'bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 hover:bg-white'
             )}
             aria-label={isFavorited ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           >
@@ -83,15 +96,18 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </Link>
 
-      <div className="p-3 md:p-4">
+      <div className="p-4">
         <Link href={`/produtos/${product.slug}`}>
-          <h3 className="font-medium text-gray-900 text-sm md:text-base line-clamp-2 mb-1 group-hover:text-green-600 transition-colors">
+          <h3 className="font-heading font-semibold text-earth-gray text-sm md:text-base line-clamp-2 mb-1 group-hover:text-forest transition-colors">
             {product.name}
           </h3>
         </Link>
 
         {product.weight && (
-          <p className="text-xs text-gray-500 mb-2">{product.weight}</p>
+          <p className="text-xs text-earth-gray/50 mb-2 flex items-center gap-1">
+            <Scale size={12} />
+            {product.weight}
+          </p>
         )}
 
         <div className="flex items-baseline gap-2 mb-3">
@@ -102,36 +118,36 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           <span
             className={cn(
-              'font-bold text-base md:text-lg',
-              hasPromo ? 'text-green-600' : 'text-gray-900'
+              'font-heading font-bold text-lg',
+              hasPromo ? 'text-forest' : 'text-earth-gray'
             )}
           >
             {formatCurrency(displayPrice)}
           </span>
-          <span className="text-xs text-gray-500">/{product.unit}</span>
+          <span className="text-xs text-earth-gray/50">/{product.unit}</span>
         </div>
 
         {/* Add to cart */}
         <div className="flex items-center gap-2">
           {showQty ? (
-            <div className="flex items-center gap-1 flex-1">
+            <div className="flex items-center gap-1.5 flex-1">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuantity(Math.max(1, quantity - 1)); }}
+                className="w-8 h-8 rounded-lg bg-forest/10 flex items-center justify-center hover:bg-forest/20 transition-colors text-forest"
               >
                 <Minus size={14} />
               </button>
-              <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+              <span className="w-8 text-center text-sm font-heading font-bold text-earth-gray">{quantity}</span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setQuantity(quantity + 1); }}
+                className="w-8 h-8 rounded-lg bg-forest/10 flex items-center justify-center hover:bg-forest/20 transition-colors text-forest"
               >
                 <Plus size={14} />
               </button>
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAdd}
-                className="flex-1 ml-1 h-8 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
+                className="flex-1 ml-1 h-9 bg-forest text-white text-sm font-heading font-semibold rounded-xl hover:bg-forest/90 transition-colors shadow-md"
               >
                 Adicionar
               </motion.button>
@@ -139,8 +155,8 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : (
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowQty(true)}
-              className="w-full h-9 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowQty(true); }}
+              className="w-full h-10 bg-forest text-white text-sm font-heading font-semibold rounded-xl hover:bg-forest/90 transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
             >
               <ShoppingCart size={16} />
               Adicionar

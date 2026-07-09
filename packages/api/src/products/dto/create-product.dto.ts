@@ -91,6 +91,17 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   promotional?: boolean;
+
+  @ApiPropertyOptional({ example: 'tomate-organico' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  slug?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  images?: string;
 }
 
 export class UpdateProductDto {

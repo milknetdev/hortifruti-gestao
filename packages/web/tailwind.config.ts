@@ -42,6 +42,11 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // New design palette
+        'leafy-green': '#4CAF50',
+        'harvest-gold': '#FBC02D',
+        'earth-gray': '#2D2D2D',
+        'forest': '#154212',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -49,16 +54,22 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Open Sans', 'system-ui', 'sans-serif'],
+        heading: ['Montserrat', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
+        'float': 'float 3s ease-in-out infinite',
       },
     },
   },
