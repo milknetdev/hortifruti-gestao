@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Send, Phone, MapPin, Clock, Instagram, Facebook, Leaf, CreditCard, Banknote, QrCode, Heart } from 'lucide-react';
+import { Send, Phone, MapPin, Clock, Instagram, Facebook, Leaf, CreditCard, Banknote, QrCode, Heart, Mail } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export function Footer() {
