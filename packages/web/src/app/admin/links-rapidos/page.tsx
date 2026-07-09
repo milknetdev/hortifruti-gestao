@@ -34,7 +34,7 @@ export default function LinksRapidosPage() {
   const fetchLinks = async () => {
     try {
       const { data: result } = await api.get('/quick-links/admin');
-      const linksData = result?.data || result || [];
+      const linksData = result?.data?.data || result?.data || result || [];
       setLinks(Array.isArray(linksData) ? linksData : []);
     } catch {
       toast.error('Erro ao carregar links');
