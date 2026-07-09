@@ -72,7 +72,7 @@ export default function CheckoutPage() {
       setSavedAddresses(Array.isArray(addresses) ? addresses : []);
       setShowAddresses(true);
     } catch {
-      toast.error('Erro ao carregar endereços');
+      // Silently ignore 401 on addresses load
     }
   };
 
@@ -234,7 +234,13 @@ export default function CheckoutPage() {
       toast.success('Pedido realizado com sucesso!');
       router.push('/conta/pedidos');
     } catch (err: any) {
-      toast.error(err?.message || 'Erro ao finalizar pedido. Tente novamente.');
+      const errMsg = err?.response?.status === 401 
+        ? 'Sua sessão expirou. Faça login novamente.'
+        : err?.response?.status === 400
+        ? 'Dados do pedido inválidos. Verifique os itens.'
+        : 'Erro ao finalizar pedido. Tente novamente.';
+      toast.error(errMsg);
+      if (err?.response?.status === 401) router.push('/login');
     } finally {
       setLoading(false);
     }
