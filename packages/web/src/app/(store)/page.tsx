@@ -59,16 +59,18 @@ export default function HomePage() {
   const [featured, setFeatured] = useState<Product[]>([]);
   const [promotional, setPromotional] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [aboutSettings, setAboutSettings] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [catData, featData, promoData, bestData] = await Promise.allSettled([
+        const [catData, featData, promoData, bestData, aboutData] = await Promise.allSettled([
           api.get('/categories'),
           api.get('/products/featured?limit=8'),
           api.get('/products/promotional?limit=8'),
           api.get('/products/best-sellers?limit=8'),
+          api.get('/settings/about'),
         ]);
 
         if (catData.status === 'fulfilled') {
@@ -86,6 +88,10 @@ export default function HomePage() {
         if (bestData.status === 'fulfilled') {
           const res = bestData.value?.data?.data || bestData.value?.data || [];
           setBestSellers(Array.isArray(res) ? res : []);
+        }
+        if (aboutData.status === 'fulfilled') {
+          const about = aboutData.value?.data?.data || aboutData.value?.data || {};
+          setAboutSettings(about);
         }
       } catch {
         // handled by Promise.allSettled
@@ -266,14 +272,24 @@ export default function HomePage() {
             <span className="inline-block px-4 py-1.5 bg-forest/10 text-forest rounded-full text-sm font-heading font-semibold mb-4">
               Sobre Nós
             </span>
-            <h2 className="section-title mb-4">Frescor do Campo direto pra sua Mesa</h2>
+            <h2 className="section-title mb-4">{aboutSettings.aboutTitle || 'Frescor do Campo direto pra sua Mesa'}</h2>
             <p className="text-earth-gray/70 leading-relaxed mb-6">
-              Na HortiFruti, acreditamos que alimentação saudável começa com ingredientes frescos e de qualidade.
-              Trabalhamos diretamente com produtores locais para garantir que cada fruta, verdura e legume
-              chegue à sua casa com todo o sabor e nutrição que você merece.
+              {aboutSettings.aboutDescription || 'Na HortiFruti, acreditamos que alimentação saudável começa com ingredientes frescos e de qualidade. Trabalhamos diretamente com produtores locais para garantir que cada fruta, verdura e legume chegue à sua casa com todo o sabor e nutrição que você merece.'}
             </p>
             <div className="grid grid-cols-3 gap-4">
-              {[
+              {(aboutSettings.aboutStat1 || aboutSettings.aboutStat2 || aboutSettings.aboutStat3) ? [
+                { value: aboutSettings.aboutStat1 },
+                { value: aboutSettings.aboutStat2 },
+                { value: aboutSettings.aboutStat3 },
+              ].filter(s => s.value).map((stat, i) => {
+                const parts = stat.value.split(' ');
+                return (
+                  <div key={i} className="text-center p-4 rounded-2xl bg-white border border-forest/5">
+                    <p className="font-heading text-2xl font-bold text-forest">{parts[0]}</p>
+                    <p className="text-xs text-earth-gray/50 mt-1">{parts.slice(1).join(' ')}</p>
+                  </div>
+                );
+              }) : [
                 { value: '500+', label: 'Produtos' },
                 { value: '10k+', label: 'Clientes' },
                 { value: '5★', label: 'Avaliação' },
@@ -287,11 +303,15 @@ export default function HomePage() {
           </div>
           <div className="relative">
             <div className="aspect-[4/3] rounded-3xl bg-gradient-to-br from-forest/10 to-leafy-green/10 flex items-center justify-center border border-forest/10 overflow-hidden">
-              <div className="text-center">
-                <span className="text-7xl mb-4 block">🥗</span>
-                <p className="font-heading font-bold text-forest text-xl">Qualidade Garantida</p>
-                <p className="text-earth-gray/50 text-sm mt-1">Selecionados com carinho</p>
-              </div>
+              {aboutSettings.aboutImage ? (
+                <img src={aboutSettings.aboutImage} alt="Sobre nós" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-center">
+                  <span className="text-7xl mb-4 block">🥗</span>
+                  <p className="font-heading font-bold text-forest text-xl">{aboutSettings.aboutFeatureTitle || 'Qualidade Garantida'}</p>
+                  <p className="text-earth-gray/50 text-sm mt-1">{aboutSettings.aboutFeatureDesc || 'Selecionados com carinho'}</p>
+                </div>
+              )}
             </div>
             {/* Floating badge */}
             <motion.div
