@@ -237,6 +237,33 @@ export default function ConfiguracoesPage() {
                 />
                 <p className="text-xs text-gray-500">Link do grupo de ofertas do WhatsApp exibido na página inicial</p>
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Telefone / WhatsApp</Label>
+                  <Input
+                    value={settings.socialPhone || ''}
+                    onChange={(e) => updateSetting('socialPhone', e.target.value)}
+                    placeholder="5511999999999"
+                  />
+                  <p className="text-xs text-gray-500">Número com DDD (ex: 5511999999999)</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Instagram</Label>
+                  <Input
+                    value={settings.socialInstagram || ''}
+                    onChange={(e) => updateSetting('socialInstagram', e.target.value)}
+                    placeholder="https://instagram.com/seu perfil"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Facebook</Label>
+                  <Input
+                    value={settings.socialFacebook || ''}
+                    onChange={(e) => updateSetting('socialFacebook', e.target.value)}
+                    placeholder="https://facebook.com/sua pagina"
+                  />
+                </div>
+              </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}
               </Button>

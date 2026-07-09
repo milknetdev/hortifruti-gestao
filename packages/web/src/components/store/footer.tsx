@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const [whatsappLink, setWhatsappLink] = useState('');
+  const [socialLinks, setSocialLinks] = useState({ phone: '', instagram: '', facebook: '' });
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -15,6 +16,11 @@ export function Footer() {
         const { data: result } = await api.get('/settings/general');
         const data = result?.data || result || {};
         setWhatsappLink(data.whatsappGroupLink || '');
+        setSocialLinks({
+          phone: data.socialPhone || '',
+          instagram: data.socialInstagram || '',
+          facebook: data.socialFacebook || '',
+        });
       } catch {
         // ignore
       }
@@ -94,33 +100,39 @@ export function Footer() {
                 cada pedido.
               </p>
               <div className="flex items-center gap-3">
-                <a
-                  href="https://wa.me/5511999999999"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-leafy-green transition-colors"
-                  aria-label="WhatsApp"
-                >
-                  <Phone size={18} />
-                </a>
-                <a
-                  href="https://instagram.com/hortifruti"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-pink-600 transition-colors"
-                  aria-label="Instagram"
-                >
-                  <Instagram size={18} />
-                </a>
-                <a
-                  href="https://facebook.com/hortifruti"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-blue-600 transition-colors"
-                  aria-label="Facebook"
-                >
-                  <Facebook size={18} />
-                </a>
+                {socialLinks.phone && (
+                  <a
+                    href={`https://wa.me/${socialLinks.phone}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-leafy-green transition-colors"
+                    aria-label="WhatsApp"
+                  >
+                    <Phone size={18} />
+                  </a>
+                )}
+                {socialLinks.instagram && (
+                  <a
+                    href={socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-pink-600 transition-colors"
+                    aria-label="Instagram"
+                  >
+                    <Instagram size={18} />
+                  </a>
+                )}
+                {socialLinks.facebook && (
+                  <a
+                    href={socialLinks.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-blue-600 transition-colors"
+                    aria-label="Facebook"
+                  >
+                    <Facebook size={18} />
+                  </a>
+                )}
               </div>
             </div>
 
