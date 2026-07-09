@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Plus, Pencil, Trash2, HelpCircle, RefreshCw, Truck, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 
+import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 interface Faq {
