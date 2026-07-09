@@ -54,7 +54,7 @@ export default function SacPage() {
   const fetchFaqs = async () => {
     try {
       const { data: result } = await api.get('/faqs/admin');
-      const faqsData = result?.data || result || [];
+      const faqsData = result?.data?.data || result?.data || result || [];
       setFaqs(Array.isArray(faqsData) ? faqsData : []);
     } catch {
       toast.error('Erro ao carregar FAQ');
