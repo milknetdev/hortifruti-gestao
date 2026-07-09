@@ -144,7 +144,7 @@ export default function ContactPage() {
       try {
         const { data: result } = await api.get('/faqs');
         const faqs = result?.data || result || [];
-        if (Array.isArray(faqs) const [openFaq, setOpenFaq] = useState<number | null>(null);const [openFaq, setOpenFaq] = useState<number | null>(null); faqs.length > 0) {
+        if (Array.isArray(faqs) && faqs.length > 0) {
           setFaqItems(faqs.map(f => ({ icon: f.icon, question: f.question, answer: f.answer })));
         }
       } catch {}
