@@ -48,6 +48,15 @@ interface OrderDetail {
     state: string;
     zipCode: string;
   };
+  pickupPoint?: {
+    id: string;
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+    phone?: string;
+  };
   paymentMethod: string;
   deliveryType: string;
   notes?: string;
@@ -296,6 +305,62 @@ export default function OrderDetailPage() {
               {order.deliveryType === 'delivery' ? 'Entrega' : 'Retirada na loja'}
             </p>
           </div>
+
+          {order.deliveryType === 'pickup' && order.pickupPoint && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-green-200 bg-green-50/50">
+              <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <MapPin size={18} className="text-green-600" />
+                Local de Retirada
+              </h2>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-800">{order.pickupPoint.name}</p>
+                <p className="text-sm text-gray-600">
+                  {order.pickupPoint.address}, {order.pickupPoint.city} - {order.pickupPoint.state}
+                  {order.pickupPoint.zipCode && ` - CEP: ${order.pickupPoint.zipCode}`}
+                </p>
+                {order.pickupPoint.phone && (
+                  <p className="text-sm text-gray-500">Tel: {order.pickupPoint.phone}</p>
+                )}
+                <div className="flex gap-2 mt-3">
+                  <button
+                    onClick={() => {
+                      const fullAddress = `${order.pickupPoint!.address}, ${order.pickupPoint!.city} - ${order.pickupPoint!.state}`;
+                      navigator.clipboard.writeText(fullAddress);
+                      toast.success('Endereço copiado!');
+                    }}
+                    className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 font-medium px-3 py-2 bg-green-100 rounded-lg hover:bg-green-200 transition-colors"
+                  >
+                    Copiar endereço
+                  </button>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${order.pickupPoint.address}, ${order.pickupPoint.city} - ${order.pickupPoint.state}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium px-3 py-2 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+                  >
+                    Abrir no Maps
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {order.deliveryType === 'delivery' && order.address && (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+              <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <MapPin size={18} className="text-green-600" />
+                Endereço de Entrega
+              </h2>
+              <p className="text-sm text-gray-600">
+                {order.address.street}, {order.address.number}
+                {order.address.complement && ` - ${order.address.complement}`}
+              </p>
+              <p className="text-sm text-gray-600">
+                {order.address.neighborhood}, {order.address.city} - {order.address.state}
+              </p>
+              <p className="text-sm text-gray-500">CEP: {order.address.zipCode}</p>
+            </div>
+          )}
 
           {order.notes && (
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
