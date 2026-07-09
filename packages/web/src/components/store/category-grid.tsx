@@ -63,13 +63,11 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
       viewport={{ once: true, margin: '-50px' }}
       className={cn(
         'grid gap-3 md:gap-4',
-        bentoLayout
-          ? 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6'
-          : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
+        'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'
       )}
     >
       {categories.map((category, index) => {
-        const isHero = bentoLayout && index === 0;
+        const isHero = false; // Disabled - all tiles same size on mobile
         const iconInfo = defaultIcons[category.slug] || defaultIcons.outros;
         const IconComponent = iconInfo.icon;
 
@@ -77,7 +75,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
           <motion.div
             key={category.id}
             variants={item}
-            className={cn(isHero && 'md:col-span-2 md:row-span-2')}
+            className={cn('')})
           >
             <Link
               href={`/produtos?category=${category.slug}`}
@@ -88,7 +86,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                   'relative rounded-2xl overflow-hidden h-full',
                   'border border-forest/10 group-hover:border-forest/20',
                   'transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1',
-                  isHero ? 'min-h-[200px] md:min-h-[280px]' : 'aspect-square'
+                  'aspect-square'
                 )}
               >
                 {category.imageUrl ? (
@@ -108,7 +106,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                       className={cn(
                         'drop-shadow-lg',
                         iconInfo.iconColor,
-                        isHero ? 'w-20 h-20 md:w-28 md:h-28' : 'w-12 h-12 md:w-16 md:h-16'
+                        'w-12 h-12 md:w-16 md:h-16'
                       )}
                       strokeWidth={1.5}
                     />
@@ -121,11 +119,11 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                 {/* Category info */}
                 <div className={cn(
                   'absolute bottom-0 left-0 right-0',
-                  isHero ? 'p-4 md:p-6' : 'p-3'
+                  'p-3'
                 )}>
                   <h3 className={cn(
                     'text-white font-heading font-bold leading-tight',
-                    isHero ? 'text-lg md:text-2xl' : 'text-sm md:text-base'
+                    'text-sm md:text-base'
                   )}>
                     {category.name}
                   </h3>
