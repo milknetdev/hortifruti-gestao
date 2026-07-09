@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Apple, Carrot, Leaf, Salad, Sprout, ShoppingBasket, Milk, Wheat, Package } from 'lucide-react';
+import { Apple, Carrot, Leaf, Salad, Sprout, ShoppingBasket, Milk, Wheat, Package, Coffee, Egg, Croissant, Snowflake } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Category {
@@ -19,17 +19,23 @@ interface CategoryGridProps {
   categories: Category[];
 }
 
-const defaultIcons: Record<string, { emoji: string; bg: string }> = {
-  frutas: { emoji: '🍎', bg: 'from-red-400 to-orange-400' },
-  verduras: { emoji: '🥬', bg: 'from-green-400 to-emerald-500' },
-  legumes: { emoji: '🥕', bg: 'from-orange-400 to-amber-500' },
-  temperos: { emoji: '🌿', bg: 'from-emerald-400 to-teal-500' },
-  organicos: { emoji: '🌱', bg: 'from-green-500 to-lime-500' },
-  cestas: { emoji: '🧺', bg: 'from-amber-400 to-yellow-500' },
-  bebidas: { emoji: '🥤', bg: 'from-blue-400 to-cyan-500' },
-  laticinios: { emoji: '🥛', bg: 'from-slate-300 to-slate-400' },
-  'grãos': { emoji: '🌾', bg: 'from-yellow-400 to-amber-500' },
-  outros: { emoji: '📦', bg: 'from-gray-400 to-gray-500' },
+const defaultIcons: Record<string, { icon: React.ElementType; bg: string; iconColor: string }> = {
+  frutas: { icon: Apple, bg: 'from-red-400 to-orange-400', iconColor: 'text-white' },
+  verduras: { icon: Salad, bg: 'from-green-400 to-emerald-500', iconColor: 'text-white' },
+  legumes: { icon: Carrot, bg: 'from-orange-400 to-amber-500', iconColor: 'text-white' },
+  temperos: { icon: Leaf, bg: 'from-emerald-400 to-teal-500', iconColor: 'text-white' },
+  'temperos-e-ervas': { icon: Leaf, bg: 'from-emerald-400 to-teal-500', iconColor: 'text-white' },
+  organicos: { icon: Sprout, bg: 'from-green-500 to-lime-500', iconColor: 'text-white' },
+  cestas: { icon: ShoppingBasket, bg: 'from-amber-400 to-yellow-500', iconColor: 'text-white' },
+  'cestas-prontas': { icon: ShoppingBasket, bg: 'from-amber-400 to-yellow-500', iconColor: 'text-white' },
+  bebidas: { icon: Coffee, bg: 'from-blue-400 to-cyan-500', iconColor: 'text-white' },
+  laticinios: { icon: Milk, bg: 'from-slate-300 to-slate-400', iconColor: 'text-white' },
+  'ovos-e-laticinios': { icon: Egg, bg: 'from-yellow-300 to-amber-400', iconColor: 'text-white' },
+  graos: { icon: Wheat, bg: 'from-yellow-400 to-amber-500', iconColor: 'text-white' },
+  'graos-e-cereais': { icon: Wheat, bg: 'from-yellow-400 to-amber-500', iconColor: 'text-white' },
+  panificacao: { icon: Croissant, bg: 'from-orange-300 to-amber-400', iconColor: 'text-white' },
+  congelados: { icon: Snowflake, bg: 'from-sky-400 to-blue-500', iconColor: 'text-white' },
+  outros: { icon: Package, bg: 'from-gray-400 to-gray-500', iconColor: 'text-white' },
 };
 
 export function CategoryGrid({ categories }: CategoryGridProps) {
@@ -65,6 +71,7 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
       {categories.map((category, index) => {
         const isHero = bentoLayout && index === 0;
         const iconInfo = defaultIcons[category.slug] || defaultIcons.outros;
+        const IconComponent = iconInfo.icon;
 
         return (
           <motion.div
@@ -97,12 +104,14 @@ export function CategoryGrid({ categories }: CategoryGridProps) {
                     'w-full h-full bg-gradient-to-br flex items-center justify-center',
                     iconInfo.bg
                   )}>
-                    <span className={cn(
-                      'drop-shadow-lg',
-                      isHero ? 'text-6xl md:text-8xl' : 'text-4xl md:text-5xl'
-                    )}>
-                      {iconInfo.emoji}
-                    </span>
+                    <IconComponent
+                      className={cn(
+                        'drop-shadow-lg',
+                        iconInfo.iconColor,
+                        isHero ? 'w-20 h-20 md:w-28 md:h-28' : 'w-12 h-12 md:w-16 md:h-16'
+                      )}
+                      strokeWidth={1.5}
+                    />
                   </div>
                 )}
 
