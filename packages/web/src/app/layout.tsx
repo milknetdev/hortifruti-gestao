@@ -33,7 +33,6 @@ export default function RootLayout({
           position="top-right"
           toastOptions={{
             duration: 4000,
-            onClick: (t) => toast.dismiss(t.id),
             style: {
               background: '#fff',
               color: '#333',
