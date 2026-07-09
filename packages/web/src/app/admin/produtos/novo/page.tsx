@@ -205,9 +205,12 @@ export default function NovoProdutoPage() {
                     setSearchImages(true);
                     try {
                       const { data: result } = await api.get(`/images/search?query=${encodeURIComponent(name)}`);
-                      if (result?.data?.length > 0) {
-                        setImageResults(result.data);
+                      const images = result?.data?.data || result?.data || [];
+                      if (Array.isArray(images) && images.length > 0) {
+                        setImageResults(images);
                         setShowImageModal(true);
+                      } else {
+                        toast.error('Nenhuma imagem encontrada');
                       }
                     } catch {
                       toast.error('Erro ao buscar imagens');
