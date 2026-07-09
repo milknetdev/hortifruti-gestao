@@ -82,8 +82,8 @@ export function Header() {
                 <Leaf size={20} className="text-white" />
               </div>
               <span className="text-xl md:text-2xl font-heading font-bold">
-                <span className="text-forest">{storeSettings.storeName?.split(' ')[0] || 'Horti'}</span>
-                <span className="text-leafy-green">{storeSettings.storeName?.split(' ').slice(1).join(' ') || 'Fruti'}</span>
+                <span className="text-forest">{storeSettings.storeName || 'HortiFruti'}</span>
+                
               </span>
             </Link>
 
