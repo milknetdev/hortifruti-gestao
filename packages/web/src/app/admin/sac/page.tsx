@@ -9,8 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-12|import { Loader2, Plus, Pencil, Trash2, HelpCircle, RefreshCw, Truck, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
-13|
+import { Loader2, Plus, Pencil, Trash2, HelpCircle, RefreshCw, Truck, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+
 import toast from 'react-hot-toast';
 
 interface Faq {
