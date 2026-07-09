@@ -1,11 +1,15 @@
 'use client';
 
-import { Star, Info, Link2, HelpCircle,useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { Star, Info, Link2, HelpCircle,usePathname } from 'next/navigation';
-import { Star, Info, Link2, HelpCircle,cn } from '@/lib/utils';
-import { Star, Info, Link2, HelpCircle,useAdminStore } from '@/stores/admin-store';
-import { Star,
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { useAdminStore } from '@/stores/admin-store';
+import {
+  Star,
+  Info,
+  Link2,
+  HelpCircle,
   LayoutDashboard,
   ShoppingBag,
   Package,
@@ -28,9 +32,9 @@ import { Star,
   FileSpreadsheet,
   History,
 } from 'lucide-react';
-import { Star, Info, Link2, HelpCircle,Button } from '@/components/ui/button';
-import { Star, Info, Link2, HelpCircle,Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { Star, Info, Link2, HelpCircle,ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface MenuItem {
   label: string;
