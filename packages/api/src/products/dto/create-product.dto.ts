@@ -72,7 +72,7 @@ export class CreateProductDto {
   @Min(0)
   weight?: number;
 
-  @ApiPropertyOptional({ example: 'KG', enum: ['KG', 'UN', 'L', 'PCT', 'DUZIA'] })
+  @ApiPropertyOptional({ example: 'KG', enum: ['KG', 'UN', 'G', 'CX', 'L', 'PCT', 'DUZIA', 'MACO'] })
   @IsOptional()
   @IsString()
   unit?: string;

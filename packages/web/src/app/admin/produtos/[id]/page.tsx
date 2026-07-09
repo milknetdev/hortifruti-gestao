@@ -234,6 +234,7 @@ export default function EditarProdutoPage() {
                   <option value="G">Grama (g)</option>
                   <option value="CX">Caixa (cx)</option>
                   <option value="L">Litro (L)</option>
+                  <option value="MACO">Maço (maço)</option>
                 </select>
               </div>
             </div>

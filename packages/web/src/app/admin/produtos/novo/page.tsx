@@ -181,6 +181,7 @@ export default function NovoProdutoPage() {
                     <SelectItem value="G">Grama (g)</SelectItem>
                     <SelectItem value="CX">Caixa (cx)</SelectItem>
                     <SelectItem value="L">Litro (L)</SelectItem>
+                    <SelectItem value="MACO">Maço (maço)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
