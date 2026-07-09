@@ -44,12 +44,21 @@ export function BannerCarousel() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [storeName, setStoreName] = useState('HortiFruti');
 
   useEffect(() => {
     const fetchBanners = async () => {
       try {
-        const { data: result } = await api.get('/banners/active');
+        const [bannersRes, settingsRes] = await Promise.allSettled([
+          api.get('/banners/active'),
+          api.get('/settings/general'),
+        ]);
+        const result = bannersRes.status === 'fulfilled' ? bannersRes.value?.data : null;
         const bannerList = Array.isArray(result?.data) ? result.data : (Array.isArray(result) ? result : []);
+        if (settingsRes.status === 'fulfilled') {
+          const sData = settingsRes.value?.data?.data || settingsRes.value?.data || {};
+          setStoreName(sData.storeName || 'HortiFruti');
+        }
         if (bannerList.length > 0) {
           setBanners(bannerList);
         } else {
@@ -120,7 +129,7 @@ export function BannerCarousel() {
               transition={{ delay: 0.1 }}
               className="inline-block px-4 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-heading font-semibold mb-4 uppercase tracking-wider"
             >
-              HortiFruti
+              {storeName}
             </motion.span>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}

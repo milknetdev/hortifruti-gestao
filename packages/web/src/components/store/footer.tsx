@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const [whatsappLink, setWhatsappLink] = useState('');
+  const [storeName, setStoreName] = useState('HortiFruti');
   const [socialLinks, setSocialLinks] = useState({ phone: '', instagram: '', facebook: '' });
   const [quickLinks, setQuickLinks] = useState([
     { href: '/', label: 'Início' },
@@ -26,6 +27,7 @@ export function Footer() {
         if (settingsRes.status === 'fulfilled') {
           const data = settingsRes.value?.data?.data || settingsRes.value?.data || {};
           setWhatsappLink(data.whatsappGroupLink || '');
+          setStoreName(data.storeName || 'HortiFruti');
           setSocialLinks({
             phone: data.socialPhone || '',
             instagram: data.socialInstagram || '',
@@ -236,7 +238,7 @@ export function Footer() {
         <div className="border-t border-white/10">
           <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-2">
             <p className="text-sm text-gray-500">
-              © {currentYear} HortiFruti. Todos os direitos reservados.
+              © {currentYear} {storeName}. Todos os direitos reservados.
             </p>
             <p className="text-xs text-gray-600 flex items-center gap-1">
               Feito com <Heart size={12} className="text-red-500 fill-red-500" /> para levar frescor até você
