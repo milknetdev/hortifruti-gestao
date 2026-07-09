@@ -53,6 +53,7 @@ export default function RootLayout({
               },
             },
           }}
+          closeButton={true}
         />
       </body>
     </html>
