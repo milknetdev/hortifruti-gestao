@@ -97,7 +97,8 @@ export default function HomePage() {
         }
         if (featureBannersData.status === 'fulfilled') {
           const iconMap: Record<string, any> = { 'truck': Truck, 'leaf': Leaf, 'shield': ShieldCheck, 'refresh-cw': RotateCcw, 'clock': Clock, 'star': Star, 'heart': Heart, 'zap': Zap, 'award': Award, 'help-circle': HelpCircle, 'calendar': Calendar, 'credit-card': CreditCard, 'package': Package };
-          const banners = featureBannersData.value?.data?.data || featureBannersData.value?.data || [];
+          const bannersRaw = featureBannersData.value?.data?.data || featureBannersData.value?.data || [];
+          const banners = Array.isArray(bannersRaw) ? bannersRaw : (bannersRaw?.data || []);
           if (Array.isArray(banners) && banners.length > 0) {
             setFeatures(banners.filter((b: any) => b.active).sort((a: any, b: any) => a.sortOrder - b.sortOrder).map((b: any) => ({
               icon: iconMap[b.icon] || HelpCircle,
