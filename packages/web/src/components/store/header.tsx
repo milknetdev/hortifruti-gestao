@@ -32,19 +32,23 @@ export function Header() {
   const { items } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
 
+  const fetchStoreSettings = async () => {
+    try {
+      const { data: result } = await api.get('/settings/general');
+      const data = result?.data || result || {};
+      setStoreSettings({
+        storeName: data.storeName || 'HortiFruti',
+        slogan: data.slogan || '',
+        logo: data.logo || '',
+      });
+    } catch {}
+  };
+
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data: result } = await api.get('/settings/general');
-        const data = result?.data || result || {};
-        setStoreSettings({
-          storeName: data.storeName || 'HortiFruti',
-          slogan: data.slogan || '',
-          logo: data.logo || '',
-        });
-      } catch {}
-    };
-    fetchSettings();
+    fetchStoreSettings();
+    const handleFocus = () => fetchStoreSettings();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
