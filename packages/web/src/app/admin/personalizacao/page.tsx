@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Save, Loader2, Eye } from 'lucide-react';
+import { Upload, Save, Loader2, Eye, RefreshCw } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -71,6 +71,12 @@ export default function PersonalizacaoPage() {
     }
   };
 
+  const handleRefresh = () => {
+    setIsLoading(true);
+    fetchSettings();
+    toast.success('Configurações recarregadas!');
+  };
+
   const updateSetting = (key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
@@ -88,6 +94,12 @@ export default function PersonalizacaoPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Personalização</h1>
         <p className="text-gray-500">Personalize a aparência da loja</p>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" size="icon">
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+      </div>
+      <div>
       </div>
 
       <Tabs defaultValue="geral">
