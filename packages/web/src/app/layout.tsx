@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster, ToastBar } from 'react-hot-toast';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -39,7 +39,6 @@ export default function RootLayout({
               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               borderRadius: '8px',
               padding: '12px 16px',
-              cursor: 'pointer',
             },
             success: {
               iconTheme: {
@@ -54,7 +53,26 @@ export default function RootLayout({
               },
             },
           }}
-        />
+        >
+          {(t) => (
+            <ToastBar toast={t}>
+              {({ icon, message }) => (
+                <span onClick={() => toast.dismiss(t.id)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {icon}
+                  {message}
+                  {t.type !== 'loading' && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
+                      style={{ background: 'none', border: 'none', padding: '0 0 0 8px', cursor: 'pointer', color: '#999', fontSize: '16px', lineHeight: 1 }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              )}
+            </ToastBar>
+          )}
+        </Toaster>
       </body>
     </html>
   );
