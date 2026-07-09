@@ -100,8 +100,8 @@ export function Footer() {
                   <Leaf size={22} className="text-white" />
                 </div>
                 <span className="text-2xl font-heading font-bold">
-                  <span className="text-white">Horti</span>
-                  <span className="text-leafy-green">Fruti</span>
+                  <span className="text-white">{storeName}</span>
+                  
                 </span>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed mb-6">
