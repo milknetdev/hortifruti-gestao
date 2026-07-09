@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Upload, X, Loader2, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 
 const productSchema = z.object({
@@ -51,6 +51,9 @@ interface Category {
 export default function NovoProdutoPage() {
   const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
+  const [searchImages, setSearchImages] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageResults, setImageResults] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -187,7 +190,39 @@ export default function NovoProdutoPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Imagens</Label>
+              <div className="flex items-center justify-between">
+                <Label>Imagens</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (!formData.name) {
+                      toast.error('Preencha o nome do produto primeiro');
+                      return;
+                    }
+                    setSearchImages(true);
+                    try {
+                      const { data: result } = await api.get(`/images/search?query=${encodeURIComponent(formData.name)}`);
+                      if (result?.data?.length > 0) {
+                        setImageResults(result.data);
+                        setShowImageModal(true);
+                      }
+                    } catch {
+                      toast.error('Erro ao buscar imagens');
+                    } finally {
+                      setSearchImages(false);
+                    }
+                  }}
+                  disabled={searchImages}
+                >
+                  {searchImages ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Buscando...</>
+                  ) : (
+                    <><Sparkles className="w-4 h-4 mr-2" />Buscar Automático</>
+                  )}
+                </Button>
+              </div>
               <div className="flex items-center gap-4 flex-wrap">
                 {images.map((img, i) => (
                   <div key={i} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
@@ -318,6 +353,44 @@ export default function NovoProdutoPage() {
           </Button>
         </div>
       </form>
+
+      {/* Image Selection Modal */}
+      {showImageModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Selecionar Imagem</h3>
+              <Button variant="ghost" size="icon" onClick={() => setShowImageModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="p-4 overflow-y-auto max-h-[60vh]">
+              <div className="grid grid-cols-3 gap-4">
+                {imageResults.map((img, i) => (
+                  <div
+                    key={i}
+                    className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group border-2 border-transparent hover:border-green-500 transition-all"
+                    onClick={() => {
+                      setImages([...images, img.url]);
+                      setShowImageModal(false);
+                      toast.success('Imagem adicionada!');
+                    }}
+                  >
+                    <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                      <div className="opacity-0 group-hover:opacity-100 bg-green-500 text-white rounded-full p-2">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
