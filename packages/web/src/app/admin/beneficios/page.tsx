@@ -53,7 +53,7 @@ export default function FeatureBannersPage() {
   const fetchBanners = async () => {
     try {
       const { data: result } = await api.get('/feature-banners/admin');
-      const bannersData = result?.data || result || [];
+      const bannersData = result?.data?.data || result?.data || result || [];
       setBanners(Array.isArray(bannersData) ? bannersData : []);
     } catch {
       toast.error('Erro ao carregar banners');
