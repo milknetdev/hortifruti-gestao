@@ -17,6 +17,7 @@ export function Footer() {
     }
     return 'HortiFruti';
   });
+  const [storeEmail, setStoreEmail] = useState('contato@hortifruti.com.br');
   const [storeLogo, setStoreLogo] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -46,6 +47,7 @@ export function Footer() {
           setWhatsappLink(data.whatsappGroupLink || '');
           setStoreName(data.storeName || 'HortiFruti');
           setStoreLogo(data.logo || '');
+          setStoreEmail(data.email || 'contato@hortifruti.com.br');
           try { 
             const cached = JSON.parse(localStorage.getItem('store-settings') || '{}');
             localStorage.setItem('store-settings', JSON.stringify({ ...cached, storeName: data.storeName || 'HortiFruti', logo: data.logo || '' }));
@@ -226,7 +228,7 @@ export function Footer() {
                   <div className="w-8 h-8 rounded-lg bg-leafy-green/20 flex items-center justify-center flex-shrink-0">
                     <Mail size={16} className="text-leafy-green" />
                   </div>
-                  <span>contato@hortifruti.com.br</span>
+                  <span>{storeEmail}</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm">
                   <div className="w-8 h-8 rounded-lg bg-leafy-green/20 flex items-center justify-center flex-shrink-0">

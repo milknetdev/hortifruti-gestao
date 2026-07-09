@@ -7,33 +7,33 @@ import toast from 'react-hot-toast';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-const contactInfo = [
+const getContactInfo = (settings: any) => [
   {
     icon: Phone,
     title: 'WhatsApp',
-    value: '(11) 99999-9999',
+    value: settings?.whatsapp || settings?.phone || '(11) 99999-9999',
     detail: 'Resposta em até 30 minutos',
     color: 'bg-green-500',
   },
   {
     icon: Mail,
     title: 'Email',
-    value: 'contato@hortifruti.com.br',
+    value: settings?.email || 'contato@hortifruti.com.br',
     detail: 'Resposta em até 24 horas',
     color: 'bg-blue-500',
   },
   {
     icon: MapPin,
     title: 'Endereço',
-    value: 'Rua das Frutas, 123',
-    detail: 'Centro, São Paulo - SP',
+    value: settings?.address || 'Rua das Frutas, 123',
+    detail: settings?.address ? `${settings.city || ''} - ${settings.state || ''}` : 'Centro, São Paulo - SP',
     color: 'bg-forest',
   },
   {
     icon: Clock,
     title: 'Horário',
-    value: 'Seg a Sáb: 06:00 - 20:00',
-    detail: 'Dom: 07:00 - 14:00',
+    value: settings?.weekdayHours ? `Seg a Sex: ${settings.weekdayHours}` : 'Seg a Sáb: 06:00 - 20:00',
+    detail: settings?.saturdayHours ? `Sáb: ${settings.saturdayHours} • Dom: ${settings.sundayHours || 'Fechado'}` : 'Dom: 07:00 - 14:00',
     color: 'bg-harvest-gold',
   },
 ];
@@ -138,8 +138,19 @@ export default function ContactPage() {
     { icon: 'refresh-cw', question: 'Como funciona a politica de trocas?', answer: 'A troca pode ser solicitada em ate 24h.' },
     { icon: 'shield', question: 'Os organicos sao certificados?', answer: 'Sim! Todos possuem certificacao.' },
   ]);
+  const [contactInfo, setContactInfo] = useState(getContactInfo({}));
 
   useEffect(() => {
+    // Fetch contact settings
+    const fetchSettings = async () => {
+      try {
+        const { data: result } = await api.get('/settings/general');
+        const data = result?.data || result || {};
+        setContactInfo(getContactInfo(data));
+      } catch {}
+    };
+    fetchSettings();
+
     const fetchFaqs = async () => {
       try {
         const { data: result } = await api.get('/faqs');
