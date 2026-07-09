@@ -252,12 +252,45 @@ export default function BannersPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>URL da Imagem</Label>
-              <Input
-                value={formData.imagem}
-                onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
-                placeholder="https://..."
-              />
+              <Label>Imagem do Banner</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={formData.imagem}
+                  onChange={(e) => setFormData({ ...formData, imagem: e.target.value })}
+                  placeholder="URL da imagem ou faça upload"
+                  className="flex-1"
+                />
+                <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md cursor-pointer hover:bg-green-700 transition-colors whitespace-nowrap">
+                  <Upload className="w-4 h-4" />
+                  <span className="text-sm">Upload</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const uploading = toast.loading('Enviando imagem...');
+                      try {
+                        const formDataUpload = new FormData();
+                        formDataUpload.append('file', file);
+                        const { data: result } = await api.post('/upload', formDataUpload, {
+                          headers: { 'Content-Type': 'multipart/form-data' },
+                        });
+                        const url = result?.data?.url || result?.url;
+                        if (url) {
+                          setFormData((prev) => ({ ...prev, imagem: url }));
+                          toast.success('Imagem enviada!', { id: uploading });
+                        } else {
+                          toast.error('Erro ao obter URL', { id: uploading });
+                        }
+                      } catch {
+                        toast.error('Erro ao enviar imagem', { id: uploading });
+                      }
+                    }}
+                  />
+                </label>
+              </div>
               {formData.imagem && (
                 <div className="mt-2 border rounded-lg overflow-hidden">
                   <img 
