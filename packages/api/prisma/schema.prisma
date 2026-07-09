@@ -49,6 +49,7 @@ model Tenant {
   stockMovements StockMovement[]
   financialEntries FinancialEntry[]
   featureBanners FeatureBanner[]
+  quickLinks QuickLink[]
   suppliers     Supplier[]
   notifications Notification[]
 
@@ -600,4 +601,19 @@ model FeatureBanner {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("feature_banners")
+}
+
+model QuickLink {
+  id          String   @id @default(uuid())
+  tenantId    String
+  label       String
+  href        String
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("quick_links")
 }

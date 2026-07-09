@@ -9,34 +9,42 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
   const [whatsappLink, setWhatsappLink] = useState('');
   const [socialLinks, setSocialLinks] = useState({ phone: '', instagram: '', facebook: '' });
+  const [quickLinks, setQuickLinks] = useState([
+    { href: '/', label: 'Início' },
+    { href: '/produtos', label: 'Produtos' },
+    { href: '/contato', label: 'Contato' },
+  ]);
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data: result } = await api.get('/settings/general');
-        const data = result?.data || result || {};
-        setWhatsappLink(data.whatsappGroupLink || '');
-        setSocialLinks({
-          phone: data.socialPhone || '',
-          instagram: data.socialInstagram || '',
-          facebook: data.socialFacebook || '',
-        });
+        const [settingsRes, linksRes] = await Promise.allSettled([
+          api.get('/settings/general'),
+          api.get('/quick-links'),
+        ]);
+
+        if (settingsRes.status === 'fulfilled') {
+          const data = settingsRes.value?.data?.data || settingsRes.value?.data || {};
+          setWhatsappLink(data.whatsappGroupLink || '');
+          setSocialLinks({
+            phone: data.socialPhone || '',
+            instagram: data.socialInstagram || '',
+            facebook: data.socialFacebook || '',
+          });
+        }
+
+        if (linksRes.status === 'fulfilled') {
+          const links = linksRes.value?.data?.data || linksRes.value?.data || [];
+          if (Array.isArray(links) && links.length > 0) {
+            setQuickLinks(links.map(l => ({ href: l.href, label: l.label })));
+          }
+        }
       } catch {
         // ignore
       }
     };
     fetchSettings();
   }, []);
-
-  const quickLinks = [
-    { href: '/', label: 'Início' },
-    { href: '/produtos', label: 'Produtos' },
-    { href: '/contato', label: 'Contato' },
-    { href: '/politicas', label: 'Políticas de Privacidade' },
-    { href: '/politicas#termos', label: 'Termos de Uso' },
-    { href: '/politicas#entregas', label: 'Políticas de Entrega' },
-    { href: '/politicas#trocas', label: 'Trocas e Devoluções' },
-  ];
 
   const categories = [
     { href: '/produtos?category=frutas', label: 'Frutas' },
