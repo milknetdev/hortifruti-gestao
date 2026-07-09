@@ -49,6 +49,10 @@ export default function ConfiguracoesPage() {
       showDeliveryTime: true,
     },
     autoBackup: true,
+    whatsappGroupLink: '',
+    socialPhone: '',
+    socialInstagram: '',
+    socialFacebook: '',
   });
 
   useEffect(() => {
