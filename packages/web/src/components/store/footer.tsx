@@ -17,6 +17,15 @@ export function Footer() {
     }
     return 'HortiFruti';
   });
+  const [storeLogo, setStoreLogo] = useState(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('store-settings');
+        if (cached) return JSON.parse(cached).logo || '';
+      } catch {}
+    }
+    return '';
+  });
   const [socialLinks, setSocialLinks] = useState({ phone: '', instagram: '', facebook: '' });
   const [quickLinks, setQuickLinks] = useState([
     { href: '/', label: 'Início' },
@@ -36,9 +45,10 @@ export function Footer() {
           const data = settingsRes.value?.data?.data || settingsRes.value?.data || {};
           setWhatsappLink(data.whatsappGroupLink || '');
           setStoreName(data.storeName || 'HortiFruti');
+          setStoreLogo(data.logo || '');
           try { 
             const cached = JSON.parse(localStorage.getItem('store-settings') || '{}');
-            localStorage.setItem('store-settings', JSON.stringify({ ...cached, storeName: data.storeName || 'HortiFruti' }));
+            localStorage.setItem('store-settings', JSON.stringify({ ...cached, storeName: data.storeName || 'HortiFruti', logo: data.logo || '' }));
           } catch {}
           setSocialLinks({
             phone: data.socialPhone || '',
@@ -108,9 +118,13 @@ export function Footer() {
             {/* About */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl gradient-fresh flex items-center justify-center">
-                  <Leaf size={22} className="text-white" />
-                </div>
+                {storeLogo ? (
+                  <img src={storeLogo} alt={storeName} className="h-10 w-auto max-w-[120px] object-contain" />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl gradient-fresh flex items-center justify-center">
+                    <Leaf size={22} className="text-white" />
+                  </div>
+                )}
                 <span className="text-2xl font-heading font-bold">
                   <span className="text-white">{storeName}</span>
                   
