@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, Trash2, Truck, Leaf, Shield, Clock, Star, Heart, Zap, Award } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Truck, Leaf, Shield, Clock, Star, Heart, Zap, Award, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -285,6 +285,40 @@ export default function FeatureBannersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview Section */}
+      {banners.length > 0 && (
+        <Card className="border-dashed border-2 border-green-200 bg-green-50/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-lg">Preview</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Assim vai aparecer no site</p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {banners.filter(b => b.active).map((banner) => {
+                const Icon = getIcon(banner.icon);
+                return (
+                  <div
+                    key={banner.id}
+                    className="bg-white rounded-xl p-5 text-center shadow-sm hover:shadow-md transition-shadow border"
+                  >
+                    <div className="w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-3">
+                      <Icon className="w-6 h-6 text-green-700" />
+                    </div>
+                    <h4 className="font-semibold text-gray-900 text-sm">{banner.title}</h4>
+                    {banner.description && (
+                      <p className="text-xs text-gray-500 mt-1">{banner.description}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

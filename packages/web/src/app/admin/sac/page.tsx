@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, Trash2, HelpCircle, Truck, RefreshCw, Shield, Calendar, CreditCard, Package, ChevronDown } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, HelpCircle, Truck, RefreshCw, Shield, Calendar, CreditCard, Package, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -42,6 +42,7 @@ export default function SacPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<Faq | null>(null);
+  const [expandedPreview, setExpandedPreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     question: '',
     answer: '',
@@ -285,6 +286,53 @@ export default function SacPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview Section */}
+      {faqs.length > 0 && (
+        <Card className="border-dashed border-2 border-green-200 bg-green-50/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-lg">Preview</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Assim vai aparecer na página de contato</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-w-2xl">
+              {faqs.filter(f => f.active).sort((a, b) => a.sortOrder - b.sortOrder).map((faq) => {
+                const Icon = getIcon(faq.icon);
+                const isExpanded = expandedPreview === faq.id;
+                return (
+                  <div
+                    key={faq.id}
+                    className="bg-white rounded-lg border overflow-hidden"
+                  >
+                    <button
+                      className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-50 transition-colors"
+                      onClick={() => setExpandedPreview(isExpanded ? null : faq.id)}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-green-700" />
+                      </div>
+                      <span className="flex-1 font-medium text-gray-900 text-sm">{faq.question}</span>
+                      {isExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pl-15">
+                        <p className="text-sm text-gray-600 leading-relaxed ml-11">{faq.answer}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

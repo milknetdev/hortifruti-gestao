@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Upload, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Upload, Loader2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -322,6 +322,48 @@ export default function BannersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview Section */}
+      {banners.length > 0 && (
+        <Card className="border-dashed border-2 border-green-200 bg-green-50/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-lg">Preview</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Assim vai aparecer no site</p>
+          </CardHeader>
+          <CardContent>
+            <div className="relative overflow-hidden rounded-xl">
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+                {banners.filter(b => (b.status ?? b.active ?? true)).map((banner) => (
+                  <div
+                    key={banner.id}
+                    className="min-w-[320px] md:min-w-[480px] h-48 rounded-xl flex items-center justify-center snap-center relative overflow-hidden flex-shrink-0"
+                    style={{ backgroundColor: banner.backgroundColor || banner.corFundo || '#154212' }}
+                  >
+                    {(banner.image || banner.imagem) && (
+                      <img
+                        src={banner.image || banner.imagem}
+                        alt={banner.title || banner.titulo}
+                        className="absolute inset-0 w-full h-full object-cover opacity-30"
+                      />
+                    )}
+                    <div className="relative z-10 text-center text-white px-6">
+                      <h3 className="text-xl font-bold drop-shadow-md">{banner.title || banner.titulo}</h3>
+                      {(banner.subtitle || banner.subtitulo) && (
+                        <p className="text-sm mt-1 opacity-90 drop-shadow">{banner.subtitle || banner.subtitulo}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="absolute top-1/2 left-2 -translate-y-1/2 bg-white/80 rounded-full w-8 h-8 flex items-center justify-center shadow text-gray-600 text-lg font-bold">‹</div>
+              <div className="absolute top-1/2 right-2 -translate-y-1/2 bg-white/80 rounded-full w-8 h-8 flex items-center justify-center shadow text-gray-600 text-lg font-bold">›</div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

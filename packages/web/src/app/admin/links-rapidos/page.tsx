@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Plus, Pencil, Trash2, Link2, GripVertical } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Link2, GripVertical, Eye, ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -232,6 +232,35 @@ export default function LinksRapidosPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Preview Section */}
+      {links.length > 0 && (
+        <Card className="border-dashed border-2 border-green-200 bg-green-50/30">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-lg">Preview</CardTitle>
+            </div>
+            <p className="text-sm text-gray-500">Assim vai aparecer no rodapé do site</p>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-gray-900 rounded-xl p-6">
+              <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Links Rápidos</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {links.filter(l => l.active).sort((a, b) => a.sortOrder - b.sortOrder).map((link) => (
+                  <a
+                    key={link.id}
+                    className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm group cursor-default"
+                  >
+                    <ExternalLink className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
