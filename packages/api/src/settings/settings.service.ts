@@ -13,6 +13,12 @@ export class SettingsService {
     return tenantId;
   }
 
+  private serializeValue(value: any): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+
   async getSettings(tenantId: string, group: string) {
     tenantId = await this.resolveTenantId(tenantId);
     const settings = await this.prisma.tenantSetting.findMany({
@@ -20,20 +26,36 @@ export class SettingsService {
     });
     
     const settingsMap: any = {};
-    settings.forEach(s => { settingsMap[s.key] = s.value; });
+    settings.forEach(s => {
+      // Try to parse JSON values back to objects
+      try {
+        if (s.value && s.value.startsWith('{')) {
+          settingsMap[s.key] = JSON.parse(s.value);
+        } else if (s.value === '[object Object]') {
+          // Skip corrupted values
+          settingsMap[s.key] = {};
+        } else {
+          settingsMap[s.key] = s.value;
+        }
+      } catch {
+        settingsMap[s.key] = s.value;
+      }
+    });
     return settingsMap;
   }
 
   async updateSettings(tenantId: string, group: string, data: Record<string, any>) {
     tenantId = await this.resolveTenantId(tenantId);
     
-    const updates = Object.entries(data).map(([key, value]) => 
-      this.prisma.tenantSetting.upsert({
-        where: { tenantId_key: { tenantId, key } },
-        update: { value: String(value) },
-        create: { tenantId, key, value: String(value), group },
-      })
-    );
+    const updates = Object.entries(data)
+      .filter(([_, value]) => value !== undefined && value !== null)
+      .map(([key, value]) => 
+        this.prisma.tenantSetting.upsert({
+          where: { tenantId_key: { tenantId, key } },
+          update: { value: this.serializeValue(value) },
+          create: { tenantId, key, value: this.serializeValue(value), group },
+        })
+      );
     
     await Promise.all(updates);
     return { message: 'Configurações atualizadas' };
