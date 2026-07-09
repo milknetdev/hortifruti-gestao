@@ -62,7 +62,7 @@ function ProductsContent() {
     const fetchCategories = async () => {
       try {
         const { data } = await api.get('/categories');
-        setCategories(Array.isArray(data) ? data : data?.items || []);
+        const cats = data?.data || data || []; setCategories(Array.isArray(cats) ? cats : []);
       } catch {
         setCategories([]);
       }
