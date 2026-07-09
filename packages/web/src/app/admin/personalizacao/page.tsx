@@ -123,12 +123,50 @@ export default function PersonalizacaoPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Logo URL</Label>
-                <Input
-                  value={settings.logo}
-                  onChange={(e) => updateSetting('logo', e.target.value)}
-                  placeholder="https://..."
-                />
+                <Label>Logo</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={settings.logo}
+                    onChange={(e) => updateSetting('logo', e.target.value)}
+                    placeholder="URL da logo ou faça upload"
+                    className="flex-1"
+                  />
+                  <label className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md cursor-pointer hover:bg-green-700 transition-colors whitespace-nowrap">
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm">Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const uploading = toast.loading('Enviando logo...');
+                        try {
+                          const formDataUpload = new FormData();
+                          formDataUpload.append('file', file);
+                          const { data: result } = await api.post('/upload', formDataUpload, {
+                            headers: { 'Content-Type': 'multipart/form-data' },
+                          });
+                          const url = result?.data?.url || result?.url;
+                          if (url) {
+                            updateSetting('logo', url);
+                            toast.success('Logo enviada!', { id: uploading });
+                          } else {
+                            toast.error('Erro ao obter URL', { id: uploading });
+                          }
+                        } catch {
+                          toast.error('Erro ao enviar logo', { id: uploading });
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {settings.logo && (
+                  <div className="mt-2 border rounded-lg overflow-hidden inline-block">
+                    <img src={settings.logo} alt="Logo" className="h-12 object-contain" />
+                  </div>
+                )}
               </div>
               <Button className="bg-[#16a34a] hover:bg-[#15803d]" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Salvando...</> : <><Save className="w-4 h-4 mr-2" />Salvar</>}

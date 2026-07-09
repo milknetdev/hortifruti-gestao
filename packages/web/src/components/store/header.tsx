@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,13 +22,30 @@ import { useAuthStore } from '@/stores/auth-store';
 import { SearchBar } from '@/components/store/search-bar';
 import { CartSidebar } from '@/components/store/cart-sidebar';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [storeSettings, setStoreSettings] = useState({ storeName: 'HortiFruti', slogan: '', logo: '' });
   const { items } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data: result } = await api.get('/settings/general');
+        const data = result?.data || result || {};
+        setStoreSettings({
+          storeName: data.storeName || 'HortiFruti',
+          slogan: data.slogan || '',
+          logo: data.logo || '',
+        });
+      } catch {}
+    };
+    fetchSettings();
+  }, []);
 
   const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -65,8 +82,8 @@ export function Header() {
                 <Leaf size={20} className="text-white" />
               </div>
               <span className="text-xl md:text-2xl font-heading font-bold">
-                <span className="text-forest">Horti</span>
-                <span className="text-leafy-green">Fruti</span>
+                <span className="text-forest">{storeSettings.storeName?.split(' ')[0] || 'Horti'}</span>
+                <span className="text-leafy-green">{storeSettings.storeName?.split(' ').slice(1).join(' ') || 'Fruti'}</span>
               </span>
             </Link>
 
