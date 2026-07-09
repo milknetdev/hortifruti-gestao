@@ -35,7 +35,7 @@ export function Header() {
         if (cached) return JSON.parse(cached);
       } catch {}
     }
-    return { storeName: 'HortiFruti', slogan: '', logo: '' };
+    return { storeName: 'HortiFruti', slogan: '', logo: '', topBanner: 'Frete grátis para pedidos acima de R$100 • Entrega no mesmo dia!' };
   });
   const { items } = useCartStore();
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -45,10 +45,11 @@ export function Header() {
       const { data: result } = await api.get('/settings/general');
       const data = result?.data || result || {};
       const newSettings = {
-              storeName: data.storeName || 'HortiFruti',
-              slogan: data.slogan || '',
-              logo: data.logo || '',
-            };
+                    storeName: data.storeName || 'HortiFruti',
+                    slogan: data.slogan || '',
+                    logo: data.logo || '',
+                    topBanner: data.topBanner || 'Frete grátis para pedidos acima de R$100 • Entrega no mesmo dia!',
+                  };
             setStoreSettings(newSettings);
             try { localStorage.setItem('store-settings', JSON.stringify(newSettings)); } catch {}
     } catch {}
@@ -75,8 +76,7 @@ export function Header() {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-forest/10">
         {/* Top bar */}
         <div className="gradient-forest text-white text-center py-1.5 text-xs font-medium">
-          <span className="hidden sm:inline">🥬 Frete grátis para pedidos acima de R$100 • Entrega no mesmo dia!</span>
-          <span className="sm:hidden">🥬 Frete grátis acima de R$100!</span>
+          <span>{storeSettings.topBanner}</span>
         </div>
 
         <div className="container mx-auto px-4">
