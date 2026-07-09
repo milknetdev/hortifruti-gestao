@@ -6,7 +6,8 @@ import { DataTable, Column } from '@/components/admin/data-table';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 
@@ -42,6 +43,17 @@ export default function ClientesPage() {
     }
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Tem certeza que deseja apagar o cliente "${name}"?`)) return;
+    try {
+      await api.delete(`/customers/${id}`);
+      toast.success('Cliente removido!');
+      fetchCustomers();
+    } catch {
+      toast.error('Erro ao remover cliente');
+    }
+  };
+
   const columns: Column<any>[] = [
     { key: 'name', label: 'Nome', sortable: true },
     { key: 'email', label: 'E-mail' },
@@ -71,13 +83,23 @@ export default function ClientesPage() {
       key: 'actions',
       label: '',
       render: (_, row) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/admin/clientes/${row.id}`)}
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/admin/clientes/${row.id}`)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row.id, row.name)}
+            className="text-red-500 hover:text-red-700"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     },
   ];
