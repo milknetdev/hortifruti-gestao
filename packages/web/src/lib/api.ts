@@ -34,6 +34,7 @@ api.interceptors.request.use(
           url.includes('/customer/') || 
           url.includes('/addresses') ||
           url.includes('/orders/my') ||
+          (url.match(/\/orders\/[a-f0-9-]+$/) && config.method === 'get') ||
           (url.includes('/orders') && !url.includes('/orders/my') && config.method === 'post');
         
         let token = null;
