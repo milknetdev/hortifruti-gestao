@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Phone, Mail, MapPin, Clock, Loader2, ChevronDown, MessageCircle, Shield, Truck, RotateCcw, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -61,7 +61,9 @@ const faqItems = [
   },
 ];
 
-function AccordionItem({ icon: Icon, question, answer, isOpen, onToggle }: {
+const iconMap: Record<string, any> = {  'truck': Truck,  'refresh-cw': RotateCcw,  'shield': Shield,  'calendar': Clock,  'credit-card': Mail,  'package': MapPin,  'help-circle': HelpCircle,};function getIconComponent(iconName: string | any) {  if (typeof iconName === 'string') {    return iconMap[iconName] || HelpCircle;  }  return iconName;}
+function AccordionItem({ icon: iconName, question, answer, isOpen, onToggle }: {
+  const Icon = getIconComponent(iconName);
   icon: any;
   question: string;
   answer: string;
@@ -115,6 +117,24 @@ export default function ContactPage() {
   });
   const [loading, setLoading] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [faqItems, setFaqItems] = useState([
+    { icon: 'truck', question: 'Qual o prazo de entrega?', answer: 'Entregamos em ate 2 horas para toda a cidade.' },
+    { icon: 'refresh-cw', question: 'Como funciona a politica de trocas?', answer: 'A troca pode ser solicitada em ate 24h.' },
+    { icon: 'shield', question: 'Os organicos sao certificados?', answer: 'Sim! Todos possuem certificacao.' },
+  ]);
+
+  useEffect(() => {
+    const fetchFaqs = async () => {
+      try {
+        const { data: result } = await api.get('/faqs');
+        const faqs = result?.data || result || [];
+        if (Array.isArray(faqs) const [openFaq, setOpenFaq] = useState<number | null>(null);const [openFaq, setOpenFaq] = useState<number | null>(null); faqs.length > 0) {
+          setFaqItems(faqs.map(f => ({ icon: f.icon, question: f.question, answer: f.answer })));
+        }
+      } catch {}
+    };
+    fetchFaqs();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

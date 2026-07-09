@@ -1,10 +1,10 @@
 'use client';
 
-import { Star, Info, Link2,useState } from 'react';
+import { Star, Info, Link2, HelpCircle,useState } from 'react';
 import Link from 'next/link';
-import { Star, Info, Link2,usePathname } from 'next/navigation';
-import { Star, Info, Link2,cn } from '@/lib/utils';
-import { Star, Info, Link2,useAdminStore } from '@/stores/admin-store';
+import { Star, Info, Link2, HelpCircle,usePathname } from 'next/navigation';
+import { Star, Info, Link2, HelpCircle,cn } from '@/lib/utils';
+import { Star, Info, Link2, HelpCircle,useAdminStore } from '@/stores/admin-store';
 import { Star,
   LayoutDashboard,
   ShoppingBag,
@@ -28,9 +28,9 @@ import { Star,
   FileSpreadsheet,
   History,
 } from 'lucide-react';
-import { Star, Info, Link2,Button } from '@/components/ui/button';
-import { Star, Info, Link2,Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import { Star, Info, Link2,ScrollArea } from '@/components/ui/scroll-area';
+import { Star, Info, Link2, HelpCircle,Button } from '@/components/ui/button';
+import { Star, Info, Link2, HelpCircle,Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Star, Info, Link2, HelpCircle,ScrollArea } from '@/components/ui/scroll-area';
 
 interface MenuItem {
   label: string;
@@ -80,6 +80,7 @@ const menuGroups: MenuGroup[] = [
       { label: 'Beneficios', href: '/admin/beneficios', icon: Star },
       { label: 'Sobre Nos', href: '/admin/sobre-nos', icon: Info },
       { label: 'Links Rapidos', href: '/admin/links-rapidos', icon: Link2 },
+      { label: 'SAC / FAQ', href: '/admin/sac', icon: HelpCircle },
     ],
   },
   {

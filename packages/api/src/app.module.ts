@@ -22,6 +22,7 @@ import { ExportModule } from './export/export.module';
 import { AuditModule } from './audit/audit.module';
 import { FeatureBannersModule } from './feature-banners/feature-banners.module';
 import { QuickLinksModule } from './quick-links/quick-links.module';
+import { FaqsModule } from './faqs/faqs.module';
 import { ImagesModule } from './images/images.module';
 import { PaymentsModule } from './payments/payments.module';
 import { BannersModule } from './banners/banners.module';
@@ -56,6 +57,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     AuditModule,
     FeatureBannersModule,
     QuickLinksModule,
+    FaqsModule,
     ImagesModule,
     PaymentsModule,
     BannersModule,
