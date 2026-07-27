@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Upload, Save, Loader2, Eye, RefreshCw } from 'lucide-react';
+import { uploadFile } from '@/lib/upload';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -155,18 +156,9 @@ export default function PersonalizacaoPage() {
                         if (!file) return;
                         const uploading = toast.loading('Enviando logo...');
                         try {
-                          const formDataUpload = new FormData();
-                          formDataUpload.append('file', file);
-                          const { data: result } = await api.post('/upload', formDataUpload, {
-                            headers: { 'Content-Type': 'multipart/form-data' },
-                          });
-                          const url = result?.data?.url || result?.url;
-                          if (url) {
-                            updateSetting('logo', url);
-                            toast.success('Logo enviada!', { id: uploading });
-                          } else {
-                            toast.error('Erro ao obter URL', { id: uploading });
-                          }
+                          const url = await uploadFile(file);
+                          updateSetting('logo', url);
+                          toast.success('Logo enviada!', { id: uploading });
                         } catch {
                           toast.error('Erro ao enviar logo', { id: uploading });
                         }

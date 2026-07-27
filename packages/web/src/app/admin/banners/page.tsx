@@ -16,6 +16,7 @@ import {
 import { Plus, Pencil, Trash2, Upload, Loader2, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { uploadFile } from '@/lib/upload';
 import toast from 'react-hot-toast';
 
 export default function BannersPage() {
@@ -272,12 +273,7 @@ export default function BannersPage() {
                       if (!file) return;
                       const uploading = toast.loading('Enviando imagem...');
                       try {
-                        const formDataUpload = new FormData();
-                        formDataUpload.append('file', file);
-                        const { data: result } = await api.post('/upload', formDataUpload, {
-                          headers: { 'Content-Type': 'multipart/form-data' },
-                        });
-                        const url = result?.data?.url || result?.url;
+                        const url = await uploadFile(file);
                         if (url) {
                           setFormData((prev) => ({ ...prev, imagem: url }));
                           toast.success('Imagem enviada!', { id: uploading });

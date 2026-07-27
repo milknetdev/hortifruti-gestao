@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Upload, X, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { uploadFile } from '@/lib/upload';
 
 const productSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -212,16 +213,10 @@ export default function NovoProdutoPage() {
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const formData = new FormData();
-                      formData.append('file', file);
                       try {
-                        const { data: result } = await api.post('/upload', formData, {
-                          headers: { 'Content-Type': 'multipart/form-data' },
-                        });
-                        if (result?.data?.url) {
-                          setImages([...images, result.data.url]);
-                          toast.success('Imagem enviada!');
-                        }
+                        const url = await uploadFile(file);
+                        setImages([...images, url]);
+                        toast.success('Imagem enviada!');
                       } catch {
                         toast.error('Erro ao enviar imagem');
                       }
