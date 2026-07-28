@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upload to Vercel Blob
-    const blob = await put(`uploads/${file.name}`, file, {
+    const blob = await put(`uploads/${Date.now()}-${file.name}`, file, {
       access: 'public',
     });
 
