@@ -42,10 +42,10 @@ export async function POST(request: NextRequest) {
         pathname: blob.pathname,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Upload error:', error);
     return NextResponse.json(
-      { success: false, message: 'Erro ao enviar arquivo' },
+      { success: false, message: error?.message || 'Erro ao enviar arquivo', stack: error?.stack?.substring(0, 200) },
       { status: 500 }
     );
   }
