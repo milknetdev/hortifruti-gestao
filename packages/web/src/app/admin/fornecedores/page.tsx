@@ -45,7 +45,7 @@ export default function FornecedoresPage() {
   const fetchSuppliers = async () => {
     try {
       const { data: result } = await api.get('/suppliers');
-      const data = result?.data || result || [];
+      const data = result?.data?.data || result?.data || result || [];
       setSuppliers(Array.isArray(data) ? data : []);
     } catch {
       toast.error('Erro ao carregar fornecedores');
