@@ -207,4 +207,9 @@ export class UpdateProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  supplierId?: string;
 }
