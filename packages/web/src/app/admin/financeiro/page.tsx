@@ -62,7 +62,8 @@ export default function FinanceiroPage() {
   const fetchSupplierPayments = async () => {
     try {
       const { data: result } = await api.get(`/finance/supplier-payments?startDate=${startDate}&endDate=${endDate}`);
-      setSupplierData(result?.data || { suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } });
+      const data = result?.data?.data || result?.data || { suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } };
+      setSupplierData(data);
     } catch {}
   };
 
