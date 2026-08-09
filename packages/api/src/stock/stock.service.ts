@@ -47,15 +47,10 @@ export class StockService {
   }
 
   async addStock(productId: string, quantity: number, tenantId: string, userId?: string, costPrice?: number, reason?: string) {
-    console.log('=== ADDSTOCK CALLED ===');
-    console.log('productId:', productId, 'quantity:', quantity, 'costPrice:', costPrice, 'reason:', reason);
-    
     tenantId = await this.resolveTenantId(tenantId);
     const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId }, include: { supplier: true } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     if (quantity <= 0) throw new BadRequestException('Quantidade deve ser positiva');
-    
-    console.log('Product found:', product.name, 'supplierId:', product.supplierId, 'supplier:', product.supplier?.name, 'costPrice:', product.costPrice);
     
     const previousQty = product.stock;
     const newQty = previousQty + quantity;
@@ -64,9 +59,8 @@ export class StockService {
     // Auto-create supplier payment if product has a supplier
     if (product.supplierId && product.supplier) {
       const unitCost = costPrice || Number(product.costPrice) || 0;
-      console.log('Creating supplier payment - unitCost:', unitCost, 'supplierId:', product.supplierId);
       if (unitCost > 0) {
-        const payment = await this.prisma.supplierPayment.create({
+        await this.prisma.supplierPayment.create({
           data: {
             tenantId,
             supplierId: product.supplierId,
@@ -78,12 +72,7 @@ export class StockService {
             notes: 'Gerado automaticamente pela entrada de estoque',
           },
         });
-        console.log('Payment created:', payment.id);
-      } else {
-        console.log('Skipping payment - unitCost is 0');
       }
-    } else {
-      console.log('Skipping payment - no supplier');
     }
     
     return this.prisma.product.update({ where: { id: productId }, data: { stock: newQty } });
