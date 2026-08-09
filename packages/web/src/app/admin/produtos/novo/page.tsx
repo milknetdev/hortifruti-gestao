@@ -38,6 +38,7 @@ const productSchema = z.object({
   unit: z.string().min(1, 'Unidade é obrigatória'),
   description: z.string().optional(),
   available: z.boolean().default(true),
+  supplierId: z.string().optional(),
   featured: z.boolean().default(false),
   promotional: z.boolean().default(false),
 });
@@ -49,10 +50,16 @@ interface Category {
   name: string;
 }
 
+interface Supplier {
+  id: string;
+  name: string;
+}
+
 export default function NovoProdutoPage() {
   const router = useRouter();
   const [images, setImages] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -79,9 +86,14 @@ export default function NovoProdutoPage() {
 
   const fetchCategories = async () => {
     try {
-      const { data: result } = await api.get('/categories');
-      const cats = result?.data || result || [];
+      const [catRes, supRes] = await Promise.all([
+        api.get('/categories'),
+        api.get('/suppliers'),
+      ]);
+      const cats = catRes.data?.data || catRes.data || [];
       setCategories(Array.isArray(cats) ? cats : []);
+      const supps = supRes.data?.data || supRes.data || [];
+      setSuppliers(Array.isArray(supps) ? supps : []);
     } catch {
       setCategories([]);
     } finally {
@@ -103,6 +115,7 @@ export default function NovoProdutoPage() {
         weight: data.weight ? parseFloat(data.weight) : null,
         mainImage: images[0] || null,
         images: JSON.stringify(images),
+        supplierId: data.supplierId || null,
       };
 
       await api.post('/products', payload);
@@ -169,6 +182,19 @@ export default function NovoProdutoPage() {
                   </SelectContent>
                 </Select>
                 {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Fornecedor</Label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={watch('supplierId') || ''}
+                  onChange={(e) => setValue('supplierId', e.target.value)}
+                >
+                  <option value="">Nenhum</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label>Unidade *</Label>

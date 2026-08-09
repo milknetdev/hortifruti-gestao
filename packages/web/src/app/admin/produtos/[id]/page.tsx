@@ -32,6 +32,7 @@ const productSchema = z.object({
   unit: z.string().min(1, 'Unidade é obrigatória'),
   description: z.string().optional(),
   available: z.boolean().default(true),
+  supplierId: z.string().optional(),
   featured: z.boolean().default(false),
   promotional: z.boolean().default(false),
 });
@@ -43,6 +44,11 @@ interface Category {
   name: string;
 }
 
+interface Supplier {
+  id: string;
+  name: string;
+}
+
 export default function EditarProdutoPage() {
   const router = useRouter();
   const params = useParams();
@@ -50,6 +56,7 @@ export default function EditarProdutoPage() {
 
   const [images, setImages] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -70,14 +77,17 @@ export default function EditarProdutoPage() {
 
   const fetchData = async () => {
     try {
-      const [productRes, categoriesRes] = await Promise.all([
+      const [productRes, categoriesRes, suppliersRes] = await Promise.all([
         api.get(`/products/${productId}`),
         api.get('/categories'),
+        api.get('/suppliers'),
       ]);
 
       const product = productRes.data?.data || productRes.data;
       const cats = categoriesRes.data?.data || categoriesRes.data || [];
       setCategories(Array.isArray(cats) ? cats : []);
+      const supps = suppliersRes.data?.data || suppliersRes.data || [];
+      setSuppliers(Array.isArray(supps) ? supps : []);
 
       if (product) {
         // Parse images - avoid duplicates
@@ -112,6 +122,7 @@ export default function EditarProdutoPage() {
           available: product.available ?? true,
           featured: product.featured ?? false,
           promotional: product.promotional ?? false,
+          supplierId: product.supplierId || '',
         });
       }
     } catch (err) {
@@ -135,6 +146,7 @@ export default function EditarProdutoPage() {
         weight: data.weight ? parseFloat(data.weight) : null,
         mainImage: images[0] || null,
         images: JSON.stringify(images),
+        supplierId: data.supplierId || null,
       };
 
       await api.put(`/products/${productId}`, payload);
@@ -222,6 +234,19 @@ export default function EditarProdutoPage() {
                   ))}
                 </select>
                 {errors.categoryId && <p className="text-sm text-red-500">{errors.categoryId.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label>Fornecedor</Label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm"
+                  value={watch('supplierId') || ''}
+                  onChange={(e) => setValue('supplierId', e.target.value)}
+                >
+                  <option value="">Nenhum</option>
+                  {suppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-2">
                 <Label>Unidade *</Label>
