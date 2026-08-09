@@ -50,7 +50,7 @@ export class ProductsService {
     if (query.sort === 'name') orderBy = { name: 'asc' };
 
     const [items, total] = await Promise.all([
-      this.prisma.product.findMany({ where, skip, take: limit, orderBy, include: { category: { select: { id: true, name: true, slug: true } } } }),
+      this.prisma.product.findMany({ where, skip, take: limit, orderBy, include: { category: { select: { id: true, name: true, slug: true } }, supplier: { select: { id: true, name: true } } } }),
       this.prisma.product.count({ where }),
     ]);
     return { data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
