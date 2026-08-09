@@ -59,6 +59,13 @@ export default function FinanceiroPage() {
     data: '',
   });
 
+  const fetchSupplierPayments = async () => {
+    try {
+      const { data: result } = await api.get(`/finance/supplier-payments?startDate=${startDate}&endDate=${endDate}`);
+      setSupplierData(result?.data || { suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } });
+    } catch {}
+  };
+
   useEffect(() => {
     fetchFinance();
     fetchSupplierPayments();
@@ -89,14 +96,7 @@ export default function FinanceiroPage() {
     }
   };
 
-  const fetchSupplierPayments = async () => {
-    try {
-      const { data: result } = await api.get(`/finance/supplier-payments?startDate=${startDate}&endDate=${endDate}`);
-      setSupplierData(result?.data || { suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } });
-    } catch {}
-  };
-
-  const fetchFinance = async () => {
+const fetchFinance = async () => {
     try {
       const { data: result } = await api.get('/finance?limit=100');
       const data = result?.data || [];
