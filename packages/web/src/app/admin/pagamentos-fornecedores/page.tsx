@@ -76,6 +76,8 @@ export default function PagamentosFornecedoresPage() {
       ]);
       
       const payData = payRes.data?.data?.data || payRes.data?.data || payRes.data || [];
+      console.log('DEBUG payRes:', JSON.stringify(payRes.data).substring(0, 300));
+      console.log('DEBUG payData:', payData);
       setPayments(Array.isArray(payData) ? payData : []);
       setSummary(payRes.data?.data?.summary || payRes.data?.summary || { totalPending: 0, totalPaid: 0, total: 0 });
       
