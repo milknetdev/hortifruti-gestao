@@ -27,8 +27,11 @@ export class SupplierPaymentsController {
     if (paid === 'false') where.paid = false;
     if (startDate || endDate) {
       where.createdAt = {};
-      if (startDate) where.createdAt.gte = new Date(startDate);
-      if (endDate) where.createdAt.lte = new Date(endDate);
+      if (startDate) where.createdAt.gte = new Date(startDate + 'T00:00:00.000Z');
+      if (endDate) {
+        const end = new Date(endDate + 'T23:59:59.999Z');
+        where.createdAt.lte = end;
+      }
     }
 
     const payments: any[] = await this.prisma.supplierPayment.findMany({
