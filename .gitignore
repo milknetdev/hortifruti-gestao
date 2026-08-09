@@ -90,3 +90,6 @@ packages/web/out/
 # Turbo
 # ============================================
 .turbo/
+
+.vercel
+.env*
