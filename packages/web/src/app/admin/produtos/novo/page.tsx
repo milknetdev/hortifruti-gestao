@@ -92,7 +92,7 @@ export default function NovoProdutoPage() {
       ]);
       const cats = catRes.data?.data || catRes.data || [];
       setCategories(Array.isArray(cats) ? cats : []);
-      const supps = supRes.data?.data || supRes.data || [];
+      const supps = supRes.data?.data?.data || supRes.data?.data || supRes.data || [];
       setSuppliers(Array.isArray(supps) ? supps : []);
     } catch {
       setCategories([]);

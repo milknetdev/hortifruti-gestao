@@ -86,7 +86,7 @@ export default function EditarProdutoPage() {
       const product = productRes.data?.data || productRes.data;
       const cats = categoriesRes.data?.data || categoriesRes.data || [];
       setCategories(Array.isArray(cats) ? cats : []);
-      const supps = suppliersRes.data?.data || suppliersRes.data || [];
+      const supps = suppliersRes.data?.data?.data || suppliersRes.data?.data || suppliersRes.data || [];
       setSuppliers(Array.isArray(supps) ? supps : []);
 
       if (product) {
