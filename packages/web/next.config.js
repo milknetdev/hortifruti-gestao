@@ -15,3 +15,4 @@ const nextConfig = {
 
 module.exports = nextConfig;
 // build 1783074725
+// deploy trigger dom,  9 de ago de 2026 18:49:25
