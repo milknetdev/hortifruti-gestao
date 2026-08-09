@@ -18,6 +18,7 @@ import { CouponsModule } from './coupons/coupons.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { PickupPointsModule } from './pickup-points/pickup-points.module';
 import { SettingsModule } from './settings/settings.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
 import { ExportModule } from './export/export.module';
 import { AuditModule } from './audit/audit.module';
 import { FeatureBannersModule } from './feature-banners/feature-banners.module';
@@ -53,6 +54,7 @@ import { FavoritesModule } from './favorites/favorites.module';
     DeliveryModule,
     PickupPointsModule,
     SettingsModule,
+    SuppliersModule,
     ExportModule,
     AuditModule,
     FeatureBannersModule,
