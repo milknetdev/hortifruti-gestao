@@ -75,14 +75,14 @@ export default function PagamentosFornecedoresPage() {
         api.get('/products?limit=100'),
       ]);
       
-      const payData = payRes.data?.data || payRes.data || [];
+      const payData = payRes.data?.data?.data || payRes.data?.data || payRes.data || [];
       setPayments(Array.isArray(payData) ? payData : []);
-      setSummary(payRes.data?.summary || { totalPending: 0, totalPaid: 0, total: 0 });
+      setSummary(payRes.data?.data?.summary || payRes.data?.summary || { totalPending: 0, totalPaid: 0, total: 0 });
       
       const supData = supRes.data?.data?.data || supRes.data?.data || supRes.data || [];
       setSuppliers(Array.isArray(supData) ? supData : []);
       
-      const prodData = prodRes.data?.data || prodRes.data || [];
+      const prodData = prodRes.data?.data?.data || prodRes.data?.data || prodRes.data || [];
       setProducts(Array.isArray(prodData) ? prodData : []);
     } catch {
       toast.error('Erro ao carregar dados');
