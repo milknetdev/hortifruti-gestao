@@ -26,6 +26,7 @@ interface Product {
   stock: number;
   active: boolean;
   category?: { name: string };
+  supplier?: { id: string; name: string };
   mainImage?: string;
 }
 
@@ -36,10 +37,13 @@ export default function ProdutosPage() {
   const [page, setPage] = useState(1);
   const [category, setCategory] = useState('Todas');
   const [categories, setCategories] = useState<string[]>(['Todas']);
+  const [selectedSupplier, setSelectedSupplier] = useState('Todos');
+  const [suppliers, setSuppliers] = useState<string[]>(['Todos']);
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchSuppliers();
   }, []);
 
   const fetchProducts = async () => {
@@ -50,6 +54,17 @@ export default function ProdutosPage() {
       setProducts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSuppliers = async () => {
+    try {
+      const { data: result } = await api.get('/suppliers');
+      const data = result?.data?.data || result?.data || [];
+      const supps = Array.isArray(data) ? data : [];
+      setSuppliers(['Todos', ...supps.map((s: any) => s.name)]);
+    } catch {
+      setSuppliers(['Todos']);
     }
   };
 
@@ -74,9 +89,11 @@ export default function ProdutosPage() {
     }
   };
 
-  const filteredProducts = category === 'Todas'
-    ? products
-    : products.filter((p) => p.category?.name === category);
+  const filteredProducts = products.filter((p) => {
+    const matchCategory = category === 'Todas' || p.category?.name === category;
+    const matchSupplier = selectedSupplier === 'Todos' || p.supplier?.name === selectedSupplier;
+    return matchCategory && matchSupplier;
+  });
 
   const columns: Column<any>[] = [
     {
@@ -170,6 +187,16 @@ export default function ProdutosPage() {
             <SelectContent>
               {categories.map((cat) => (
                 <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
+            <SelectTrigger className="w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers.map((sup) => (
+                <SelectItem key={sup} value={sup}>{sup}</SelectItem>
               ))}
             </SelectContent>
           </Select>
