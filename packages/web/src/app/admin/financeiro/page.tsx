@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, Percent, Plus, Loader2, Trash2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, Plus, Loader2, Trash2, Truck, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -44,6 +44,13 @@ export default function FinanceiroPage() {
   const [saving, setSaving] = useState(false);
   const [filterType, setFilterType] = useState('todos');
   const [summary, setSummary] = useState({ revenue: 0, expenses: 0, profit: 0, margin: 0 });
+  const [supplierData, setSupplierData] = useState<any>({ suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } });
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [formData, setFormData] = useState({
     tipo: 'income',
     categoria: '',
@@ -54,6 +61,7 @@ export default function FinanceiroPage() {
 
   useEffect(() => {
     fetchFinance();
+    fetchSupplierPayments();
   }, []);
 
   const handleTogglePaid = async (entry: any) => {
@@ -79,6 +87,13 @@ export default function FinanceiroPage() {
     } catch {
       toast.error('Erro ao excluir lançamento');
     }
+  };
+
+  const fetchSupplierPayments = async () => {
+    try {
+      const { data: result } = await api.get(`/finance/supplier-payments?startDate=${startDate}&endDate=${endDate}`);
+      setSupplierData(result?.data || { suppliers: [], summary: { totalToPay: 0, totalRevenue: 0, profit: 0, supplierCount: 0 } });
+    } catch {}
   };
 
   const fetchFinance = async () => {
@@ -298,6 +313,133 @@ export default function FinanceiroPage() {
             totalItems={filteredEntries.length}
             onPageChange={setPage}
           />
+        </CardContent>
+      </Card>
+
+      {/* Supplier Payments Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Truck className="w-5 h-5" />
+                Pagamentos a Fornecedores
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">Valores a pagar por fornecedor no período</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-36"
+                />
+                <span className="text-gray-400">até</span>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-36"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchSupplierPayments}>
+                Filtrar
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Summary */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+            <div className="bg-red-50 rounded-lg p-4">
+              <p className="text-sm text-red-600">Total a Pagar</p>
+              <p className="text-2xl font-bold text-red-700">
+                R$ {supplierData.summary.totalToPay.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <p className="text-sm text-green-600">Receita (Produtos c/ Fornecedor)</p>
+              <p className="text-2xl font-bold text-green-700">
+                R$ {supplierData.summary.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-sm text-blue-600">Lucro</p>
+              <p className="text-2xl font-bold text-blue-700">
+                R$ {supplierData.summary.profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4">
+              <p className="text-sm text-purple-600">Fornecedores</p>
+              <p className="text-2xl font-bold text-purple-700">{supplierData.summary.supplierCount}</p>
+            </div>
+          </div>
+
+          {/* Supplier List */}
+          {supplierData.suppliers.length > 0 ? (
+            <div className="space-y-4">
+              {supplierData.suppliers.map((supplier: any) => (
+                <div key={supplier.supplierId} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Truck className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{supplier.supplierName}</h3>
+                        <p className="text-xs text-gray-500">{supplier.items.length} item(ns) no período</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">A pagar</p>
+                      <p className="text-lg font-bold text-red-600">
+                        R$ {supplier.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b">
+                          <th className="pb-2">Produto</th>
+                          <th className="pb-2 text-right">Qtd</th>
+                          <th className="pb-2 text-right">Custo Unit.</th>
+                          <th className="pb-2 text-right">Total</th>
+                          <th className="pb-2 text-right">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {supplier.items.slice(0, 5).map((item: any, idx: number) => (
+                          <tr key={idx} className="border-b last:border-0">
+                            <td className="py-2">{item.productName}</td>
+                            <td className="py-2 text-right">{item.quantity}</td>
+                            <td className="py-2 text-right">R$ {item.unitCost.toFixed(2)}</td>
+                            <td className="py-2 text-right font-medium">R$ {item.totalCost.toFixed(2)}</td>
+                            <td className="py-2 text-right text-gray-500">
+                              {new Date(item.orderDate).toLocaleDateString('pt-BR')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {supplier.items.length > 5 && (
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        + {supplier.items.length - 5} mais itens
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Truck className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>Nenhum pagamento a fornecedores no período</p>
+              <p className="text-sm">Associe fornecedores aos produtos para ver os pagamentos aqui</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -61,6 +61,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { label: 'Produtos', href: '/admin/produtos', icon: Package },
       { label: 'Categorias', href: '/admin/categorias', icon: FolderTree },
+      { label: 'Fornecedores', href: '/admin/fornecedores', icon: Truck },
       { label: 'Clientes', href: '/admin/clientes', icon: Users },
     ],
   },
