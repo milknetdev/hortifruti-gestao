@@ -49,7 +49,8 @@ model Tenant {
   stockMovements StockMovement[]
   financialEntries FinancialEntry[]
   featureBanners FeatureBanner[]
-  quickLinks QuickLink[]
+  quickLinks     QuickLink[]
+  supplierPayments SupplierPayment[]
   faqs Faq[]
   suppliers     Supplier[]
   notifications Notification[]
@@ -217,6 +218,7 @@ model Supplier {
 
   tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   products    Product[]
+  supplierPayments SupplierPayment[]
 
   @@map("suppliers")
 }
@@ -256,6 +258,7 @@ model Product {
   tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   supplier        Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierPayments SupplierPayment[]
   orderItems      OrderItem[]
   favorites       Favorite[]
   stockMovements  StockMovement[]
@@ -633,4 +636,26 @@ model Faq {
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("faqs")
+}
+
+model SupplierPayment {
+  id          String   @id @default(uuid())
+  tenantId    String
+  supplierId  String
+  productId   String?
+  description String
+  quantity    Int
+  unitCost    Decimal  @default(0)
+  totalCost   Decimal  @default(0)
+  paid        Boolean  @default(false)
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("supplier_payments")
 }
