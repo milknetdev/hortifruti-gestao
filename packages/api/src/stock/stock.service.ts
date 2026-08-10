@@ -48,33 +48,13 @@ export class StockService {
 
   async addStock(productId: string, quantity: number, tenantId: string, userId?: string, costPrice?: number, reason?: string) {
     tenantId = await this.resolveTenantId(tenantId);
-    const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId }, include: { supplier: true } });
+    const product = await this.prisma.product.findFirst({ where: { id: productId, tenantId } });
     if (!product) throw new NotFoundException('Produto não encontrado');
     if (quantity <= 0) throw new BadRequestException('Quantidade deve ser positiva');
     
     const previousQty = product.stock;
     const newQty = previousQty + quantity;
     await this.prisma.stockMovement.create({ data: { tenantId, productId, userId, type: 'ENTRY', quantity, previousQty, newQty, costPrice, reason: reason || 'Entrada manual' } });
-    
-    // Auto-create supplier payment if product has a supplier
-    if (product.supplierId && product.supplier) {
-      const unitCost = costPrice || Number(product.costPrice) || 0;
-      if (unitCost > 0) {
-        await this.prisma.supplierPayment.create({
-          data: {
-            tenantId,
-            supplierId: product.supplierId,
-            productId: productId,
-            description: product.name,
-            quantity: quantity,
-            unitCost: unitCost,
-            totalCost: quantity * unitCost,
-            notes: 'Gerado automaticamente pela entrada de estoque',
-          },
-        });
-      }
-    }
-    
     return this.prisma.product.update({ where: { id: productId }, data: { stock: newQty } });
   }
 

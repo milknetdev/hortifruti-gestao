@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { StockService } from './stock.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 
@@ -9,7 +10,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class StockController {
-  constructor(private stockService: StockService) {}
+  constructor(private stockService: StockService, private prisma: PrismaService) {}
 
   @Get('movements')
   @ApiOperation({ summary: 'Movimentações de estoque' })
@@ -19,8 +20,39 @@ export class StockController {
 
   @Post('add')
   @ApiOperation({ summary: 'Entrada de estoque' })
-  addStock(@Body() body: { productId: string; quantity: number; costPrice?: number; reason?: string }, @CurrentUser() user: any) {
-    return this.stockService.addStock(body.productId, body.quantity, '', user?.id, body.costPrice, body.reason);
+  async addStock(@Body() body: { productId: string; quantity: number; costPrice?: number; reason?: string }, @CurrentUser() user: any) {
+    // First, add the stock
+    const result = await this.stockService.addStock(body.productId, body.quantity, '', user?.id, body.costPrice, body.reason);
+    
+    // Then, create supplier payment if applicable
+    try {
+      const product = await this.prisma.product.findUnique({
+        where: { id: body.productId },
+        include: { supplier: true },
+      });
+      
+      if (product?.supplierId && product?.supplier) {
+        const unitCost = body.costPrice || Number(product.costPrice) || 0;
+        if (unitCost > 0) {
+          await this.prisma.supplierPayment.create({
+            data: {
+              tenantId: product.tenantId,
+              supplierId: product.supplierId,
+              productId: body.productId,
+              description: product.name,
+              quantity: body.quantity,
+              unitCost: unitCost,
+              totalCost: body.quantity * unitCost,
+              notes: 'Gerado automaticamente pela entrada de estoque',
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao criar pagamento ao fornecedor:', error);
+    }
+    
+    return result;
   }
 
   @Post('remove')
