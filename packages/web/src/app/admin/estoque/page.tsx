@@ -105,8 +105,7 @@ export default function EstoquePage() {
       toast.success('Movimentação registrada!');
       setDialogOpen(false);
       fetchData();
-    } catch (err: any) {
-      console.error('ERRO ESTOQUE:', err?.message, err?.response?.data);
+    } catch {
       toast.error('Erro ao registrar movimentação');
     } finally {
       setSaving(false);
