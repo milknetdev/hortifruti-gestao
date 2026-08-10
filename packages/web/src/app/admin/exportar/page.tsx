@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download, FileSpreadsheet, Users, Leaf, Loader2 } from 'lucide-react';
+import { Download, FileSpreadsheet, Users, Leaf, Loader2, MapPin, Truck, Navigation } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -171,6 +171,158 @@ export default function ExportarPage() {
     }
   };
 
+  const exportDeliveryRoutes = async () => {
+    setLoading('routes');
+    try {
+      const { data: result } = await api.get(`/export/orders?startDate=${startDate}&endDate=${endDate}`);
+      const orders = result?.data || result || [];
+
+      if (!Array.isArray(orders) || orders.length === 0) {
+        toast.error('Nenhum pedido encontrado no período');
+        return;
+      }
+
+      // Filter only delivery orders with address
+      const deliveryOrders = orders.filter((o: any) => 
+        o.deliveryType === 'delivery' && o.address && o.address.zipCode
+      );
+
+      if (deliveryOrders.length === 0) {
+        toast.error('Nenhum pedido de entrega com endereço encontrado');
+        return;
+      }
+
+      // Group by CEP prefix (first 5 digits) for route optimization
+      const routeGroups: Record<string, any[]> = {};
+      for (const order of deliveryOrders) {
+        const cep = order.address.zipCode?.replace(/\D/g, '') || '';
+        const cepPrefix = cep.substring(0, 5);
+        if (!routeGroups[cepPrefix]) routeGroups[cepPrefix] = [];
+        routeGroups[cepPrefix].push(order);
+      }
+
+      // Create route data
+      const routes: any[] = [];
+      let routeNumber = 1;
+
+      for (const [cepPrefix, groupOrders] of Object.entries(routeGroups)) {
+        // Sort orders within route by full CEP for optimized path
+        const sortedOrders = groupOrders.sort((a: any, b: any) => {
+          const cepA = a.address.zipCode?.replace(/\D/g, '') || '';
+          const cepB = b.address.zipCode?.replace(/\D/g, '') || '';
+          return cepA.localeCompare(cepB);
+        });
+
+        // Generate Google Maps link for the route
+        const addresses = sortedOrders.map((o: any) => {
+          const addr = o.address;
+          return `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city} - ${addr.state}, ${addr.zipCode}`;
+        });
+
+        const mapsUrl = addresses.length > 1 
+          ? \`https://www.google.com/maps/dir/\${addresses.map(a => encodeURIComponent(a)).join('/')}\`
+          : \`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(addresses[0])}\`;
+
+        for (const order of sortedOrders) {
+          const addr = order.address;
+          routes.push({
+            'Rota': \`Rota \${routeNumber}\`,
+            'Pedido': '#' + order.orderNumber,
+            'Cliente': order.customer?.name || order.customerName || '-',
+            'Telefone': order.customer?.phone || '-',
+            'CEP': addr.zipCode || '-',
+            'Endereço': \`\${addr.street}, \${addr.number}\`,
+            'Complemento': addr.complement || '-',
+            'Bairro': addr.neighborhood || '-',
+            'Cidade': \`\${addr.city}/\${addr.state}\`,
+            'Referência': addr.reference || '-',
+            'Itens': order.items?.map((i: any) => \`\${i.product?.name} (\${i.quantity})\`).join(', ') || '-',
+            'Total': Number(order.total).toFixed(2),
+            'Pagamento': translatePayment(order.paymentMethod || '-'),
+            'Observações': order.notes || '-',
+            'Link Rota': mapsUrl,
+          });
+        }
+        routeNumber++;
+      }
+
+      // Download CSV
+      const headers = Object.keys(routes[0]);
+      const csvContent = [
+        headers.join(';'),
+        ...routes.map(row => headers.map(h => {
+          const val = row[h] ?? '';
+          const str = String(val).replace(/"/g, '""');
+          return str.includes(';') || str.includes('"') || str.includes('\n') ? \`"\${str}"\` : str;
+        }).join(';'))
+      ].join('\n');
+
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = \`rotas_entrega_\${startDate}_\${endDate}.csv\`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(\`\${deliveryOrders.length} pedidos em \${Object.keys(routeGroups).length} rotas!\`);
+    } catch {
+      toast.error('Erro ao gerar rotas');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const viewRoutesMap = async () => {
+    setLoading('map');
+    try {
+      const { data: result } = await api.get(\`/export/orders?startDate=\${startDate}&endDate=\${endDate}\`);
+      const orders = result?.data || result || [];
+
+      const deliveryOrders = orders.filter((o: any) => 
+        o.deliveryType === 'delivery' && o.address && o.address.zipCode
+      );
+
+      if (deliveryOrders.length === 0) {
+        toast.error('Nenhum pedido de entrega encontrado');
+        return;
+      }
+
+      // Group by CEP prefix
+      const routeGroups: Record<string, any[]> = {};
+      for (const order of deliveryOrders) {
+        const cep = order.address.zipCode?.replace(/\D/g, '') || '';
+        const cepPrefix = cep.substring(0, 5);
+        if (!routeGroups[cepPrefix]) routeGroups[cepPrefix] = [];
+        routeGroups[cepPrefix].push(order);
+      }
+
+      // Open Google Maps with all addresses
+      const allAddresses = deliveryOrders.map((o: any) => {
+        const addr = o.address;
+        return \`\${addr.street}, \${addr.number} - \${addr.neighborhood}, \${addr.city} - \${addr.state}\`;
+      });
+
+      // Use first address as origin, rest as waypoints, last as destination
+      if (allAddresses.length === 1) {
+        window.open(\`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(allAddresses[0])}\`, '_blank');
+      } else {
+        const origin = encodeURIComponent(allAddresses[0]);
+        const destination = encodeURIComponent(allAddresses[allAddresses.length - 1]);
+        const waypoints = allAddresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
+        const url = \`https://www.google.com/maps/dir/?api=1&origin=\${origin}&destination=\${destination}\${waypoints ? \`&waypoints=\${waypoints}\` : ''}&travelmode=driving\`;
+        window.open(url, '_blank');
+      }
+
+      toast.success(\`\${deliveryOrders.length} endereços carregados no mapa!\`);
+    } catch {
+      toast.error('Erro ao abrir mapa');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -302,6 +454,51 @@ export default function ExportarPage() {
                 <><Download className="w-4 h-4 mr-2" />Exportar Colheita</>
               )}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Delivery Routes */}
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Truck className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Rotas de Entrega</CardTitle>
+                <p className="text-xs text-gray-500">Rotas otimizadas por CEP</p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Agrupa pedidos de entrega por região (CEP) e gera rotas otimizadas com link para o Google Maps.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={exportDeliveryRoutes}
+                disabled={loading !== null}
+                className="w-full bg-orange-600 hover:bg-orange-700"
+              >
+                {loading === 'routes' ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</>
+                ) : (
+                  <><Download className="w-4 h-4 mr-2" />Exportar Rotas</>
+                )}
+              </Button>
+              <Button
+                onClick={viewRoutesMap}
+                disabled={loading !== null}
+                variant="outline"
+                className="w-full"
+              >
+                {loading === 'map' ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Abrindo...</>
+                ) : (
+                  <><Navigation className="w-4 h-4 mr-2" />Ver no Mapa</>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
