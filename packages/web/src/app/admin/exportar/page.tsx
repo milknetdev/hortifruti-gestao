@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download, FileSpreadsheet, Users, Leaf, Loader2, MapPin, Truck, Navigation } from 'lucide-react';
+import { Download, FileSpreadsheet, Users, Leaf, Loader2, Truck, Navigation } from 'lucide-react';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 
@@ -89,12 +89,9 @@ export default function ExportarPage() {
         'Email': o.customer?.email || '-',
         'Telefone': o.customer?.phone || '-',
         'Tipo': o.deliveryType === 'pickup' ? 'Retirada' : 'Entrega',
-        'Endereço': o.address ? `${o.address.street}, ${o.address.number} - ${o.address.neighborhood}, ${o.address.city}/${o.address.state} - CEP: ${o.address.zipCode}` : (o.pickupPoint ? `Retirada: ${o.pickupPoint.name} - ${o.pickupPoint.address}, ${o.pickupPoint.city}/${o.pickupPoint.state}` : '-'),
+        'Endereço': o.address ? `${o.address.street}, ${o.address.number} - ${o.address.neighborhood}, ${o.address.city}/${o.address.state} - CEP: ${o.address.zipCode}` : (o.pickupPoint ? `Retirada: ${o.pickupPoint.name}` : '-'),
         'Pagamento': translatePayment(o.paymentMethod || '-'),
         'Status': translateStatus(o.status),
-        'Subtotal': Number(o.subtotal).toFixed(2),
-        'Frete': Number(o.deliveryFee).toFixed(2),
-        'Desconto': Number(o.discount).toFixed(2),
         'Total': Number(o.total).toFixed(2),
         'Itens': o.items?.map((i: any) => `${i.product?.name} (${i.quantity})`).join(', ') || '-',
       }));
@@ -128,10 +125,8 @@ export default function ExportarPage() {
             'Telefone': order.customer?.phone || '-',
             'Produto': item.product?.name || '-',
             'Quantidade': Number(item.quantity),
-            'Unidade': item.product?.unit || 'un',
-            'Preço Unitário': Number(item.price).toFixed(2),
             'Total': (Number(item.price) * Number(item.quantity)).toFixed(2),
-            'Data Pedido': new Date(order.createdAt).toLocaleDateString('pt-BR'),
+            'Data': new Date(order.createdAt).toLocaleDateString('pt-BR'),
           });
         }
       }
@@ -182,8 +177,7 @@ export default function ExportarPage() {
         return;
       }
 
-      // Filter only delivery orders with address
-      const deliveryOrders = orders.filter((o: any) => 
+      const deliveryOrders = orders.filter((o: any) =>
         o.deliveryType === 'delivery' && o.address && o.address.zipCode
       );
 
@@ -192,51 +186,48 @@ export default function ExportarPage() {
         return;
       }
 
-      // Group by CEP prefix (first 5 digits) for route optimization
+      // Group by CEP prefix (first 5 digits)
       const routeGroups: Record<string, any[]> = {};
       for (const order of deliveryOrders) {
-        const cep = order.address.zipCode?.replace(/\D/g, '') || '';
+        const cep = (order.address.zipCode || '').replace(/\D/g, '');
         const cepPrefix = cep.substring(0, 5);
         if (!routeGroups[cepPrefix]) routeGroups[cepPrefix] = [];
         routeGroups[cepPrefix].push(order);
       }
 
-      // Create route data
       const routes: any[] = [];
       let routeNumber = 1;
 
       for (const [cepPrefix, groupOrders] of Object.entries(routeGroups)) {
-        // Sort orders within route by full CEP for optimized path
-        const sortedOrders = groupOrders.sort((a: any, b: any) => {
-          const cepA = a.address.zipCode?.replace(/\D/g, '') || '';
-          const cepB = b.address.zipCode?.replace(/\D/g, '') || '';
+        const sortedOrders = (groupOrders as any[]).sort((a: any, b: any) => {
+          const cepA = (a.address.zipCode || '').replace(/\D/g, '');
+          const cepB = (b.address.zipCode || '').replace(/\D/g, '');
           return cepA.localeCompare(cepB);
         });
 
-        // Generate Google Maps link for the route
         const addresses = sortedOrders.map((o: any) => {
           const addr = o.address;
           return `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city} - ${addr.state}, ${addr.zipCode}`;
         });
 
-        const mapsUrl = addresses.length > 1 
-          ? \`https://www.google.com/maps/dir/\${addresses.map(a => encodeURIComponent(a)).join('/')}\`
-          : \`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(addresses[0])}\`;
+        const mapsUrl = addresses.length > 1
+          ? `https://www.google.com/maps/dir/${addresses.map((a: string) => encodeURIComponent(a)).join('/')}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addresses[0])}`;
 
         for (const order of sortedOrders) {
           const addr = order.address;
           routes.push({
-            'Rota': \`Rota \${routeNumber}\`,
+            'Rota': `Rota ${routeNumber}`,
             'Pedido': '#' + order.orderNumber,
             'Cliente': order.customer?.name || order.customerName || '-',
             'Telefone': order.customer?.phone || '-',
             'CEP': addr.zipCode || '-',
-            'Endereço': \`\${addr.street}, \${addr.number}\`,
+            'Endereço': `${addr.street}, ${addr.number}`,
             'Complemento': addr.complement || '-',
             'Bairro': addr.neighborhood || '-',
-            'Cidade': \`\${addr.city}/\${addr.state}\`,
+            'Cidade': `${addr.city}/${addr.state}`,
             'Referência': addr.reference || '-',
-            'Itens': order.items?.map((i: any) => \`\${i.product?.name} (\${i.quantity})\`).join(', ') || '-',
+            'Itens': order.items?.map((i: any) => `${i.product?.name} (${i.quantity})`).join(', ') || '-',
             'Total': Number(order.total).toFixed(2),
             'Pagamento': translatePayment(order.paymentMethod || '-'),
             'Observações': order.notes || '-',
@@ -246,27 +237,8 @@ export default function ExportarPage() {
         routeNumber++;
       }
 
-      // Download CSV
-      const headers = Object.keys(routes[0]);
-      const csvContent = [
-        headers.join(';'),
-        ...routes.map(row => headers.map(h => {
-          const val = row[h] ?? '';
-          const str = String(val).replace(/"/g, '""');
-          return str.includes(';') || str.includes('"') || str.includes('\n') ? \`"\${str}"\` : str;
-        }).join(';'))
-      ].join('\n');
-
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = \`rotas_entrega_\${startDate}_\${endDate}.csv\`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      toast.success(\`\${deliveryOrders.length} pedidos em \${Object.keys(routeGroups).length} rotas!\`);
+      downloadCSV(routes, `rotas_entrega_${startDate}_${endDate}.csv`, Object.keys(routes[0]));
+      toast.success(`${deliveryOrders.length} pedidos em ${Object.keys(routeGroups).length} rotas!`);
     } catch {
       toast.error('Erro ao gerar rotas');
     } finally {
@@ -277,10 +249,10 @@ export default function ExportarPage() {
   const viewRoutesMap = async () => {
     setLoading('map');
     try {
-      const { data: result } = await api.get(\`/export/orders?startDate=\${startDate}&endDate=\${endDate}\`);
+      const { data: result } = await api.get(`/export/orders?startDate=${startDate}&endDate=${endDate}`);
       const orders = result?.data || result || [];
 
-      const deliveryOrders = orders.filter((o: any) => 
+      const deliveryOrders = orders.filter((o: any) =>
         o.deliveryType === 'delivery' && o.address && o.address.zipCode
       );
 
@@ -289,33 +261,22 @@ export default function ExportarPage() {
         return;
       }
 
-      // Group by CEP prefix
-      const routeGroups: Record<string, any[]> = {};
-      for (const order of deliveryOrders) {
-        const cep = order.address.zipCode?.replace(/\D/g, '') || '';
-        const cepPrefix = cep.substring(0, 5);
-        if (!routeGroups[cepPrefix]) routeGroups[cepPrefix] = [];
-        routeGroups[cepPrefix].push(order);
-      }
-
-      // Open Google Maps with all addresses
       const allAddresses = deliveryOrders.map((o: any) => {
         const addr = o.address;
-        return \`\${addr.street}, \${addr.number} - \${addr.neighborhood}, \${addr.city} - \${addr.state}\`;
+        return `${addr.street}, ${addr.number} - ${addr.neighborhood}, ${addr.city} - ${addr.state}`;
       });
 
-      // Use first address as origin, rest as waypoints, last as destination
       if (allAddresses.length === 1) {
-        window.open(\`https://www.google.com/maps/search/?api=1&query=\${encodeURIComponent(allAddresses[0])}\`, '_blank');
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(allAddresses[0])}`, '_blank');
       } else {
         const origin = encodeURIComponent(allAddresses[0]);
         const destination = encodeURIComponent(allAddresses[allAddresses.length - 1]);
-        const waypoints = allAddresses.slice(1, -1).map(a => encodeURIComponent(a)).join('|');
-        const url = \`https://www.google.com/maps/dir/?api=1&origin=\${origin}&destination=\${destination}\${waypoints ? \`&waypoints=\${waypoints}\` : ''}&travelmode=driving\`;
+        const waypoints = allAddresses.slice(1, -1).map((a: string) => encodeURIComponent(a)).join('|');
+        const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}${waypoints ? `&waypoints=${waypoints}` : ''}&travelmode=driving`;
         window.open(url, '_blank');
       }
 
-      toast.success(\`\${deliveryOrders.length} endereços carregados no mapa!\`);
+      toast.success(`${deliveryOrders.length} endereços carregados no mapa!`);
     } catch {
       toast.error('Erro ao abrir mapa');
     } finally {
@@ -339,21 +300,11 @@ export default function ExportarPage() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-2">
               <Label>Data Início</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-44"
-              />
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-44" />
             </div>
             <div className="space-y-2">
               <Label>Data Fim</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-44"
-              />
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-44" />
             </div>
             <div className="text-sm text-gray-500 pb-2">
               Período: {formatDate(startDate)} até {formatDate(endDate)}
@@ -363,7 +314,7 @@ export default function ExportarPage() {
       </Card>
 
       {/* Export Options */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Orders */}
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
@@ -373,24 +324,14 @@ export default function ExportarPage() {
               </div>
               <div>
                 <CardTitle className="text-base">Pedidos</CardTitle>
-                <p className="text-xs text-gray-500">Dados completos dos pedidos</p>
+                <p className="text-xs text-gray-500">Dados completos</p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Inclui: número do pedido, data, cliente, tipo de entrega, pagamento, status, total e itens.
-            </p>
-            <Button
-              onClick={exportOrders}
-              disabled={loading !== null}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              {loading === 'orders' ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</>
-              ) : (
-                <><Download className="w-4 h-4 mr-2" />Exportar Pedidos</>
-              )}
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">Exporta todos os pedidos com cliente, endereço, pagamento e itens.</p>
+            <Button onClick={exportOrders} disabled={loading !== null} className="w-full bg-blue-600 hover:bg-blue-700">
+              {loading === 'orders' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</> : <><Download className="w-4 h-4 mr-2" />Exportar</>}
             </Button>
           </CardContent>
         </Card>
@@ -403,25 +344,15 @@ export default function ExportarPage() {
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <CardTitle className="text-base">Compras por Cliente</CardTitle>
-                <p className="text-xs text-gray-500">O que cada cliente comprou</p>
+                <CardTitle className="text-base">Clientes</CardTitle>
+                <p className="text-xs text-gray-500">Compras por cliente</p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Inclui: nome do cliente, email, telefone, produto comprado, quantidade, preço e total.
-            </p>
-            <Button
-              onClick={exportCustomers}
-              disabled={loading !== null}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-            >
-              {loading === 'customers' ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</>
-              ) : (
-                <><Download className="w-4 h-4 mr-2" />Exportar Clientes</>
-              )}
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">O que cada cliente comprou com quantidades e valores.</p>
+            <Button onClick={exportCustomers} disabled={loading !== null} className="w-full bg-purple-600 hover:bg-purple-700">
+              {loading === 'customers' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</> : <><Download className="w-4 h-4 mr-2" />Exportar</>}
             </Button>
           </CardContent>
         </Card>
@@ -439,20 +370,10 @@ export default function ExportarPage() {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Inclui: nome do produto, quantidade total somada de todos os pedidos e unidade de medida.
-            </p>
-            <Button
-              onClick={exportHarvest}
-              disabled={loading !== null}
-              className="w-full bg-green-600 hover:bg-green-700"
-            >
-              {loading === 'harvest' ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</>
-              ) : (
-                <><Download className="w-4 h-4 mr-2" />Exportar Colheita</>
-              )}
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">Produtos com quantidade total somada de todos os pedidos.</p>
+            <Button onClick={exportHarvest} disabled={loading !== null} className="w-full bg-green-600 hover:bg-green-700">
+              {loading === 'harvest' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Exportando...</> : <><Download className="w-4 h-4 mr-2" />Exportar</>}
             </Button>
           </CardContent>
         </Card>
@@ -466,37 +387,18 @@ export default function ExportarPage() {
               </div>
               <div>
                 <CardTitle className="text-base">Rotas de Entrega</CardTitle>
-                <p className="text-xs text-gray-500">Rotas otimizadas por CEP</p>
+                <p className="text-xs text-gray-500">Rotas por CEP</p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Agrupa pedidos de entrega por região (CEP) e gera rotas otimizadas com link para o Google Maps.
-            </p>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">Agrupa pedidos por região e gera rotas otimizadas com link para o Google Maps.</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                onClick={exportDeliveryRoutes}
-                disabled={loading !== null}
-                className="w-full bg-orange-600 hover:bg-orange-700"
-              >
-                {loading === 'routes' ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Gerando...</>
-                ) : (
-                  <><Download className="w-4 h-4 mr-2" />Exportar Rotas</>
-                )}
+              <Button onClick={exportDeliveryRoutes} disabled={loading !== null} className="w-full bg-orange-600 hover:bg-orange-700">
+                {loading === 'routes' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /></> : <><Download className="w-4 h-4 mr-2" />CSV</>}
               </Button>
-              <Button
-                onClick={viewRoutesMap}
-                disabled={loading !== null}
-                variant="outline"
-                className="w-full"
-              >
-                {loading === 'map' ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Abrindo...</>
-                ) : (
-                  <><Navigation className="w-4 h-4 mr-2" />Ver no Mapa</>
-                )}
+              <Button onClick={viewRoutesMap} disabled={loading !== null} variant="outline" className="w-full">
+                {loading === 'map' ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /></> : <><Navigation className="w-4 h-4 mr-2" />Mapa</>}
               </Button>
             </div>
           </CardContent>
